@@ -1,6 +1,9 @@
       *************************
        IDENTIFICATION DIVISION.
       *************************
+    *************************
+       IDENTIFICATION DIVISION.
+      *************************
 
        PROGRAM-ID. ASOM2080.
 
