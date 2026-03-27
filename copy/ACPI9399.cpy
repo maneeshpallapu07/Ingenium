@@ -13,6 +13,10 @@ P00697**  31AUG01  DPK    CREATED FOR '9399' FILE PROCESSING         **
       *---------------
        9399-1000-READ.
       *---------------
+            *---------------
+       9399-1000-READ.
+      *---------------
+
 
            MOVE ZERO                 TO W9399-SEQ-IO-STATUS.
 
