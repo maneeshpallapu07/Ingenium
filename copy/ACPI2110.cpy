@@ -31,6 +31,7 @@ APEX54**  31DEC96  TJS    MODIFICATIONS FOR MAINTAINABILITY          **
                PERFORM  2110-9000-HANDLE-ERROR
                    THRU 2110-9000-HANDLE-ERROR-X
            END-IF.
+        END-IF.
 
        2110-1000-READ-X.
            EXIT.
