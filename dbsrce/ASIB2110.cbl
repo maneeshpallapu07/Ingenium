@@ -11,6 +11,11 @@
       **  REMARKS:  SQL I/O PROGRAM USED TO BROWSE ROWS IN THE       **
       **            APEX TO NBS IMPORT AUDIT EXTRACT TABLE           **
       *****************************************************************
+      *****************************************************************
+      **  MEMBER :  ASIB2110                                         **
+      **  REMARKS:  SQL I/O PROGRAM USED TO BROWSE ROWS IN THE       **
+      **            APEX TO NBS IMPORT AUDIT EXTRACT TABLE           **
+      *****************************************************************
       **  RELEASE   DESCRIPTION                                      **
       **                                                             **
       **  612J      CREATED FOR 2110 TABLE PROCESSING                **
