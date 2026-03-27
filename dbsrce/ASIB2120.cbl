@@ -15,6 +15,15 @@
       **                                                             **
       **  612J      CREATED FOR 2120 TABLE PROCESSING                **
       *****************************************************************
+      *****************************************************************
+      **  MEMBER :  ASIB2120                                         **
+      **  REMARKS:  SQL I/O PROGRAM USED TO BROWSE ROWS IN THE       **
+      **            APEX TO NBS IMPORT MESSAGE EXTRACT TABLE         **
+      *****************************************************************
+      **  RELEASE   DESCRIPTION                                      **
+      **                                                             **
+      **  612J      CREATED FOR 2120 TABLE PROCESSING                **
+      *****************************************************************
       /
       **********************
        ENVIRONMENT DIVISION.
