@@ -13,6 +13,13 @@
       **                                                             **
       **  DOMAIN :  SY                                               **
       **  CLASS  :  PD                                               **
+     *****************************************************************
+      **  MEMBER :  ASOM2090                                         **
+      **  REMARKS:  PROCESS DRIVER FOR UPLOAD TRANSLATION TABLE      **
+      **            TRANSACTION UTTB.                                **
+      **                                                             **
+      **  DOMAIN :  SY                                               **
+      **  CLASS  :  PD                                               **
       *****************************************************************
       **  DATE     AUTH.  DESCRIPTION                                **
       **                                                             **
