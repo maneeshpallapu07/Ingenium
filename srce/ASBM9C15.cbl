@@ -1,0 +1,1697 @@
+      *************************
+       IDENTIFICATION DIVISION.
+      *************************
+
+       PROGRAM-ID. ASBM9C15.
+
+       COPY XCWWCRHT.
+
+      *****************************************************************
+      **  MEMBER : ASBM9C15                                          **
+      **  REMARKS: THIS MODULE PERFORMS AUTO CWA PAYMENT FOR THE     **
+      **           NWL POLICIES FROM PA/MGA/WMD CHANNELS.            **
+      *****************************************************************
+      **  DATE     AUTH.  DESCRIPTION                                **
+      **                                                             **
+NWLCWA**  27JUL09  CTS    INITIAL REVISION.                          **
+ATF013**  28AUG09  CTS    CHANGES DONE TO PROCESS CWA PROCESS DATE   **
+ATF013**                  FROM THE TEXT FILE FOR MAKING THE PENDING  **
+ATF013**                  POLICY PAYMENT                             **
+ATF016**  12OCT09  CTS    CHANGES DONE FOR ADDITION CHANNEL TYPE CODE**
+ATF016**                  TO THE CWA INPUT FILE AND INCLUSION OF EDIT**
+ATF016**                  FOR THE DATA FROM THE INPUT FILE           **
+ATF041**  05NOV09  CTS    CHANGES DONE TO POPULATE NEW BAC FIELDS    **
+ATF041**                  DURING CWA PROCESSING                      **
+NWLPNB**  17FEB10  CTS    CHANGES DONE TO POPULATE THE NEWLY ADDED   **
+NWLPNB**                  ADVANCE PAYMENT FIELDS IF THE PAYMENT TYPE **
+NWLPNB**                  IS PREPAYMENT IN THE INPUT CWA FILE        **
+BU8721**  30JUL10  CTS    TO GENERATE UNIQUE USER ID FOR EACH        **
+BU8721**                  INSTANCES(PA,MGA AND WMD)                  **
+NWLPP2**  28MAY10  CTS    CHANGES DONE TO PERFORM ADVANCE PAYMENT    **
+NWLPP2**                  RELATED EDITS DURING CWA UPLOAD AND        **
+NWLPP2**                  POPULATE THE NEWLY ADDED ADVANCE PAYMENT   **
+NWLPP2**                  START DATE FIELD IN CASE OF SUCCESSFUL     **
+NWLPP2**                  CWA UPLOAD                                 **
+Q01019**  13JUL10  CTS    CHANGES DONE TO HANDLE INTIAL CWA PAYMENT  **
+Q01019**                  DURING ADVANCE PAYMENT FIELD POPULATION    **
+NWLPDC**  07SEP10  CTS    CHANGES TO UPDATE THE NEW TPOL FIELD ADV   **
+NWLPDC**                  PMT EFF DATE ON SUCCESFUL ADV PMT THRU CWA **
+ATU496**  29SEP10  CTS    CODE MAINTENANCE                           **
+B11096**  28DEC10  CTS    APPLYING CWA TO SUSPENSE ACCOUNT INCASE    **
+B11096**                  SUPRESS-LCD-IND IS SET                     **   
+M161CB**  20SEP11  CTS    CREDIT CARD TRANSACTION                    **
+MP168A**  14NOV11  CTS    IMPLEMENTING THE CHANGES FOR THE PA CHANNEL**
+MP168A**                  CASHLESS  PROCESSING                       **
+Q10367**  30NOV11  CTS    FIX FOR CREDIT CARD INITIAL PAYMENT        **
+Q13007**  06DEC11  CTS    FIX FOR CWA PRCES DT - CREDIT CARD POLICIES**
+Q10274**  12DEC11  CTS    FIX FOR INITIAL FND SRC CD - CREDIT CARD   **
+C15851**  12JAN12  CTS    FIX FOR DAIHYAKU CONV POLICIES             **
+Q11536**  13JAN12  CTS    FIX FOR CWA PROCESS DATE - NIP CREDIT CARD **
+Q11857**  03FEB12  CTS    FIX WHEN THE INIT PMT TYPE IS CREDIT CARD  **
+MP171F**  20JAN12  CTS    LOGICAL LOCKING CHANGES                    **
+TVI05A**  07NOV12  CTS    ADVANCE PAYMENT ANNIVERSARY DATE POPULATION**
+MP245C**  03MAR14  CTS    SPWL_XML & CWA UPLOAD CHANGES              **
+M245A4**  01APR14  CTS    CHANGES FOR FACE AMOUNT UPDATE             **
+Q53181**  12SEP14  CTS    CHANGES FOR U/W AMOUNT CHANGES             **
+MP261D**  16OCT14  CTS    CHANGES FOR THE 1P BT COLLECTIONS FOR ARMV2**
+MP265A**  10OCT14  CTS    NOMURA_CWA UPLOAD CHANGES                  **
+C24247**  03FEB15  CTS    NOMURA_CWA ERROR REPORT CHANGES            **
+C14749**  02MAR15  CTS    CHG00014749 - NOMURA MINI BATCH ERROR FILE **
+C14749**                  WRITE EXCLUDE                              **
+M319B1**  02MAR17  CTS    CHANGES DONE AS PART OF FXWL               **
+Q88174**  14JUN17  CTS    FIX FOR TBAC POPULATION OF FXWL NEW FIELDS **
+CA0002**  30SEP18  CTS    INITIAL VERSION                            **
+FFF004**  14AUG19  CTS    ADVANCE PAYMENT CHANEGS FOR FFF            **
+FFF01A**  15OCT19  CTS    FFF NOMURA NEW BUSINESS CHANGES            **
+119771**  15OCT19  CTS    FFF NOMURA CHANGES                         **
+TLB08E*   16MAY22  CTS	  NUWRN INDICATOR SET WILL UPDATE IN TPOL    **
+SV1674**  24APR23  CTS    FIX FOR P STYPE PREM CALC & FA REDUCTION   **
+      *****************************************************************
+      /
+      **********************
+       ENVIRONMENT DIVISION.
+      **********************
+
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+      /
+      ***************
+       DATA DIVISION.
+      ***************
+
+       FILE SECTION.
+      /
+       WORKING-STORAGE SECTION.
+
+       COPY XCWWPGWS REPLACING '$VAR1' BY 'ASBM9C15'.
+
+       COPY SQLCA.
+      
+       01  WS-CTL-CARD.
+           03  WS-IN-CARD-ID                         PIC X(09).
+           03  WS-IN-CHKPT-INSTC-ID                  PIC X(02).
+MP265A*ATF016     03  FILLER                         PIC X(55).
+MP265A     03  FILLER                                PIC X(01).
+MP265A     03  WS-BATCH-TYP-ID                       PIC X(06).
+MP265A     03  WS-BATCH-TYP-IND                      PIC X(01).
+MP265A         88  WS-BATCH-TYP-EARLY                VALUE 'E'.
+MP265A         88  WS-BATCH-TYP-REG                  VALUE 'R'. 
+MP265A         88  WS-BATCH-TYP-VALID                VALUE 'E' 'R'. 
+MP265A     03  FILLER                                PIC X(47).
+ATF016*          03  FILLER                                PIC X(09).           
+ATF016*           03  WS-CHN-TYP-CD                         PIC X(01).
+ATF016*               88  WS-CHN-TYP-PA                      VALUE 'P'.
+ATF016*               88  WS-CHN-TYP-MGA                     VALUE 'M'.
+ATF016*               88  WS-CHN-TYP-WMD                     VALUE 'W'.
+ATF016*               88  WS-CHN-TYP-VALID              VALUES 'P','M','W'.
+ATF016*           03  FILLER                                PIC X(45).  
+       
+       COPY XCWWCKPT.       
+           05  WCKPT-TBL-KEY-AREA.       
+               10  WCKPT-TBL-NM                      PIC X(04).       
+               10  WCKPT-KEY-VALU                    PIC X(15). 
+               10  WCKPT-KEY-VAL2                    PIC X(10). 
+               10  WCKPT-KEY-VAL3                    PIC X(10).
+               10  WCKPT-KEY-VAL4                    PIC X(01).               
+           05  WCKPT-GLOB-CONTROL-AREA               PIC X(992).       
+           05  WCKPT-INPUT-PARM-AREA.         
+               10  WCKPT-WORK-STORE-SPACES           PIC X(122).  
+               
+       01  WS-WORK-AREA.
+           05  WS-START-APP-ID                           PIC X(15).  
+           05  WS-START-RECPT-NUM                        PIC X(10).  
+           05  WS-START-RECPT-DT                         PIC X(10).       
+           05  WS-START-PMT-MTHD-CD                      PIC X(01). 
+           05  WS-SEQ-NUM                                PIC 9(03). 
+           05  WS-WRK-STO-SPACES                         PIC X(10).
+ATF016     05  WS-INPUT-EDIT-ERR-IND                     PIC X(01).
+ATF016         88  WS-INPUT-EDIT-ERR-NO                  VALUE 'N'.
+ATF016         88  WS-INPUT-EDIT-ERR-YES                 VALUE 'Y'.
+Q88174     05  WS-POL-PREM-AMT              PIC S9(13)V9(02) COMP-3.
+Q88174     05  WS-PRE-XCHNG-PREM-AMT        PIC S9(13)V9(02) COMP-3.
+      /                                               
+      *****************************************************************
+      *  COMMON COPYBOOKS                                             *
+      *****************************************************************
+       COPY CCWWCCC.
+       COPY CCWWINDX.
+       COPY XCWLDTLK.
+       COPY CCWLPGA.
+       COPY XCWTFCMD.
+       COPY XCWWWKDT.
+       COPY XCWWTIME.
+MP171F COPY CCWWLOCK.
+MP171F COPY XCWL8090.
+      /
+      *****************************************************************
+      *  I/O COPYBOOKS                                                *
+      *****************************************************************
+       COPY XCSWPRT  REPLACING ==:ID:==  BY OCF
+                               ==':ID:'==  BY =='OCF'==.
+       COPY XCSROCF.
+      /
+       COPY XCSWSEQ  REPLACING ==:ID:==  BY BCF
+                               ==':ID:'==  BY =='BCF'==.
+       COPY XCSRBCF.
+      /
+       COPY XCSWSEQ  REPLACING ==:ID:==  BY CWAI
+                               ==':ID:'==  BY =='CWAI'==.
+       COPY ACSRCWAI.
+      /
+       COPY XCSWSEQ  REPLACING ==:ID:==  BY CWEX
+                               ==':ID:'==  BY =='CWEX'==.
+       COPY ACSRCWEX.
+      /
+       COPY CCFWPOLF.
+       COPY ACFWUPOL.
+       COPY ACFRUPOL.
+       COPY ACFWXMLE.
+       COPY ACFRXMLE.
+       COPY ACFRCWAE.
+       COPY ACFWCWAE.
+       COPY CCFRMAST.
+       COPY CCFWMAST.
+M245A4 COPY CCFRPH.
+M245A4 COPY CCFWPH.
+MP245C COPY XCFRCRCY.
+MP245C COPY XCFWCRCY.
+Q53181 COPY CCFWPD.
+Q53181 COPY CCFRPD.
+MP265A COPY CCFWEDIT.
+MP265A COPY CCFREDIT.
+CA0002 COPY CCFWRFND.
+CA0002 COPY CCFRRFND.
+      /
+      *****************************************************************
+      *  CALLED MODULE PARAMETER INFORMATION                          *
+      *****************************************************************
+      / 
+       COPY XCWL1640.
+       COPY XCWL1670.
+       COPY XCWL1680.
+       COPY XCWL1660.
+       COPY CCWL0010.
+       COPY CCWL0950.
+       COPY XCWL0035.
+       COPY XCWL0040.
+       COPY XCWL2490.
+       COPY CCWL0620.
+       COPY XCWL0290.
+       COPY XCWL0800.
+       COPY CCWL9285.
+       COPY XCWL1580.
+       COPY XCWL1610.
+       COPY CCWL9555.
+       COPY CCWL0953.
+       COPY NCWL9140.
+NWLPP2 COPY CCWL9307.
+M245A4 COPY CCWL5810.
+Q53181 COPY NCWL5660.
+M319B1 COPY CCWLCRCV.
+M319B1 COPY CCWL9215.
+Q88174 COPY XCWL0289.
+TLB08E COPY CCWL9228.
+M319B1/
+      /
+       01  WGLOB-GLOBAL-AREA.
+       COPY XCWWGLOB.
+      /
+       COPY CCFWCVG.
+       COPY CCFRCVG.
+      /
+       COPY CCFWPOL.
+       COPY CCFRPOL.
+      /
+       COPY CCWWCVGS.
+      /
+       COPY CCFHPOL.
+       COPY CCFHCVGS.
+      /
+      ********************
+       PROCEDURE DIVISION.
+      ********************
+      
+      *--------------
+       0000-MAINLINE.
+      *--------------
+      
+           PERFORM  0100-OPEN-FILES
+               THRU 0100-OPEN-FILES-X.
+      
+           PERFORM  1000-INITIALIZE
+               THRU 1000-INITIALIZE-X.
+      
+           PERFORM  2000-READ-CWAI-INPUT
+               THRU 2000-READ-CWAI-INPUT-X    
+               UNTIL  WCWAI-SEQ-IO-EOF.
+
+           PERFORM  3000-CLOSE-FILES
+               THRU 3000-CLOSE-FILES-X.
+      
+           PERFORM  0035-1000-COMMIT
+               THRU 0035-1000-COMMIT-X.
+      
+           STOP RUN.
+      
+       0000-MAINLINE-X.
+           EXIT.
+      /
+      *----------------
+       0100-OPEN-FILES.
+      *----------------
+      
+ATF016*           PERFORM  OCF-3000-OPEN-OUTPUT
+ATF016*               THRU OCF-3000-OPEN-OUTPUT-X.
+ATF016     PERFORM  OCF-5000-OPEN-EXTEND
+ATF016         THRU OCF-5000-OPEN-EXTEND-X.
+      
+           PERFORM  BCF-1000-OPEN-INPUT
+               THRU BCF-1000-OPEN-INPUT-X.
+               
+           PERFORM  CWAI-1000-OPEN-INPUT
+               THRU CWAI-1000-OPEN-INPUT-X.
+               
+ATF016*           PERFORM  CWEX-3000-OPEN-OUTPUT
+ATF016*               THRU CWEX-3000-OPEN-OUTPUT-X.
+ATF016     PERFORM  CWEX-5000-OPEN-EXTEND
+ATF016         THRU CWEX-5000-OPEN-EXTEND-X.
+      
+       0100-OPEN-FILES-X.
+           EXIT.
+      /
+      *----------------
+       1000-INITIALIZE.
+      *----------------
+
+           INITIALIZE  WS-WORK-AREA.
+           MOVE  ZERO                       TO LPGA-ATRN-SEQUENCE.
+           MOVE  SPACES                     TO LPGA-OPER-CAT-CD.
+           
+           PERFORM  CCC-1000-PRCES-CO-CTL-CARD
+               THRU CCC-1000-PRCES-CO-CTL-CARD-X.
+      
+           PERFORM  0950-0000-INIT-PARM-INFO
+               THRU 0950-0000-INIT-PARM-INFO-X.
+      
+           PERFORM  0950-1000-GET-COMPANY-NAME
+               THRU 0950-1000-GET-COMPANY-NAME-X.
+
+           MOVE L0950-COMPANY-NAME          TO L0040-COMPANY-NAME.
+              
+      * SET UP THE TITLE/HEADING LINES FOR THE OCF REPORT
+
+           MOVE ZERO                        TO L0040-ERROR-CNT.
+
+      * GET SYSTEM ID
+           MOVE 'CS00000056'                TO WGLOB-MSG-REF-INFO.
+           PERFORM  0260-2000-GET-MESSAGE
+               THRU 0260-2000-GET-MESSAGE-X.
+           MOVE WGLOB-MSG-TXT               TO L0040-SYSTEM-ID.
+
+      * GET PROGRAM DESCRIPTION
+           MOVE 'AS9C150011'                TO WGLOB-MSG-REF-INFO.
+           PERFORM  0260-2000-GET-MESSAGE
+               THRU 0260-2000-GET-MESSAGE-X.
+           MOVE WGLOB-MSG-TXT               TO L0040-PROGRAM-DESC.
+
+      * MSG    RUN MESSAGES
+           MOVE 'AS9C150012'                TO WGLOB-MSG-REF-INFO.
+           PERFORM  0260-2000-GET-MESSAGE
+               THRU 0260-2000-GET-MESSAGE-X.
+           MOVE WGLOB-MSG-TXT               TO L0040-HDG-LINE-3.
+
+           PERFORM  0040-1000-INIT-TITLE
+               THRU 0040-1000-INIT-TITLE-X.
+              
+           PERFORM  BCF-1000-READ
+               THRU BCF-1000-READ-X.
+               
+           IF  WBCF-SEQ-IO-EOF
+      *MSG:    'CONTROL CARD INFORMATION MISSING'
+               MOVE 'AS9C150001'            TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+               PERFORM  0030-4000-CTL-CARD-ERROR
+                   THRU 0030-4000-CTL-CARD-ERROR-X
+           END-IF.
+
+           MOVE RBCF-SEQ-REC-INFO           TO WS-CTL-CARD.
+
+ATF016*           IF NOT WS-CHN-TYP-VALID
+ATF016*      *MSG:    'CONTROL CARD ERROR - INVALD CHANNEL'
+ATF016*               MOVE 'AS9C150007'            TO WGLOB-MSG-REF-INFO
+ATF016*               PERFORM  0260-1000-GENERATE-MESSAGE
+ATF016*                   THRU 0260-1000-GENERATE-MESSAGE-X
+ATF016*               PERFORM  0030-4000-CTL-CARD-ERROR
+ATF016*                   THRU 0030-4000-CTL-CARD-ERROR-X
+ATF016*           END-IF.           
+           
+           IF  WS-IN-CARD-ID NOT = 'CHKPTINS='
+      *MSG: 'CKPT INSTANCE INFORMATION IS MISSING IN CONTROL CARD'
+               MOVE 'AS9C150008'            TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+               PERFORM  0030-4000-CTL-CARD-ERROR
+                   THRU 0030-4000-CTL-CARD-ERROR-X
+           END-IF.                      
+
+MP265A     IF NOT WS-BATCH-TYP-VALID
+MP265A*MSG: 'BATCH TYPE INFORMATION IS MISSING IN CONTROL CARD'
+MP265A         MOVE 'AS9C150031'            TO WGLOB-MSG-REF-INFO
+MP265A         PERFORM  0260-1000-GENERATE-MESSAGE
+MP265A             THRU 0260-1000-GENERATE-MESSAGE-X
+MP265A         PERFORM  0030-4000-CTL-CARD-ERROR
+MP265A             THRU 0030-4000-CTL-CARD-ERROR-X
+MP265A     END-IF.      
+
+           MOVE WS-IN-CHKPT-INSTC-ID        TO WGLOB-CHKPT-INSTC-ID.
+
+      **   CKPT CONTROL STARTS HERE
+           PERFORM  CKPT-CHECK-RESTART-INIT
+               THRU CKPT-CHECK-RESTART-INIT-X.
+      
+           PERFORM  0800-1000-BUILD-PARM-INFO
+               THRU 0800-1000-BUILD-PARM-INFO-X.
+      
+           MOVE WPGWS-CRNT-PGM-ID           TO L0800-CHKPT-PGM-ID.
+           MOVE WGLOB-CHKPT-INSTC-ID        TO L0800-CHKPT-INSTC-ID.
+           MOVE WGLOB-COMPANY-CODE          TO L0800-CO-ID.
+           MOVE LENGTH OF WCKPT-WORK-AREA   TO L0800-CHKPT-WRK-INFO-LEN.
+      
+           PERFORM  0800-1000-INIT-CKPT
+               THRU 0800-1000-INIT-CKPT-X.
+      
+           MOVE WCWAE-TABLE-NAME            TO WCKPT-TBL-NM.
+      
+           IF  L0800-CHKPT-STAT-RUNNING
+               PERFORM  2710-RESTORE-CKPT-DATA
+                   THRU 2710-RESTORE-CKPT-DATA-X
+      
+      * MSG : PROGRAM RESTART FOR @1
+               MOVE 'XS00000099'            TO WGLOB-MSG-REF-INFO
+               MOVE WPGWS-CRNT-PGM-ID       TO WGLOB-MSG-PARM (1)
+      
+               PERFORM  0260-2000-GET-MESSAGE
+                   THRU 0260-2000-GET-MESSAGE-X
+      
+               MOVE WGLOB-MSG-TXT           TO L0040-INPUT-LINE
+      
+               PERFORM  0040-3000-WRITE-OTHER
+                   THRU 0040-3000-WRITE-OTHER-X
+           END-IF.
+      
+      * BYPASS INPUT POLICY RECORDS IN RESTART MODE
+           IF  L0800-CHKPT-STAT-RUNNING
+               PERFORM  CWAI-1000-READ
+                   THRU CWAI-1000-READ-X
+                   UNTIL (RCWAI-APP-ID = WS-START-APP-ID
+                   AND  RCWAI-RECPT-NUM = WS-START-RECPT-NUM
+                   AND  RCWAI-RECPT-DT  = WS-START-RECPT-DT
+                   AND  RCWAI-PMT-MTHD-CD = WS-START-PMT-MTHD-CD)
+                   OR WCWAI-SEQ-IO-EOF
+           ELSE
+                PERFORM  CWAI-1000-READ
+                    THRU CWAI-1000-READ-X
+           END-IF.
+           
+           PERFORM  MAST-1000-READ
+               THRU MAST-1000-READ-X.
+      
+           IF  WMAST-IO-OK
+               MOVE RMAST-APPL-CTL-PRCES-DT TO WGLOB-PROCESS-DATE
+           ELSE
+      *MSG: 'MASTER CONTROL RECORD (@1) NOT FOUND'
+               MOVE WMAST-KEY               TO WGLOB-MSG-PARM (1)
+               MOVE 'CS00000061'            TO WGLOB-MSG-REF-INFO
+      
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+      
+               PERFORM  0030-5000-LOGIC-ERROR
+                   THRU 0030-5000-LOGIC-ERROR-X
+           END-IF.               
+BU8721* TO GENERATE UNIQUE USER ID FOR EACH INSTANCES(PA,MGA AND WMD)
+BU8721     MOVE SPACES                      TO WGLOB-USER-ID.
+BU8721     STRING 'NWLCWA'
+BU8721            WS-IN-CHKPT-INSTC-ID
+BU8721            DELIMITED BY SIZE
+BU8721            INTO WGLOB-USER-ID
+BU8721     END-STRING.
+
+       1000-INITIALIZE-X.
+           EXIT.
+      /
+      *----------------------
+       2000-READ-CWAI-INPUT.
+      *----------------------
+
+           PERFORM  TASK-1000-INCR-TASK-ID
+               THRU TASK-1000-INCR-TASK-ID-X.
+
+      * MSG : NOW PROCESSING APPLICATION @1..
+           MOVE 'AS9C150009'                TO WGLOB-MSG-REF-INFO.
+           MOVE  RCWAI-APP-ID               TO WGLOB-MSG-PARM(1).
+           PERFORM  0260-1000-GENERATE-MESSAGE
+               THRU 0260-1000-GENERATE-MESSAGE-X.
+               
+           INITIALIZE RCWEX-SEQ-REC-INFO.
+
+ATF016     PERFORM  2100-VALIDATE-INPUT
+ATF016         THRU 2100-VALIDATE-INPUT-X.
+ATF016
+ATF016     IF  WS-INPUT-EDIT-ERR-YES
+ATF016         SET   RCWEX-CWA-REJ-OTHR     TO TRUE
+ATF016         PERFORM  2500-BUILD-ERROR-REPORT
+ATF016             THRU 2500-BUILD-ERROR-REPORT-X
+ATU496*ATF016         PERFORM  2700-COMMIT-CKPT    
+ATU496*ATF016             THRU 2700-COMMIT-CKPT-X 
+ATF016         GO TO 2000-READ-CWAI-INPUT-X
+ATF016     END-IF.
+ATF016
+      * BROWSE THE XML ERROR HISTORY TABLE FOR CHECKING THE HISTORY OF
+      * REJECTION FOR THE APPLICATION
+      
+           MOVE  LOW-VALUES                 TO WXMLE-KEY.
+           MOVE  HIGH-VALUES                TO WXMLE-ENDBR-KEY.
+           MOVE  RCWAI-APP-ID               TO WXMLE-APP-ID
+                                               WXMLE-ENDBR-APP-ID.
+ATF016*           MOVE  WS-CHN-TYP-CD              TO WXMLE-APP-CHNL-CD
+ATF016     MOVE  RCWAI-CHNL-TYP-CD          TO WXMLE-APP-CHNL-CD
+                                               WXMLE-ENDBR-APP-CHNL-CD.
+           MOVE  WWKDT-LOW-DT               TO WXMLE-APP-UPLD-DT.
+           MOVE  WWKDT-HIGH-DT              TO WXMLE-ENDBR-APP-UPLD-DT.
+           
+           PERFORM  XMLE-1000-BROWSE
+               THRU XMLE-1000-BROWSE-X.
+               
+           PERFORM  XMLE-2000-READ-NEXT
+               THRU XMLE-2000-READ-NEXT-X.
+               
+           IF  WXMLE-IO-OK
+C24247     AND WS-BATCH-TYP-REG
+               MOVE  RXMLE-APP-REJ-REASN-CD TO RCWEX-CWA-REJ-CD
+               PERFORM  2500-BUILD-ERROR-REPORT
+                   THRU 2500-BUILD-ERROR-REPORT-X
+               PERFORM  XMLE-3000-END-BROWSE
+                   THRU XMLE-3000-END-BROWSE-X
+ATU496*               PERFORM  2700-COMMIT-CKPT    
+ATU496*                   THRU 2700-COMMIT-CKPT-X 
+               GO TO 2000-READ-CWAI-INPUT-X
+           END-IF.
+           
+C14749     IF  WXMLE-IO-OK
+C14749     AND WS-BATCH-TYP-EARLY
+C14749         PERFORM  XMLE-3000-END-BROWSE
+C14749             THRU XMLE-3000-END-BROWSE-X
+C14749         PERFORM  CWAI-1000-READ
+C14749             THRU CWAI-1000-READ-X
+C14749         GO TO 2000-READ-CWAI-INPUT-X
+C14749     END-IF.           
+           
+           PERFORM  XMLE-3000-END-BROWSE
+               THRU XMLE-3000-END-BROWSE-X.
+               
+      
+      * READ THE TPOL TABLE USING THE POLF ALT. INDEX AND CHECK FOR
+      * THE EXISTENCE OF THE APPLICATION IN TPOL
+
+           MOVE  LOW-VALUES                 TO WPOLF-KEY.
+           MOVE  RCWAI-APP-ID               TO WPOLF-POL-APP-FORM-ID.
+
+           PERFORM  POLF-1000-READ
+               THRU POLF-1000-READ-X.
+               
+           IF NOT WPOLF-IO-OK
+C24247     AND WS-BATCH-TYP-REG           
+               SET  RCWEX-CWA-FAIL           TO TRUE
+               PERFORM  2500-BUILD-ERROR-REPORT
+                   THRU 2500-BUILD-ERROR-REPORT-X
+ATU496*               PERFORM  2700-COMMIT-CKPT
+ATU496*                   THRU 2700-COMMIT-CKPT-X
+               GO TO 2000-READ-CWAI-INPUT-X
+           END-IF.
+           
+C14749     IF NOT WPOLF-IO-OK
+C14749     AND WS-BATCH-TYP-EARLY
+C14749         PERFORM  CWAI-1000-READ
+C14749             THRU CWAI-1000-READ-X
+C14749         GO TO 2000-READ-CWAI-INPUT-X
+C14749     END-IF.
+
+      *
+      * LOAD THE COVERAGES TO PERFORM PROCESSING
+      *
+           MOVE  1                          TO I.
+           PERFORM  CVGS-1000-LOAD-CVGS-ARRAY
+               THRU CVGS-1000-LOAD-CVGS-ARRAY-X.
+
+MP265A     MOVE 'EBAGT'                     TO WEDIT-ETBL-TYP-ID.
+MP265A     MOVE RPOL-SERV-AGT-ID            TO WEDIT-ETBL-VALU-ID.
+MP265A     MOVE WGLOB-USER-LANG             TO WEDIT-ETBL-LANG-CD.  
+MP265A
+MP265A     PERFORM  EDIT-1000-READ
+MP265A         THRU EDIT-1000-READ-X.
+MP265A         
+MP265A     IF  WEDIT-IO-OK
+MP265A         IF  WS-BATCH-TYP-REG
+MP265A             PERFORM  CWAI-1000-READ
+MP265A                 THRU CWAI-1000-READ-X
+MP265A             GO TO 2000-READ-CWAI-INPUT-X
+MP265A         END-IF
+MP265A     ELSE
+MP265A         IF  WS-BATCH-TYP-EARLY
+MP265A             PERFORM  CWAI-1000-READ
+MP265A                 THRU CWAI-1000-READ-X
+MP265A             GO TO 2000-READ-CWAI-INPUT-X
+MP265A         END-IF
+MP265A     END-IF.
+MP265A
+
+      * IF THE CHANNEL CODE IS BLANK FOR THE POLICY, GENERATE ERROR 
+      * REPORT
+      
+           IF  RPOL-POL-CHNL-NONE
+               SET  RCWEX-CWA-NO-AGT         TO TRUE
+               PERFORM  2500-BUILD-ERROR-REPORT
+                   THRU 2500-BUILD-ERROR-REPORT-X
+ATU496*               PERFORM  2700-COMMIT-CKPT     
+ATU496*                   THRU 2700-COMMIT-CKPT-X 
+               GO TO 2000-READ-CWAI-INPUT-X               
+           END-IF.
+
+      * IF THERE IS A CHANNEL MISMATCH BETWEEN THE INPUT FILE CHANNEL
+      * AND THE CHANNEL TYPE IN TPOL, GENERATE ERROR REPORT.
+      
+ATF016*           IF  RPOL-POL-CHNL-CD <> WS-CHN-TYP-CD
+ATF016     IF  RPOL-POL-CHNL-CD <> RCWAI-CHNL-TYP-CD
+               SET   RCWEX-CWA-REJ-OTHR     TO TRUE
+               PERFORM  2500-BUILD-ERROR-REPORT
+                   THRU 2500-BUILD-ERROR-REPORT-X
+ATU496*               PERFORM  2700-COMMIT-CKPT    
+ATU496*                   THRU 2700-COMMIT-CKPT-X 
+               GO TO 2000-READ-CWAI-INPUT-X
+           END-IF.
+CA0002     
+CA0002**  VALIDATE WHETHER THE REFUND REUEST HAS BEEN DONE FOR THE 
+CA0002**  POLICY. IF SO,THEN WRITE IN ERROR REPORT.
+CA0002     
+CA0002     MOVE RPOL-POL-ID                 TO WRFND-POL-ID.
+CA0002     MOVE RPOL-POL-ID                 TO WRFND-ENDBR-POL-ID.
+CA0002     MOVE ZEROES                      TO WRFND-SEQ-NUM.
+CA0002     MOVE +999                        TO WRFND-ENDBR-SEQ-NUM.
+CA0002
+CA0002     PERFORM  RFND-2000-READ-MAX
+CA0002         THRU RFND-2000-READ-MAX-X.
+CA0002
+CA0002     IF NOT WRFND-IO-OK
+CA0002         MOVE +001             TO WRFND-SEQ-NUM
+CA0002     ELSE
+CA0002         MOVE WRFND-MAX-SEQ-NUM
+CA0002                               TO WRFND-SEQ-NUM
+CA0002     END-IF.
+CA0002
+CA0002     PERFORM  RFND-1000-READ
+CA0002         THRU RFND-1000-READ-X.
+CA0002
+CA0002     IF WRFND-IO-OK
+CA0002        IF  NOT RRFND-RFND-STAT-REVERSED
+CA0002*MSG:CWA REFUND/REJECTION HAS BEEN ENTERED. CANNOT PROCESS
+CA0002            SET   RCWEX-CWA-REJ-OTHR     TO TRUE
+CA0002            PERFORM  2500-BUILD-ERROR-REPORT
+CA0002                THRU 2500-BUILD-ERROR-REPORT-X
+CA0002            GO TO 2000-READ-CWAI-INPUT-X
+CA0002         END-IF
+CA0002     END-IF.
+ATF013*      *
+ATF013*      * IF THERE IS A MISMATCH IN THE BILL TYPE MENTIONED IN THE 
+ATF013*      * CWA TEXT FILE AND TPOL, GENERATE ERROR REPORT
+ATF013*      *
+ATF013*           IF  RCWAI-BILL-TYP-CD <> RPOL-POL-BILL-TYP-CD
+ATF013*               SET  RCWEX-CWA-REJ-OTHR       TO TRUE
+ATF013*               PERFORM  2500-BUILD-ERROR-REPORT
+ATF013*                   THRU 2500-BUILD-ERROR-REPORT-X
+ATF013*               PERFORM  2700-COMMIT-CKPT
+ATF013*                   THRU 2700-COMMIT-CKPT-X
+ATF013*               GO TO 2000-READ-CWAI-INPUT-X
+ATF013*           END-IF.
+ATF013
+ATF013* EDITS FOR CWA PROCESS DATE
+ATF013
+ATF013     IF  (RCWAI-CWA-PRCES-DT > WGLOB-PROCESS-DATE
+Q10367*ATF013     OR  RCWAI-CWA-PRCES-DT < RPOL-POL-APP-RECV-DT)
+Q10367     OR  (RCWAI-INIT-PMT-TYP-CD NOT = 'C' 
+Q10367     AND RCWAI-CWA-PRCES-DT < RPOL-POL-APP-RECV-DT))
+ATF013     AND (RCWAI-CWA-PRCES-DT NOT = SPACES
+ATF013     AND  RCWAI-CWA-PRCES-DT NOT = WWKDT-ZERO-DT)
+ATF013         SET  RCWEX-CWA-REJ-OTHR       TO TRUE
+ATF013         PERFORM  2500-BUILD-ERROR-REPORT
+ATF013             THRU 2500-BUILD-ERROR-REPORT-X
+ATU496*ATF013         PERFORM  2700-COMMIT-CKPT
+ATU496*ATF013             THRU 2700-COMMIT-CKPT-X
+ATF013         GO TO 2000-READ-CWAI-INPUT-X
+ATF013     END-IF.
+ATF013
+
+NWLPP2
+NWLPP2     IF  RCWAI-ADV-PMT-VALID
+NWLPP2         PERFORM  9307-0000-BUILD-PARM-INFO
+NWLPP2             THRU 9307-0000-BUILD-PARM-INFO-X
+NWLPP2         SET L9307-RQST-FLDS-AND-EDITS 
+NWLPP2                                      TO TRUE
+NWLPP2         SET L9307-ADV-PMT-DUR-IN-MODE    
+NWLPP2                                      TO TRUE
+NWLPP2         SET L9307-PRCES-CWA-BTCH     TO TRUE
+NWLPP2         MOVE RCWAI-CWA-PRCES-DT      TO L9307-EFF-DT
+NWLPP2         MOVE RCWAI-CWA-DUR-N         TO L9307-ADV-PMT-DUR-MODE
+NWLPP2         MOVE RCWAI-RECPT-AMT-N       TO L9307-RECV-AMT
+FFF004         MOVE RCWAI-PMT-CRCY-CD       TO L9307-PMT-CRCY-CD
+M319B1
+M319B1         PERFORM  9215-1000-BUILD-PARM-INFO
+M319B1             THRU 9215-1000-BUILD-PARM-INFO-X
+M319B1
+M319B1         MOVE RCWAI-RECPT-DT          TO L1680-INTERNAL-1
+M319B1         MOVE ZERO                    TO L1680-NUMBER-OF-YEARS
+M319B1         MOVE ZERO                    TO L1680-NUMBER-OF-MONTHS
+M319B1         MOVE ZERO                    TO L1680-NUMBER-OF-DAYS
+M319B1
+M319B1         PERFORM  1680-3000-ADD-Y-M-D-TO-DATE
+M319B1             THRU 1680-3000-ADD-Y-M-D-TO-DATE-X
+M319B1  
+M319B1         MOVE L1680-INTERNAL-2            TO L9215-INTERNAL-1
+M319B1         MOVE 1                           TO L9215-NUMBER-OF-DAYS
+M319B1
+M319B1         PERFORM  9215-1100-GET-PAST-BUS-DT
+M319B1             THRU 9215-1100-GET-PAST-BUS-DT-X 
+M319B1
+FFF004*M319B1         IF  L9215-RETRN-OK
+FFF004*M319B1             MOVE L9215-INTERNAL-2        TO L9307-XCHNG-EFF-DT
+FFF004*M319B1         END-IF
+119771         IF  RPOL-PROD-APP-TYP-FFF
+119771         AND ((RPOL-ADV-PMT-VAR-DSCNT)
+119771         OR  (RPOL-POL-BILL-TYP-DIRECT
+119771         AND NOT RPOL-INIT-PMT-TYP-MRF))
+119771             MOVE RCWAI-RECPT-DT      TO L9307-EFF-DT
+119771         END-IF
+FFF004
+FFF004         IF  L9215-RETRN-OK
+FFF004         AND NOT(RPOL-PROD-APP-TYP-FFF 
+FFF01A*FFF004         AND (RPOL-POL-BILL-TYP-DIRECT
+FFF01A         AND ((RPOL-POL-BILL-TYP-DIRECT
+FFF01A         AND NOT RPOL-INIT-PMT-TYP-MRF)
+FFF004         OR  RPOL-ADV-PMT-VAR-DSCNT))
+FFF004             MOVE L9215-INTERNAL-2        TO L9307-XCHNG-EFF-DT
+FFF004         ELSE
+FFF004             PERFORM 9215-1000-BUILD-PARM-INFO
+FFF004                THRU 9215-1000-BUILD-PARM-INFO-X
+FFF004
+FFF004             MOVE RCWAI-RECPT-DT          TO L9215-INTERNAL-1
+FFF004             SET  L9215-BYPASS-MSGS-YES    
+FFF004                                      TO TRUE
+FFF004
+FFF004             PERFORM  9215-9000-GET-BSDT-DAY-DT
+FFF004                 THRU 9215-9000-GET-BSDT-DAY-DT-X
+FFF004
+FFF004* IF THE CALCULATED DATE IS NOT A BUSINESS DAY, GET THE FIRST
+FFF004* BUSINESS DAY PRIOR TO THAT DATE.
+FFF004
+FFF004         IF  L9215-RETRN-OK
+FFF004         AND L9215-BUS-DY
+FFF004                 MOVE RCWAI-RECPT-DT 
+FFF004                                      TO L9307-XCHNG-EFF-DT
+FFF004             ELSE
+FFF004                 PERFORM  9215-1000-BUILD-PARM-INFO
+FFF004                     THRU 9215-1000-BUILD-PARM-INFO-X
+FFF004                 MOVE L1680-INTERNAL-2   
+FFF004                                      TO L9215-INTERNAL-1
+FFF004                 MOVE 1               TO L9215-NUMBER-OF-DAYS
+FFF004                 SET L9215-BYPASS-MSGS-YES 
+FFF004                                      TO TRUE
+FFF004                 PERFORM  9215-1100-GET-PAST-BUS-DT
+FFF004                     THRU 9215-1100-GET-PAST-BUS-DT-X
+FFF004                 IF  L9215-RETRN-OK
+FFF004                     MOVE L9215-INTERNAL-2 
+FFF004                                      TO L9307-XCHNG-EFF-DT
+FFF004                 END-IF
+FFF004             END-IF
+FFF004         END-IF
+NWLPP2                
+NWLPP2         PERFORM  9307-1000-ADV-PMT-FLDS-EDITS
+NWLPP2             THRU 9307-1000-ADV-PMT-FLDS-EDITS-X
+NWLPP2        
+NWLPP2         IF NOT L9307-RETRN-OK
+NWLPP2            
+NWLPP2            EVALUATE TRUE
+NWLPP2                WHEN L9307-EDIT-ERROR-YYMM
+NWLPP2                OR (L9307-RETRN-ERROR
+NWLPP2                AND L9307-PREM-TYP-REG)
+NWLPP2*MSG: ADVANCE PAYMENT YEAR AND MONTH ERROR
+NWLPP2                     MOVE 'AS9C150019' 
+NWLPP2                                      TO WGLOB-MSG-REF-INFO
+NWLPP2                     MOVE  RCWAI-APP-ID            
+NWLPP2                                      TO WGLOB-MSG-PARM(1)
+NWLPP2                     PERFORM  0260-1000-GENERATE-MESSAGE
+NWLPP2                         THRU 0260-1000-GENERATE-MESSAGE-X
+NWLPP2                     SET  RCWEX-CWA-ERROR-YYMM     
+NWLPP2                                      TO TRUE
+NWLPP2
+NWLPP2                WHEN L9307-EDIT-ERROR-PMT-CMPLT
+NWLPP2*MSG: PAYMENT COMPLETION ERROR
+NWLPP2                     MOVE 'AS9C150020' 
+NWLPP2                                      TO WGLOB-MSG-REF-INFO
+NWLPP2                     MOVE  RCWAI-APP-ID            
+NWLPP2                                      TO WGLOB-MSG-PARM(1)
+NWLPP2                     PERFORM  0260-1000-GENERATE-MESSAGE
+NWLPP2                         THRU 0260-1000-GENERATE-MESSAGE-X
+NWLPP2                     SET  RCWEX-CWA-ERROR-PMT-COMPLT 
+NWLPP2                                      TO TRUE
+NWLPP2
+NWLPP2                WHEN L9307-EDIT-ERROR-PMT-RTE
+NWLPP2*MSG: PAYMENT ROUTE ERROR
+NWLPP2                     MOVE 'AS9C150021' 
+NWLPP2                                      TO WGLOB-MSG-REF-INFO
+NWLPP2                     MOVE  RCWAI-APP-ID 
+NWLPP2                                      TO WGLOB-MSG-PARM(1)
+NWLPP2                     PERFORM  0260-1000-GENERATE-MESSAGE
+NWLPP2                         THRU 0260-1000-GENERATE-MESSAGE-X
+NWLPP2                     SET  RCWEX-CWA-ERROR-PMT-RTE 
+NWLPP2                                      TO TRUE
+NWLPP2
+NWLPP2                WHEN L9307-EDIT-ERROR-CALC-AMT
+NWLPP2*MSG: CALCULATION AMOUNT ERROR
+NWLPP2                     MOVE 'AS9C150022'
+NWLPP2                                      TO WGLOB-MSG-REF-INFO
+NWLPP2                     MOVE  RCWAI-APP-ID 
+NWLPP2                                      TO WGLOB-MSG-PARM(1)
+NWLPP2                     PERFORM  0260-1000-GENERATE-MESSAGE
+NWLPP2                         THRU 0260-1000-GENERATE-MESSAGE-X
+NWLPP2                     SET  RCWEX-CWA-ERROR-CALC-AMT
+NWLPP2                                      TO TRUE
+NWLPP2
+NWLPP2                WHEN L9307-EDIT-ERROR-PMT-TYP
+NWLPP2*MSG: PAYMENT TYPE ERROR
+NWLPP2                     MOVE 'AS9C150023'
+NWLPP2                                      TO WGLOB-MSG-REF-INFO
+NWLPP2                     MOVE  RCWAI-APP-ID 
+NWLPP2                                      TO WGLOB-MSG-PARM(1)
+NWLPP2                     PERFORM  0260-1000-GENERATE-MESSAGE
+NWLPP2                         THRU 0260-1000-GENERATE-MESSAGE-X
+NWLPP2                     SET  RCWEX-CWA-ERROR-PMT-TYP 
+NWLPP2                                      TO TRUE
+NWLPP2
+NWLPP2                WHEN L9307-EDIT-ERROR-OVRLAP
+NWLPP2*MSG: OVERLAPPING ADVANCE PAYMENT ERROR 
+NWLPP2                     MOVE 'AS9C150024' 
+NWLPP2                                      TO WGLOB-MSG-REF-INFO
+NWLPP2                     MOVE  RCWAI-APP-ID
+NWLPP2                                      TO WGLOB-MSG-PARM(1)
+NWLPP2                     PERFORM  0260-1000-GENERATE-MESSAGE
+NWLPP2                         THRU 0260-1000-GENERATE-MESSAGE-X
+NWLPP2                     SET  RCWEX-CWA-ERROR-OVRLAP     
+NWLPP2                                      TO TRUE
+NWLPP2
+NWLPP2                WHEN L9307-EDIT-ERROR-INSRD-AGE
+NWLPP2*MSG: ADVANCE PAYMENT YEAR AND MONTH ERROR - INSURED AGE REACHES 100
+NWLPP2                     MOVE 'AS9C150025' 
+NWLPP2                                      TO WGLOB-MSG-REF-INFO
+NWLPP2                     MOVE  RCWAI-APP-ID
+NWLPP2                                      TO WGLOB-MSG-PARM(1)
+NWLPP2                     PERFORM  0260-1000-GENERATE-MESSAGE
+NWLPP2                         THRU 0260-1000-GENERATE-MESSAGE-X
+NWLPP2                     SET  RCWEX-CWA-ERROR-INSRD-AGE     
+NWLPP2                                      TO TRUE
+NWLPP2
+NWLPP2                WHEN L9307-EDIT-ERROR-MAT-XPRY
+NWLPP2*MSG: ADVANCE PAYMENT YEAR AND MONTH ERROR - RIDER EXPIRES
+NWLPP2                     MOVE 'AS9C150026' 
+NWLPP2                                      TO WGLOB-MSG-REF-INFO
+NWLPP2                     MOVE  RCWAI-APP-ID 
+NWLPP2                                      TO WGLOB-MSG-PARM(1)
+NWLPP2                     PERFORM  0260-1000-GENERATE-MESSAGE
+NWLPP2                         THRU 0260-1000-GENERATE-MESSAGE-X
+NWLPP2                     SET  RCWEX-CWA-ERROR-MAT-XPRY     
+NWLPP2                                      TO TRUE
+NWLPP2
+NWLPP2                WHEN L9307-EDIT-ERROR-TRM-RENW
+NWLPP2*MSG: ADVANCE PAYMENT YEAR AND MONTH ERROR - TERM RIDER RENEWS
+NWLPP2                     MOVE 'AS9C150027' 
+NWLPP2                                      TO WGLOB-MSG-REF-INFO
+NWLPP2                     MOVE  RCWAI-APP-ID            
+NWLPP2                                      TO WGLOB-MSG-PARM(1)
+NWLPP2                     PERFORM  0260-1000-GENERATE-MESSAGE
+NWLPP2                         THRU 0260-1000-GENERATE-MESSAGE-X
+NWLPP2                     SET  RCWEX-CWA-ERROR-TRM-RENW
+NWLPP2                                      TO TRUE
+NWLPP2            END-EVALUATE
+NWLPP2
+NWLPP2            IF  L9307-RETRN-ERROR
+NWLPP2                PERFORM  2500-BUILD-ERROR-REPORT
+NWLPP2                    THRU 2500-BUILD-ERROR-REPORT-X
+NWLPP2                PERFORM  2700-COMMIT-CKPT
+NWLPP2                    THRU 2700-COMMIT-CKPT-X
+NWLPP2                GO TO 2000-READ-CWAI-INPUT-X
+NWLPP2            END-IF
+NWLPP2         END-IF
+NWLPP2
+NWLPP2         IF  L9307-ADV-PMT-CD NOT = RCWAI-PMT-MTHD-CD
+NWLPP2*MSG: PAYMENT TYPE ERROR
+NWLPP2             MOVE 'AS9C150023'        TO WGLOB-MSG-REF-INFO
+NWLPP2             MOVE  RCWAI-APP-ID       TO WGLOB-MSG-PARM(1)
+NWLPP2             PERFORM  0260-1000-GENERATE-MESSAGE
+NWLPP2                 THRU 0260-1000-GENERATE-MESSAGE-X
+NWLPP2             SET  RCWEX-CWA-ERROR-PMT-TYP 
+NWLPP2                                      TO TRUE
+NWLPP2             PERFORM  2500-BUILD-ERROR-REPORT
+NWLPP2                 THRU 2500-BUILD-ERROR-REPORT-X
+NWLPP2             PERFORM  2700-COMMIT-CKPT
+NWLPP2                 THRU 2700-COMMIT-CKPT-X
+NWLPP2             GO TO 2000-READ-CWAI-INPUT-X
+NWLPP2         END-IF
+NWLPP2     END-IF.
+
+      * PROCESS PAYMENT BY CALLING 9140 MODULE FOR PAYMENT EDITS
+      
+           PERFORM  9140-0000-INIT-PARM-INFO
+               THRU 9140-0000-INIT-PARM-INFO-X.
+               
+           PERFORM  9140-1000-BUILD-PARM-INFO
+               THRU 9140-1000-BUILD-PARM-INFO-X.
+               
+           MOVE  RCWAI-RECPT-NUM            TO L9140-RECPT-NBR.
+           MOVE  RCWAI-RECPT-DT             TO L9140-RECPT-DT.
+           MOVE  RCWAI-RECPT-AMT-N          TO L9140-CASH-AMT
+                                               L9140-SUSP-AMT.
+NWLPNB     MOVE  RCWAI-CWA-DUR              TO L9140-DPOS-RFND-QTY.
+NWLPNB   
+MP168A     MOVE   RCWAI-INIT-PMT-TYP-CD     TO L9140-INIT-PMT-TYP-CD.   
+MP168A 
+MP245C     MOVE  RCWAI-PMT-CRCY-CD          TO L9140-PMT-CRCY-CD.
+MP245C    
+MP245C     MOVE WGLOB-COMPANY-CODE          TO WCRCY-CO-ID.
+MP245C     MOVE L9140-PMT-CRCY-CD           TO WCRCY-CRCY-CD.
+MP245C
+MP245C     PERFORM  CRCY-1000-READ
+MP245C         THRU CRCY-1000-READ-X.
+MP245C
+MP245C     IF NOT WCRCY-IO-OK
+MP245C*MSG:CURRENCY RECORD (@1) NOT FOUND
+MP245C         SET L9140-RETRN-ERROR        TO TRUE
+MP245C         MOVE 'AS9C150028'            TO WGLOB-MSG-REF-INFO
+MP245C         MOVE L9140-PMT-CRCY-CD       TO WGLOB-MSG-PARM (1)
+MP245C         PERFORM  0260-1000-GENERATE-MESSAGE
+MP245C             THRU 0260-1000-GENERATE-MESSAGE-X
+MP245C         GO TO 2000-READ-CWAI-INPUT-X
+MP245C     END-IF.
+
+           SET L9140-PRCES-TYP-EDIT-ONLY    TO TRUE.
+           
+           PERFORM  9140-1000-POL-PAYMENT
+               THRU 9140-1000-POL-PAYMENT-X.
+               
+           IF NOT L9140-RETRN-OK
+      *MSG: ERRORS ENCOUNTERED - CORRECT AND RESUBMIT INPUTS
+               MOVE 'AS9C150010'             TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+               SET  RCWEX-CWA-REJ-OTHR       TO TRUE
+               PERFORM  2500-BUILD-ERROR-REPORT
+                   THRU 2500-BUILD-ERROR-REPORT-X
+ATU496*               PERFORM  2700-COMMIT-CKPT
+ATU496*                   THRU 2700-COMMIT-CKPT-X
+               GO TO 2000-READ-CWAI-INPUT-X
+           END-IF.
+           
+      * PROCESS PAYMENT BY CALLING 9140 MODULE FOR PENDING POLICY
+      * PAYMENT
+      
+           SET L9140-PRCES-TYP-ALL          TO TRUE.
+           SET LPGA-EVNT-CD-CWA             TO TRUE.
+ATF013*
+ATF013* SET THE JOURNAL DATE AND CWA PROCESS DATE FOR THE CWA UPLOAD
+ATF013*
+ATF013     IF  RPOL-CWA-PRCES-DT = WWKDT-ZERO-DT
+ATF013         IF  RPOL-CWA-PRCES-DT = WWKDT-ZERO-DT
+ATF013         AND (RCWAI-CWA-PRCES-DT = WWKDT-ZERO-DT
+ATF013         OR  RCWAI-CWA-PRCES-DT = SPACES)
+ATF013             MOVE  WGLOB-PROCESS-DATE TO LPGA-JRNL-DT
+ATF013         ELSE
+ATF013             MOVE  RCWAI-CWA-PRCES-DT TO LPGA-JRNL-DT
+ATF013         END-IF
+ATF013     ELSE
+ATF013         MOVE  WGLOB-PROCESS-DATE     TO LPGA-JRNL-DT
+ATF013     END-IF.
+
+Q11857*M161CB     IF  RPOL-INIT-PMT-TYP-CRC
+Q11857     IF  RCWAI-INIT-PMT-TYP-CD = 'C'
+M161CB         SET L9140-ORIGIN-CRC-PMT     TO TRUE
+M161CB     END-IF.
+M161CB
+MP261D* FOR THE BANK TRANSFER FOR THE ARMV2 POLICIES
+MP261D     IF  RCWAI-INIT-PMT-TYP-PAC
+MP261D         SET L9140-ORIGIN-FPBT-PMT    TO TRUE
+MP261D     END-IF
+MP261D
+           PERFORM  9140-1000-POL-PAYMENT
+               THRU 9140-1000-POL-PAYMENT-X.
+   
+           IF  L9140-RETRN-OK
+      * MSG : PAYMENT PROCESS SUCCESSFUL FOR APPLICATION @1
+               MOVE 'AS9C150002'            TO WGLOB-MSG-REF-INFO
+               MOVE  RCWAI-APP-ID           TO WGLOB-MSG-PARM(1)
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+Q11857*Q13007         IF  RPOL-INIT-PMT-TYP-CRC
+Q11857         IF  RCWAI-INIT-PMT-TYP-CD = 'C'
+Q11536         AND RPOL-CWA-PRCES-DT = WWKDT-ZERO-DT
+Q13007             MOVE  RCWAI-CWA-PRCES-DT TO RPOL-CWA-PRCES-DT
+Q13007         END-IF
+ATF013         IF  RPOL-CWA-PRCES-DT = WWKDT-ZERO-DT
+ATF013             MOVE  LPGA-JRNL-DT       TO RPOL-CWA-PRCES-DT
+ATF013         END-IF
+NWLPP2*NWLPNB         IF  RCWAI-PMT-PREPAY
+Q01019*NWLPP2         IF  RCWAI-PMT-VALID
+Q01019         IF  RCWAI-ADV-PMT-VALID
+NWLPP2             MOVE  L9307-ADV-PMT-STRT-DT 
+NWLPP2                                      TO RPOL-ADV-PMT-STRT-DT
+NWLPDC             MOVE  L9307-ADV-PMT-EFF-DT 
+NWLPDC                                      TO RPOL-ADV-PMT-EFF-DT
+TVI05A             MOVE  L9307-ADV-PMT-ANNV-DT
+TVI05A                                      TO RPOL-ADV-PMT-ANNV-DT
+NWLPNB             MOVE  RCWAI-PMT-MTHD-CD  TO RPOL-ADV-PMT-TYP-CD
+NWLPNB             MOVE  RCWAI-CWA-DUR-N    TO RPOL-ADV-PMT-DUR-N
+NWLPNB         END-IF
+           ELSE
+      * MSG : PAYMENT FAILED FOR APPLICATION @1
+               MOVE 'AS9C150003'            TO WGLOB-MSG-REF-INFO
+               MOVE  RCWAI-APP-ID           TO WGLOB-MSG-PARM(1)
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+               SET  RCWEX-CWA-REJ-OTHR      TO TRUE
+               PERFORM  2500-BUILD-ERROR-REPORT
+                   THRU 2500-BUILD-ERROR-REPORT-X
+ATU496*               PERFORM  2700-COMMIT-CKPT   
+ATU496*                   THRU 2700-COMMIT-CKPT-X 
+               GO TO 2000-READ-CWAI-INPUT-X
+           END-IF.
+
+MP168A     MOVE   RCWAI-INIT-PMT-TYP-CD     TO RPOL-INIT-PMT-TYP-CD.   
+MP168A           
+      * GENERATE THE BILLING ENTRY FOR THE SUCCESSFUL PAYMENT
+      
+           PERFORM  9285-1000-BUILD-PARM-INFO
+               THRU 9285-1000-BUILD-PARM-INFO-X.
+   
+           MOVE  RPOL-POL-ID                TO L9285-POL-ID.
+           MOVE  RPOL-POL-BILL-TYP-CD       TO L9285-BILL-TYP-CD.
+           MOVE  L9140-RECPT-DT             TO L9285-RECV-DT.
+           MOVE  ZERO                       TO L9285-PREM-RQST-QTY.
+           MOVE  ZERO                       TO L9285-PREM-COLCT-QTY.
+           MOVE  L9140-CASH-AMT             TO L9285-RECV-AMT.
+Q10274*    SET  L9285-FND-SRC-CWA           TO TRUE.
+Q10274     IF  RCWAI-INIT-PMT-TYP-CD = 'C'
+Q10274         SET L9285-FND-SRC-INIT-CRC   TO TRUE
+Q10274     ELSE
+Q10274         SET L9285-FND-SRC-CWA        TO TRUE
+Q10274     END-IF.
+ATF041           
+ATF041     IF  RPOL-POL-BUS-CLAS-TRAD
+ATF041         MOVE RPOL-CWA-PRCES-DT       TO L9285-TRAD-JRNL-DT
+ATF041         MOVE LPGA-JRNL-DT            TO L9285-TRAD-SO-JRNL-DT
+ATF041     END-IF.           
+MP261D* NEED TO SKIP THE CREATION OF BAC FOR THE ARMV2 POLICIES
+MP261D* OF 1P BT 
+MP261D
+MP261D*     PERFORM  9285-2000-CREATE-BAC
+MP261D*               THRU 9285-2000-CREATE-BAC-X.
+   
+MP261D*           IF  L9285-RETRN-ERROR
+MP261D*      * MSG : BILLING GENERATION FAILED FOR APPLICATION @1
+MP261D*               MOVE 'AS9C150004'            TO WGLOB-MSG-REF-INFO
+MP261D*               MOVE  RCWAI-APP-ID           TO WGLOB-MSG-PARM(1)
+MP261D*               PERFORM  0260-1000-GENERATE-MESSAGE
+MP261D*                   THRU 0260-1000-GENERATE-MESSAGE-X
+MP261D*               SET  RCWEX-CWA-REJ-OTHR      TO TRUE
+MP261D*               PERFORM  2500-BUILD-ERROR-REPORT
+MP261D*                   THRU 2500-BUILD-ERROR-REPORT-X
+ATU496*               PERFORM  2700-COMMIT-CKPT 
+ATU496*                   THRU 2700-COMMIT-CKPT-X 
+MP261D*               GO TO 2000-READ-CWAI-INPUT-X
+MP261D*           END-IF.
+M319B1
+M319B1     SET L9285-XCHNG-POL-FOUND-NO     TO TRUE.
+M319B1     IF  RPOL-PMT-CRCY-CD <> RPOL-PREM-CRCY-CD
+M319B1     AND NOT RPOL-POL-BILL-TYP-SINGLE
+M319B1         SET L9285-XCHNG-POL-FOUND    TO TRUE
+M319B1         PERFORM  2800-GET-CRCY-INFO
+M319B1             THRU 2800-GET-CRCY-INFO-X
+M319B1     END-IF.
+M319B1
+MP261D     IF  RCWAI-INIT-PMT-TYP-CD = '4'  
+MP261D         SET L9285-DRW-STAT-PAID      TO TRUE
+MP261D         SET  L9285-COLCTD-YES        TO TRUE
+MP261D         SET  L9285-FND-SRC-NORML     TO TRUE
+MP261D         PERFORM  9285-1000-UPDATE-BAC
+MP261D             THRU 9285-1000-UPDATE-BAC-X
+MP261D         IF  L9285-RETRN-ERROR
+MP261D*      * MSG : COLLECTION GENERATION FAILED FOR APPLICATION @1
+MP261D             MOVE 'AS9C150030'        TO WGLOB-MSG-REF-INFO
+MP261D             MOVE  RCWAI-APP-ID       TO WGLOB-MSG-PARM(1)
+MP261D             PERFORM  0260-1000-GENERATE-MESSAGE
+MP261D                 THRU 0260-1000-GENERATE-MESSAGE-X
+MP261D             SET  RCWEX-CWA-REJ-OTHR  TO TRUE
+MP261D             PERFORM  2500-BUILD-ERROR-REPORT
+MP261D                 THRU 2500-BUILD-ERROR-REPORT-X
+MP261D             GO TO 2000-READ-CWAI-INPUT-X
+MP261D         END-IF
+MP261D     ELSE
+MP261D         PERFORM  9285-2000-CREATE-BAC
+MP261D             THRU 9285-2000-CREATE-BAC-X
+MP261D         IF  L9285-RETRN-ERROR
+MP261D*      * MSG : BILLING GENERATION FAILED FOR APPLICATION @1
+MP261D             MOVE 'AS9C150004'        TO WGLOB-MSG-REF-INFO
+MP261D             MOVE  RCWAI-APP-ID       TO WGLOB-MSG-PARM(1)
+MP261D             PERFORM  0260-1000-GENERATE-MESSAGE
+MP261D                 THRU 0260-1000-GENERATE-MESSAGE-X
+MP261D             SET  RCWEX-CWA-REJ-OTHR  TO TRUE
+MP261D             PERFORM  2500-BUILD-ERROR-REPORT
+MP261D                 THRU 2500-BUILD-ERROR-REPORT-X
+MP261D             GO TO 2000-READ-CWAI-INPUT-X
+MP261D         END-IF
+MP261D     END-IF.
+      *
+      * CALCULATE LCD FOR THE POLICY AFTER SUCCESSFUL PAYMENT
+      *
+           SET  L9555-LCD-AT-UW-CC          TO TRUE.
+           SET  L9555-POL-READ-YES          TO TRUE.
+           
+           PERFORM  9555-1000-CALC-LCD
+               THRU 9555-1000-CALC-LCD-X.
+               
+           IF  L9555-RETRN-OK
+      *
+      * CALL THE POLICY ANALYSIS TO REFLECT THE ISSUE DATE CHANGE
+      *
+               PERFORM  0953-1000-BUILD-PARM-INFO
+                   THRU 0953-1000-BUILD-PARM-INFO-X
+
+C15851         MOVE RPOL-POL-CNVR-TYP-CD    TO L0953-POL-CNVR-TYP-CD
+               MOVE L9555-POL-ISS-EFF-DT    TO L0953-ISS-EFF-DT-X
+               SET  L0953-ISS-DT-CHANGED    TO TRUE
+
+               PERFORM  0953-1000-MAINTAIN-POLICY
+                   THRU 0953-1000-MAINTAIN-POLICY-X
+                   
+M245A4*PH READ
+M245A4         MOVE ZEROES                  TO I
+SV1674         MOVE ZEROES                  TO L5810-RT-AGE-N
+M245A4
+M245A4         PERFORM  PLIN-1000-PLAN-HEADER-IN
+M245A4             THRU PLIN-1000-PLAN-HEADER-IN-X
+M245A4
+M245A4         IF  WPH-IO-OK
+M245A4         AND RPH-FACE-CALC-MTHD-FROM-PREM
+SV1674         AND NOT RPOL-PROD-APP-TYP-TVI3
+M245A4*FACE AMOUNT CACULATION FROM PREMIUM
+M245A4             PERFORM
+M245A4                 VARYING I FROM +1 BY +1
+M245A4                 UNTIL I > RPOL-POL-CVG-REC-CTR-N
+M245A4
+M245A4                 MOVE  I              TO L5810-CVG-NUM
+M245A4                 PERFORM  5810-2000-FACE-AMT-FROM-PREM
+M245A4                     THRU 5810-2000-FACE-AMT-FROM-PREM-X
+Q53181                 MOVE WCVGS-PLAN-ID (I)
+Q53181                                      TO WPD-PLAN-ID
+Q53181                 PERFORM  PDIN-1000-PLAN-DEFAULTS-IN
+Q53181                     THRU PDIN-1000-PLAN-DEFAULTS-IN-X
+Q53181                 MOVE I               TO L5660-CVG-NUM
+Q53181                 PERFORM  5660-1000-BUILD-PARM-INFO
+Q53181                     THRU 5660-1000-BUILD-PARM-INFO-X
+Q53181                 PERFORM  5660-1000-CALC-DFLT-UWG-AMT
+Q53181                     THRU 5660-1000-CALC-DFLT-UWG-AMT-X
+Q53181 
+Q53181                 MOVE L5660-CVG-UWG-AMT
+Q53181                                      TO WCVGS-CVG-UWG-AMT (I)
+M245A4             END-PERFORM
+M245A4         END-IF
+           ELSE
+B11096* 
+B11096* TO BYPASS THE LCD CALCULATION FAILED ERROR
+B11096*
+B11096         IF  RPOL-SUPRES-LCD-CALC-YES
+B11096         AND NOT RPOL-POL-SUSPENDED 
+B11096             NEXT SENTENCE
+B11096         END-IF 
+      * MSG : LCD CALCULATION FAILED FOR APPLICATION @1
+               MOVE 'AS9C150005'            TO WGLOB-MSG-REF-INFO
+               MOVE  RCWAI-APP-ID           TO WGLOB-MSG-PARM(1)
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+               SET  RCWEX-CWA-REJ-OTHR      TO TRUE
+               PERFORM  2500-BUILD-ERROR-REPORT
+                   THRU 2500-BUILD-ERROR-REPORT-X
+ATU496*               PERFORM  2700-COMMIT-CKPT
+ATU496*                   THRU 2700-COMMIT-CKPT-X
+               GO TO 2000-READ-CWAI-INPUT-X
+           END-IF.
+      
+      *
+      * UPDATE THE POLICY AND COVERAGE DETAILS
+      *
+           MOVE RPOL-REC-INFO               TO HPOL-REC-INFO.
+           MOVE RPOL-POL-ID                 TO WPOL-POL-ID.
+           
+           PERFORM   POL-1000-READ-FOR-UPDATE
+               THRU  POL-1000-READ-FOR-UPDATE-X.
+   
+           MOVE HPOL-REC-INFO               TO RPOL-REC-INFO.
+   
+           PERFORM  POL-2000-REWRITE
+               THRU POL-2000-REWRITE-X.
+
+TLB08E     IF  L9140-POL-NUWRN-SUPRES-YES
+TLB08E         PERFORM  9228-0000-INIT-PARM-INFO
+TLB08E             THRU 9228-0000-INIT-PARM-INFO-X
+TLB08E         MOVE L9140-CLI-ID            TO L9228-CLI-ID
+TLB08E         SET L9228-SKIP-USCL-CHK-YES
+TLB08E                                      TO TRUE
+TLB08E         PERFORM  9228-1000-CHK-FOR-NBURN
+TLB08E             THRU 9228-1000-CHK-FOR-NBURN-X
+TLB08E         MOVE RPOL-POL-ID             TO WPOL-POL-ID
+TLB08E         PERFORM  POL-1000-READ
+TLB08E             THRU POL-1000-READ-X
+TLB08E     END-IF.
+
+           PERFORM  CVGR-1000-REWRITE-CVGS-ARRAY
+               THRU CVGR-1000-REWRITE-CVGS-ARRAY-X.
+               
+      * READ NEXT CWAI RECORD       
+      
+           PERFORM  CWAI-1000-READ
+               THRU CWAI-1000-READ-X.
+               
+           PERFORM  2700-COMMIT-CKPT
+               THRU 2700-COMMIT-CKPT-X.
+               
+       2000-READ-CWAI-INPUT-X.
+           EXIT.
+      /
+ATF016*--------------------
+ATF016 2100-VALIDATE-INPUT.
+ATF016*--------------------
+ATF016
+ATF016     SET  WS-INPUT-EDIT-ERR-NO        TO TRUE.
+ATF016
+ATF016     IF  RCWAI-APP-ID = SPACES
+ATF016*MSG: CWA APPLICATION @1 INVALID
+ATF016         MOVE RCWAI-APP-ID            TO WGLOB-MSG-PARM(1)
+ATF016         MOVE 'AS9C150017'            TO WGLOB-MSG-REF-INFO
+ATF016         SET  WS-INPUT-EDIT-ERR-YES   TO TRUE
+ATF016         PERFORM  0260-1000-GENERATE-MESSAGE
+ATF016             THRU 0260-1000-GENERATE-MESSAGE-X   
+ATF016     END-IF.
+ATF016
+ATF016     IF NOT RCWAI-CHNL-TYP-VALID
+ATF016*MSG: CWA CHANNEL CODE @1 INVALID
+ATF016        MOVE RCWAI-CHNL-TYP-CD        TO WGLOB-MSG-PARM(1)
+ATF016        MOVE 'AS9C150018'             TO WGLOB-MSG-REF-INFO
+ATF016        SET  WS-INPUT-EDIT-ERR-YES    TO TRUE
+ATF016        PERFORM  0260-1000-GENERATE-MESSAGE
+ATF016            THRU 0260-1000-GENERATE-MESSAGE-X   
+ATF016     END-IF.
+ATF016
+ATF016     MOVE RCWAI-RECPT-DT              TO L1640-INTERNAL-DATE.
+ATF016
+ATF016     PERFORM  1640-2000-INTERNAL-TO-EXT
+ATF016         THRU 1640-2000-INTERNAL-TO-EXT-X.
+ATF016
+ATF016     IF  L1640-NOT-VALID
+ATF016*MSG: CWA RECEIPT DATE @1 INVALID               
+ATF016         MOVE RCWAI-RECPT-DT          TO WGLOB-MSG-PARM(1)
+ATF016         MOVE 'AS9C150013'            TO WGLOB-MSG-REF-INFO
+ATF016         SET  WS-INPUT-EDIT-ERR-YES   TO TRUE
+ATF016         PERFORM  0260-1000-GENERATE-MESSAGE
+ATF016             THRU 0260-1000-GENERATE-MESSAGE-X   
+ATF016     END-IF.
+ATF016
+ATF016     IF  RCWAI-RECPT-AMT NOT NUMERIC
+ATF016*MSG: CWA RECEIPT AMOUT @1 INVALID               
+ATF016         MOVE RCWAI-RECPT-AMT         TO WGLOB-MSG-PARM(1)
+ATF016         MOVE 'AS9C150014'            TO WGLOB-MSG-REF-INFO
+ATF016         SET  WS-INPUT-EDIT-ERR-YES   TO TRUE
+ATF016         PERFORM  0260-1000-GENERATE-MESSAGE
+ATF016             THRU 0260-1000-GENERATE-MESSAGE-X  
+ATF016     END-IF.
+ATF016
+ATF016     MOVE RCWAI-CWA-PRCES-DT          TO L1640-INTERNAL-DATE.
+ATF016
+ATF016     PERFORM  1640-2000-INTERNAL-TO-EXT
+ATF016         THRU 1640-2000-INTERNAL-TO-EXT-X.
+ATF016
+ATF016     IF  L1640-NOT-VALID
+ATF016     AND (RCWAI-CWA-PRCES-DT NOT = SPACES
+ATF016     AND  RCWAI-CWA-PRCES-DT NOT = WWKDT-ZERO-DT)
+ATF016*MSG: CWA PROCESS DATE @1 INVALID               
+ATF016         MOVE RCWAI-CWA-PRCES-DT      TO WGLOB-MSG-PARM(1)
+ATF016         MOVE 'AS9C150015'            TO WGLOB-MSG-REF-INFO
+ATF016         SET  WS-INPUT-EDIT-ERR-YES   TO TRUE
+ATF016         PERFORM  0260-1000-GENERATE-MESSAGE
+ATF016             THRU 0260-1000-GENERATE-MESSAGE-X
+ATF016     END-IF.
+ATF016
+ATF016     IF  RCWAI-CWA-DUR NOT NUMERIC
+ATF016*MSG: CWA DURATION @1 INVALID               
+ATF016         MOVE RCWAI-CWA-DUR           TO WGLOB-MSG-PARM(1)
+ATF016         MOVE 'AS9C150016'            TO WGLOB-MSG-REF-INFO
+ATF016         SET  WS-INPUT-EDIT-ERR-YES   TO TRUE
+ATF016         PERFORM  0260-1000-GENERATE-MESSAGE
+ATF016             THRU 0260-1000-GENERATE-MESSAGE-X  
+ATF016     END-IF.
+ATF016
+MP245C     IF NOT RCWAI-PMT-CRCY-VALID
+MP245C*MSG: CWA PAYMENT CURRENCY @1 INVALID               
+MP245C         MOVE RCWAI-PMT-CRCY-CD       TO WGLOB-MSG-PARM(1)
+MP245C         MOVE 'AS9C150029'            TO WGLOB-MSG-REF-INFO
+MP245C         SET  WS-INPUT-EDIT-ERR-YES   TO TRUE
+MP245C         PERFORM  0260-1000-GENERATE-MESSAGE
+MP245C             THRU 0260-1000-GENERATE-MESSAGE-X  
+MP245C     END-IF.
+MP245C  
+ATF016 2100-VALIDATE-INPUT-X.
+ATF016     EXIT.
+ATF016/
+      *------------------------
+       2500-BUILD-ERROR-REPORT.
+      *------------------------
+      
+           MOVE RCWAI-APP-ID                TO RCWEX-APP-ID.
+           MOVE RCWAI-RECPT-NUM             TO RCWEX-RECPT-NUM.
+           MOVE RCWAI-RECPT-DT              TO RCWEX-RECPT-DT.
+           MOVE RCWAI-RECPT-AMT             TO RCWEX-RECPT-AMT.
+           MOVE RCWAI-PMT-MTHD-CD           TO RCWEX-PMT-TYP-CD.
+           
+           PERFORM  CWEX-1000-WRITE
+               THRU CWEX-1000-WRITE-X.
+
+      * MSG : ERROR EXTRACT WRITTEN FOR APPLICATION @1..
+           MOVE 'AS9C150006'                TO WGLOB-MSG-REF-INFO.
+           MOVE RCWAI-APP-ID                TO WGLOB-MSG-PARM(1).
+           PERFORM  0260-1000-GENERATE-MESSAGE
+               THRU 0260-1000-GENERATE-MESSAGE-X.
+           
+ATF016     IF  WS-INPUT-EDIT-ERR-YES
+ATF016         PERFORM  CWAI-1000-READ
+ATF016             THRU CWAI-1000-READ-X
+ATU496
+ATU496         PERFORM  2700-COMMIT-CKPT    
+ATU496             THRU 2700-COMMIT-CKPT-X
+ATU496
+ATF016         GO TO 2500-BUILD-ERROR-REPORT-X
+ATF016     END-IF.
+ATF016     
+           MOVE  LOW-VALUES                 TO WCWAE-KEY.
+           MOVE  HIGH-VALUES                TO WCWAE-ENDBR-KEY.
+           MOVE  RCWEX-APP-ID               TO WCWAE-APP-ID.
+           MOVE  001                        TO WCWAE-SEQ-NUM-N.
+           MOVE  RCWEX-APP-ID               TO WCWAE-ENDBR-APP-ID.
+           MOVE  999                        TO WCWAE-ENDBR-SEQ-NUM-N.
+                   
+           PERFORM  CWAE-1000-BROWSE
+               THRU CWAE-1000-BROWSE-X.
+               
+           PERFORM  CWAE-2000-READ-NEXT
+               THRU CWAE-2000-READ-NEXT-X.
+               
+           IF  WCWAE-IO-EOF
+               MOVE  001                    TO WCWAE-SEQ-NUM-N
+           ELSE
+               PERFORM  2510-NEW-SEQ-NUM               
+                   THRU 2510-NEW-SEQ-NUM-X            
+                   UNTIL WCWAE-IO-EOF             
+           END-IF.
+           
+           PERFORM  CWAE-3000-END-BROWSE
+               THRU CWAE-3000-END-BROWSE-X.
+            
+           PERFORM  CWAE-1000-CREATE
+               THRU CWAE-1000-CREATE-X.
+           
+           MOVE  WGLOB-PROCESS-DATE         TO RCWAE-CWA-UPLD-DT.
+           MOVE  RCWAI-RECPT-NUM            TO RCWAE-RECPT-NUM.
+           MOVE  RCWEX-RECPT-DT             TO RCWAE-RECPT-DT.
+           MOVE  RCWEX-RECPT-AMT            TO RCWAE-RECPT-AMT.
+           MOVE  RCWEX-PMT-TYP-CD           TO RCWAE-PMT-TYP-CD.
+           MOVE  RCWEX-CWA-REJ-CD           TO RCWAE-REJ-REASN-CD.
+           
+           PERFORM  CWAE-1000-WRITE
+               THRU CWAE-1000-WRITE-X. 
+           
+           PERFORM  CWAI-1000-READ
+               THRU CWAI-1000-READ-X.
+ATU496
+ATU496     PERFORM  2700-COMMIT-CKPT    
+ATU496         THRU 2700-COMMIT-CKPT-X.
+                
+       2500-BUILD-ERROR-REPORT-X.
+           EXIT.
+      /
+      *-----------------
+       2510-NEW-SEQ-NUM.
+      *-----------------
+
+           PERFORM  CWAE-2000-READ-NEXT
+               THRU CWAE-2000-READ-NEXT-X.
+           
+           IF  WCWAE-IO-EOF
+               COMPUTE WCWAE-SEQ-NUM-N = WCWAE-SEQ-NUM-N + 1
+           END-IF.
+               
+       2510-NEW-SEQ-NUM-X.
+           EXIT.
+      /
+      *------------------------
+       2700-COMMIT-CKPT.
+      *------------------------ 
+           
+           PERFORM  CKPT-CHECK-RESTART-FREQ
+               THRU CKPT-CHECK-RESTART-FREQ-X.
+           
+           IF  WCKPT-CKPT-FREQ-YES
+               PERFORM  2711-SAVE-CKPT-DATA
+                   THRU 2711-SAVE-CKPT-DATA-X
+           
+               PERFORM  0800-2000-COMMIT-CKPT
+                   THRU 0800-2000-COMMIT-CKPT-X
+           
+               PERFORM  CKPT-CHECK-RESTART-INIT
+                   THRU CKPT-CHECK-RESTART-INIT-X
+           END-IF.               
+      
+       2700-COMMIT-CKPT-X.
+           EXIT.
+      /
+      *-----------------------
+       2710-RESTORE-CKPT-DATA.
+      *-----------------------
+      
+           MOVE L0800-CHKPT-WRK-INFO-TEXT   TO WCKPT-WORK-AREA.
+           MOVE WCKPT-KEY-VALU              TO WS-START-APP-ID.
+           MOVE WCKPT-KEY-VAL2              TO WS-START-RECPT-NUM.
+           MOVE WCKPT-KEY-VAL3              TO WS-START-RECPT-DT.
+           MOVE WCKPT-KEY-VAL4              TO WS-START-PMT-MTHD-CD.
+           MOVE WCKPT-GLOB-CONTROL-AREA     TO WGLOB-GLOBAL-AREA.
+           MOVE WCKPT-WORK-STORE-SPACES     TO WS-WRK-STO-SPACES.
+      
+       2710-RESTORE-CKPT-DATA-X.
+           EXIT.
+      /
+      *--------------------
+       2711-SAVE-CKPT-DATA.
+      *--------------------
+      
+           MOVE RCWAI-APP-ID                TO WCKPT-KEY-VALU.
+           MOVE RCWAI-RECPT-NUM             TO WCKPT-KEY-VAL2.
+           MOVE RCWAI-RECPT-DT              TO WCKPT-KEY-VAL3.
+           MOVE RCWAI-PMT-MTHD-CD           TO WCKPT-KEY-VAL4.
+           MOVE WGLOB-GLOBAL-AREA           TO WCKPT-GLOB-CONTROL-AREA.
+           MOVE WS-WRK-STO-SPACES           TO WCKPT-WORK-STORE-SPACES.
+           MOVE WCKPT-WORK-AREA             TO
+                                            L0800-CHKPT-WRK-INFO-TEXT.
+      
+       2711-SAVE-CKPT-DATA-X.
+          EXIT.
+      /      
+M319B1*-------------------
+M319B1 2800-GET-CRCY-INFO.
+M319B1*-------------------
+M319B1
+Q88174*M319B1     IF  L9307-ADV-PMT-LMPSM
+Q88174*M319B1         MOVE L9307-ADV-PMT-AMT       TO L9285-PRE-XCHNG-PREM-AMT
+Q88174*M319B1     ELSE
+Q88174*M319B1         MOVE RPOL-POL-MPREM-AMT      TO L9285-PRE-XCHNG-PREM-AMT
+Q88174*M319B1     END-IF.
+Q88174     MOVE L9140-CASH-AMT             TO L9285-PRE-XCHNG-RECV-AMT.
+M319B1
+M319B1     PERFORM  9215-1000-BUILD-PARM-INFO
+M319B1         THRU 9215-1000-BUILD-PARM-INFO-X.
+M319B1
+M319B1     MOVE RCWAI-RECPT-DT              TO L1680-INTERNAL-1.
+M319B1     MOVE ZERO                        TO L1680-NUMBER-OF-YEARS.
+M319B1     MOVE ZERO                        TO L1680-NUMBER-OF-MONTHS.
+M319B1     MOVE ZERO                        TO L1680-NUMBER-OF-DAYS.
+M319B1
+M319B1     PERFORM  1680-3000-ADD-Y-M-D-TO-DATE
+M319B1         THRU 1680-3000-ADD-Y-M-D-TO-DATE-X.
+M319B1
+M319B1     MOVE L1680-INTERNAL-2            TO L9215-INTERNAL-1.
+M319B1     MOVE 1                           TO L9215-NUMBER-OF-DAYS.
+M319B1
+M319B1     PERFORM  9215-1100-GET-PAST-BUS-DT
+M319B1         THRU 9215-1100-GET-PAST-BUS-DT-X.    
+M319B1
+FFF004*M319B1     IF  L9215-RETRN-OK
+FFF004*M319B1         MOVE L9215-INTERNAL-2        TO L9285-PREM-XCHNG-EFF-DT
+FFF004*M319B1     END-IF.
+FFF004     IF  L9215-RETRN-OK
+FFF004     AND NOT(RPOL-PROD-APP-TYP-FFF 
+FFF01A*FFF004         AND (RPOL-POL-BILL-TYP-DIRECT
+FFF01A     AND ((RPOL-POL-BILL-TYP-DIRECT
+FFF01A     AND NOT RPOL-INIT-PMT-TYP-MRF)
+FFF004     OR  RPOL-ADV-PMT-VAR-DSCNT))
+FFF004         MOVE L9215-INTERNAL-2        TO L9285-PREM-XCHNG-EFF-DT
+FFF004     ELSE
+FFF004         PERFORM  9215-1000-BUILD-PARM-INFO
+FFF004             THRU 9215-1000-BUILD-PARM-INFO-X
+FFF004
+FFF004         MOVE RCWAI-RECPT-DT          TO L9215-INTERNAL-1
+FFF004         SET L9215-BYPASS-MSGS-YES    TO TRUE
+FFF004
+FFF004         PERFORM  9215-9000-GET-BSDT-DAY-DT
+FFF004             THRU 9215-9000-GET-BSDT-DAY-DT-X
+FFF004
+FFF004* IF THE CALCULATED DATE IS NOT A BUSINESS DAY, GET THE FIRST
+FFF004* BUSINESS DAY PRIOR TO THAT DATE.
+FFF004
+FFF004         IF  L9215-RETRN-OK
+FFF004         AND L9215-BUS-DY
+FFF004              MOVE RCWAI-RECPT-DT     TO L9285-PREM-XCHNG-EFF-DT
+FFF004          ELSE
+FFF004             PERFORM  9215-1000-BUILD-PARM-INFO
+FFF004                 THRU 9215-1000-BUILD-PARM-INFO-X
+FFF004             MOVE L1680-INTERNAL-2    TO L9215-INTERNAL-1
+FFF004             MOVE 1                   TO L9215-NUMBER-OF-DAYS
+FFF004             SET L9215-BYPASS-MSGS-YES 
+FFF004                                      TO TRUE
+FFF004             PERFORM  9215-1100-GET-PAST-BUS-DT
+FFF004                 THRU 9215-1100-GET-PAST-BUS-DT-X
+FFF004             IF L9215-RETRN-OK
+FFF004                 MOVE L9215-INTERNAL-2 
+FFF004                                      TO L9285-PREM-XCHNG-EFF-DT
+FFF004             END-IF
+FFF004         END-IF
+FFF004     END-IF.
+M319B1
+M319B1     PERFORM  CRCV-1000-BUILD-PARM
+M319B1         THRU CRCV-1000-BUILD-PARM-X.
+M319B1
+Q88174*M319B1     MOVE L9285-PRE-XCHNG-PREM-AMT    TO LCRCV-XCHNG-INPUT-AMT.
+Q88174     MOVE L9285-PRE-XCHNG-RECV-AMT    TO LCRCV-XCHNG-INPUT-AMT.
+M319B1     MOVE L9285-PREM-XCHNG-EFF-DT     TO LCRCV-XCHNG-EFF-DT.
+Q88174*M319B1     MOVE RPOL-PREM-CRCY-CD           TO LCRCV-XCHNG-FROM-CRCY-CD.
+Q88174*M319B1     MOVE RPOL-PMT-CRCY-CD            TO LCRCV-XCHNG-TO-CRCY-CD.
+Q88174     MOVE RPOL-PMT-CRCY-CD            TO LCRCV-XCHNG-FROM-CRCY-CD.
+Q88174     MOVE RPOL-PREM-CRCY-CD           TO LCRCV-XCHNG-TO-CRCY-CD.
+Q88174*M319B1     PERFORM  CRCV-2000-PAYOUT-CRCY-CNVR
+Q88174*M319B1         THRU CRCV-2000-PAYOUT-CRCY-CNVR-X.
+Q88174*M319B1
+Q88174*M319B1     IF  LCRCV-RETRN-OK
+Q88174*M319B1         MOVE LCRCV-XCHNG-OUTPUT-4-AMT  
+Q88174*M319B1                                      TO L9285-PRE-XCHNG-RECV-AMT 
+Q88174*M319B1         MOVE LCRCV-XCHNG-4-RT        TO L9285-PREM-XCHNG-RT
+Q88174*M319B1     END-IF.
+Q88174
+Q88174     SET LCRCV-CRCY-RND-OFF           TO TRUE.
+Q88174
+Q88174     PERFORM  CRCV-1000-PAYIN-CRCY-CNVR
+Q88174         THRU CRCV-1000-PAYIN-CRCY-CNVR-X.
+Q88174
+Q88174     IF  LCRCV-RETRN-OK
+Q88174         MOVE LCRCV-XCHNG-OUTPUT-AMT  TO L9285-PRE-XCHNG-PREM-AMT
+Q88174         MOVE LCRCV-XCHNG-RT          TO L9285-PREM-XCHNG-RT
+Q88174     END-IF.
+Q88174
+Q88174** FOR SOME SCENARIOS THE PREMIOUM IN POLICY CURRENCY HAS SOME ROUNDING ISSUES.
+Q88174** TO OVERCOME THE SAME THE MODAL PREMIUM IS MOVED IF THE CONVERTED MODAL PREMIUM
+Q88174** IS EQUAL TO THE CONVERTED AMOUNT.
+Q88174     MOVE  RPOL-POL-MPREM-AMT         TO WS-POL-PREM-AMT.
+Q88174
+Q88174     IF  L9307-ADV-PMT-LMPSM
+Q88174         MOVE L9307-ADV-PMT-AMT       TO WS-POL-PREM-AMT
+Q88174     END-IF.
+Q88174     COMPUTE  L0289-CRCY-AMT       = WS-POL-PREM-AMT
+Q88174                                    * LCRCV-XCHNG-RT.
+Q88174     MOVE  'JP'                       TO L0289-CRCY-CD.
+Q88174* DECIMAL PRECISION WILL BE 2 FOR PAYIN, PAYOUT, LIMIT CHECK RATE
+Q88174* CONVERSIONS
+Q88174     MOVE +0000                       TO L0289-DCML-PRECSN.
+Q88174               
+Q88174     PERFORM  0289-3000-CRCY-CD-RND
+Q88174         THRU 0289-3000-CRCY-CD-RND-X.  
+Q88174               
+Q88174     MOVE L0289-CRCY-AMT              TO WS-PRE-XCHNG-PREM-AMT.
+Q88174    
+Q88174     IF  WS-PRE-XCHNG-PREM-AMT = L9140-CASH-AMT
+Q88174         MOVE WS-POL-PREM-AMT         TO L9285-PRE-XCHNG-PREM-AMT
+Q88174     END-IF.
+M319B1
+M319B1 2800-GET-CRCY-INFO-X.
+M319B1    EXIT.
+M319B1/      
+      *-----------------
+       3000-CLOSE-FILES.
+      *-----------------
+      
+           PERFORM  0800-3000-FINISH-CKPT
+               THRU 0800-3000-FINISH-CKPT-X.
+          
+           PERFORM  BCF-4000-CLOSE
+               THRU BCF-4000-CLOSE-X.
+               
+           PERFORM  OCF-4000-CLOSE
+               THRU OCF-4000-CLOSE-X.
+               
+           PERFORM  CWAI-4000-CLOSE
+               THRU CWAI-4000-CLOSE-X.
+               
+           PERFORM  CWEX-4000-CLOSE
+               THRU CWEX-4000-CLOSE-X.
+      
+       3000-CLOSE-FILES-X.
+           EXIT.
+      /
+      *****************************************************************
+      *  PROCESSING COPYBOOKS                                         *
+      *****************************************************************
+       COPY XCPPCKPT.
+       COPY NCPPCVGS.
+       COPY NCPPCVGR.
+       COPY CCPPCCC.
+       COPY CCPPTASK.
+M245A4 COPY CCPPPLIN.
+Q53181 COPY CCPPPDIN.
+      /           
+      *****************************************************************
+      *  LINKAGE PROCESSING COPYBOOKS                                 *
+      *****************************************************************
+      /
+       COPY XCPL1640.
+       COPY XCPL1680.
+       COPY XCPL1660.
+       COPY XCPL0035.
+      /
+       COPY XCPL0040.
+      /
+       COPY XCPL0260.
+      /
+       COPY XCPS0290.
+       COPY XCPL0290.
+       COPY XCPS2490.
+       COPY XCPL2490.
+      /
+       COPY CCPL0010.
+       COPY CCPS0010.
+      /
+       COPY CCPL0950.
+       COPY CCPS0950.
+      /
+       COPY CCPL0620.
+      /       
+       COPY XCPS0800.
+       COPY XCPL0800.
+      /
+       COPY XCPL1580.
+       COPY XCPL1610.
+      / 
+       COPY CCPS9285.
+       COPY CCPL9285.
+      / 
+       COPY CCPL0953.
+       COPY CCPS0953.
+      / 
+       COPY NCPS9140.
+       COPY NCPL9140.
+      / 
+       COPY CCPL9555.
+      / 
+NWLPP2 COPY CCPL9307.
+NWLPP2 COPY CCPS9307.
+      /
+M245A4 COPY CCPL5810.
+M245A4/
+Q53181 COPY NCPL5660.
+Q53181 COPY NCPS5660.
+      /
+MP171F COPY XCPL8090.
+MP171F COPY XCPS8090.
+M319B1/
+M319B1 COPY CCPLCRCV.
+M319B1 COPY CCPSCRCV.
+M319B1/
+M319B1 COPY CCPS9215.
+M319B1 COPY CCPL9215.
+Q88174 COPY XCPL0289.
+TLB08E COPY CCPL9228.
+TLB08E COPY CCPS9228.
+M319B1/
+      *****************************************************************
+      *  FILE I/O PROCESS MODULE                                      *
+      *****************************************************************
+      /
+       COPY CCPNMAST. 
+       COPY CCPNPOLF.
+       COPY CCPNCVG.
+       COPY CCPUCVG.
+       COPY CCPNPOL.
+       COPY CCPUPOL.
+       COPY ACPNXMLE.
+       COPY ACPBXMLE.
+       COPY ACPNCWAE.
+       COPY ACPCCWAE.
+       COPY ACPBCWAE.
+       COPY ACPACWAE.
+M245A4 COPY CCPNPH.
+MP245C COPY XCPNCRCY.
+Q53181 COPY CCPNPD.
+MP265A COPY CCPNEDIT.
+CA0002 COPY CCPNRFND.
+CA0002 COPY CCPFRFND.
+       
+       COPY XCSLFILE REPLACING ==:ID:==  BY CWAI
+                               ==':PGM:'== BY =='ASRQCWAI'==.
+       COPY XCSOFILE REPLACING ==:ID:==  BY CWAI.
+       COPY XCSASEQ  REPLACING ==:ID:==  BY CWAI.
+       COPY XCSNSEQ  REPLACING ==:ID:==  BY CWAI.
+      /
+       COPY XCSLFILE REPLACING ==:ID:==  BY OCF
+                               ==':PGM:'== BY =='XSRQOCF'==.
+       COPY XCSOFILE REPLACING ==:ID:==  BY OCF.
+       COPY XCSNSEQ  REPLACING ==:ID:==  BY OCF.
+      /
+       COPY XCSLFILE REPLACING ==:ID:==  BY BCF
+                               ==':PGM:'== BY =='XSRQBCF'==.
+       COPY XCSOFILE REPLACING ==:ID:==  BY BCF.
+       COPY XCSNSEQ  REPLACING ==:ID:==  BY BCF.
+      /
+       COPY XCSLFILE REPLACING ==:ID:==  BY CWEX
+                               ==':PGM:'== BY =='ASRQCWEX'==.
+       COPY XCSOFILE REPLACING ==:ID:==  BY CWEX.
+       COPY XCSASEQ  REPLACING ==:ID:==  BY CWEX.
+       COPY XCSNSEQ  REPLACING ==:ID:==  BY CWEX.
+      /
+      *****************************************************************
+      *    ERROR HANDLING ROUTINES                                    *
+      *****************************************************************
+       COPY XCPL0030.
+      /
+      *****************************************************************
+      **                 END OF PROGRAM ASBM9C15                     **
+      *****************************************************************
+      

@@ -1,0 +1,10990 @@
+      *************************
+       IDENTIFICATION DIVISION.
+      *************************
+       PROGRAM-ID. ASBM9400.
+
+       COPY XCWWCRHT.
+
+      *****************************************************************
+      **  MEMBER :  ASBM9400                                         **
+      **  REMARKS:  IMPORT FAMILY TERM JAPAN UPLOAD RECORDS AND      **
+      **            CONVERT DATA TO NBS FORMAT.                      **
+      **                                                             **
+P00045**  THIS PROGRAM USES THE CHECKPOINT/RESTART FACILITY.         **
+P00045**  THE EXTRACT FILES FOR THE ASBM211O AND ASBM2120 PROGRAMS   **
+P00045**  ARE WRITTEN TO NEW TABLES (S2110 AND S2120).               **
+P00045**  THE PROGRAM, CSBU1540, IS USED TO WRITE OUT THE EXTRACT    **
+P00045**  FILES.                                                     **
+      **                                                             **
+      **  DOMAIN :  UW                                               **
+      **  CLASS  :  PD                                               **
+      *****************************************************************
+      **  DATE     AUTH.  DESCRIPTION                                **
+      **                                                             **
+      **  06DEC00  DPK    INITIAL FTJ UPLOAD SYSTEM DESIGN           **
+B00547**  31AUG00  DPK    DO NOT CREATE ALLOCATION RECORDS IF FOUND  **
+B10017**  31AUG01  DPK    BENEFICIARY'S ATTACHED TO WRONG CLIENT     **
+B10018**  31AUG01  DPK    SET SEX CD & LANGUAGE PROPERLY FOR BENE    **
+B10018**                  CLIENT                                     **
+B10023**  31AUG01  DPK    SET POLICY ISSUE DATE TO APP RECV DATE     **
+B10080**  31AUG01  DPK    NO LONGER CREATE CLIENT RECORDS FOR        **
+B10080**                  BENEFICIARIES BUT UPDATE BNFY-NM INSTEAD   **
+B00298**  31AUG01  DPK    ADDED GROUP PAYROLL (LIST BILL) PROCESSING **
+B00489**  31AUG01  DPK    UPDATE POL-ASIGN-DT WITH CWA DT            **
+B10137**  31AUG01  DPK    CHANGED BENE NAME TO LAST,FIRST SEQ.       **
+B10019**  31AUG01  DPK    USE BRANCH & SALES OFFICE FROM AG TABLE    **
+B10019**                  AND VERIFY AGAINST AG TABLE                **
+B10015**  31AUG01  DPK    REMOVE INPUT OF APP ID FROM PARM CARD.     **
+B10015**                  THIS WILL COME IN AS AN INPUT FILE         **
+B10267**  31AUG01  DPK    DEFAULT AGENT TO '999999' IF INVALID       **
+B10267**                  ALSO DEFAULT BRANCH '99999'                **
+B10268**  31AUG01  DPK    ADDED TOKENS FOR MSG AS94000012            **
+B10300**  31AUG01  DPK    SET ADDRESS TYPE ON BENE TO SPACES         **
+B10272**  31AUG01  DPK    SET SWITCH FOR LAST EDIT OF CVGS TO        **
+B10272**                  PROPERLY CHECK SUNDRY AMT.                 **
+B10319**  31AUG01  DPK    CHECK FOR DUPLICATE APPLICATIONS           **
+P00005**  05OCT01  DPK    PRODUCE ERROR MSG IF APP-RECV-DT IS        **'
+P00005**                  EQUAL TO LOW-DATE                          **
+P00026**  12OCT01  KRW    ADD SUPPORT FOR POST OFFICE ACCOUNTS       **
+P00053**  17OCT01  JEB    ENSURE CLIA ADDRESS STATUS SET CONSISTENTLY**
+P00053**                  WITH THE ONLINE                            **
+P00045**  26OCT01  BMB    CORRECT CKPT RESTART LOGIC                 **
+P00045**                  MAKE SEQUENTIAL FILES, SEQUENTIAL TABLES   **
+P00045**                  CHANGE XSOCF TO OPEN AS EXTEND             **
+P00048**  26OCT01  BMB    ADDED UNLOCK CALL FOR POL TABLE            **
+P00103**  05NOV01  DPK    ADDED MORE FIELDS FOR 2110 REPORT          **
+P00090**  19NOV01  JEB    RESET THE TYPE OF INSURANCE SO IT DOESN'T  **
+P00090**                  GET UPDATED INCORRECTLY                    **
+02NB01**  07MAY02  DPK    PRE-CONVERSION POLICY DATA                 **
+02PR63**  21JUN02  DPK    NEW MEDICAL RIDERS & CORPORATE OWNERSHIP   **
+B01120**  23SEP02  AT     STORE THE INSURED CLIENT ID OF THE         **
+B01120**                  PRIMARY INSURED CLIENT ON THE BASE CVG IN  **
+B01120**                  RPOLX-INSRD-CLI-ID                         **
+B01137**  25SEP02  AT     CALL 9196 TO DO POLX EDITS AND             **
+B01137**                  SET POLX POLICY STATUS                     **
+B10737**  23OCT02  AT     USE LAPUP-BASE-INSURED-CLIENT TO IDENTIFY  **
+B10737**                  THE BASE INSURED CLIENT AND ELIMINATE THE  **
+B10737**                  REDUNDANT IDENTIFICATION OF THE BASE       **
+B10737**                  INSURED CLIENT AT PARA. 6820-              **
+B10775**  24OCT02  AT     ENSURE COVERAGE ISSUE EFFECTIVE DATES AND  **
+B10775**                  POLICY ISSUE EFFECTIVE DATES ARE THE SAME  **
+B10775**                  ON CONVERTED POLICIES                      **
+B10791**  28OCT02  AT     USE RCLI-DTH-BEN-REL-CD TO DETERMINE       **
+B10791**                  WHETHER OR NOT TO USE THE CORPORATE NAME   **
+B10791**                  AS THE BENEFICIARY NAME                    **
+B00995**  15AUG02  AC     ADDED R2110-CO-NM FOR CORPORATE OWNERSHIP  **
+B10582**  15AUG02  AC     USED KANA NAME AS THE CORPORATE NAME       **
+P00653**  16DEC02  AC     ADDED CORPORATE NAME MATCH                 **
+P00357**  27DEC02  YUC    BANK ACCOUNT NUMBER ZERO CHECK             **
+B10061**  UNKNOWN TAG, PLACED HERE TO PASS STANDARDS CHECKING.       **
+B10065**  UNKNOWN TAG, PLACED HERE TO PASS STANDARDS CHECKING.       **
+B10179**  UNKNOWN TAG, PLACED HERE TO PASS STANDARDS CHECKING.       **
+P00734**  27DEC02  CLB    SET SMKR CD FOR UPLOADED CLIENTS BY        **
+P00734**                  UPDATING CLI RECORD WHEN MATCH IS FOUND.   **
+M00024**  16DEC02  AT     WHEN CREATING CORPORATE CLIENT SET THE     **
+M00024**                  TAX REPORT REQUEST MONTH TO 03             **
+HNB002**  28OCT02  HIN/AI NEW FIELDS FOR UPLOAD                      **
+HNB014**  25NOV02  HIN/AI HISTORY AND SELECTION FILE                 **
+HNB203**  25NOV02  HIN/AI COMPLEX TEST PHASE 1                       **
+HNB005**  25NOV02  HIN/AI U/W REQUIREMENTS PHASE 1                   **
+B10899**  28JAN03  HIN/AI MODIFY THE CREATION OF OWNER CONSENT REQTS **
+B10912**  03FEB03  HIN/AI CREATE PAPER APPLICATION REQT FOR POLICY   **
+B10922**  07FEB03  HIN/AI SET THE CLIENT MIB INDICATOR FIELD         **
+B10959**  05MAR03  HIN/AI FIX CLIENT PHONETIC NAME FIELDS FOR CLNM   **
+PR006F**  26JUN03  FB     REPLACED 'MANUFLEX' WITH 'UPLOAD'          **
+P01108**  08SEP03  SW     ADDED UW TYPE FIELD                        **
+M00010**  01DEC03  MAW    MOVE RPOL-POL-ID INSTEAD OF 'COMPLETE' TO  **
+M00010**                  UPOL-POL-ID WHEN UPLOAD IS COMPLETED       **
+PR006Q**  10DEC03  FB     ADD MY KEMPO FIELDS PROCESSING             **
+PR006Q**  01DEC03  SUG    ADD MY KEMPO TYPE CODE                     **
+B01730**  12DEC03  CLB    APPLY JOURNAL DATE EDIT TO CWA DATE.       **
+B11184**  12DEC03  CLB    FIX AND ADD NOTES FOR CWA EVENT CODE.      **
+B11195**  17DEC03  CLB    DO ACCT CLOSED CHECK ON APP RECV DATE      **
+B11195**                  INSTEAD OF CWAR RECEPT-DT AND DO NOT CHANGE**
+B11195**                  ANY PERMANENT DATES.                       **
+B11216**  06JAN04  BP     SET EFFECTIVE DATING ON MY KEMPO POLICIES  **
+P01322**  06MAY04  RZ     SET MY KEMPO POLICY ISSUE EFFECTIVE DATE TO**
+P01322**                  RPOL-ILLUS-CALC-DT (HO COMPLATION DATE)    **
+P02229**  20OCT04  CY     ADD COMMIT LOGIC TO MAINLINES              **
+MP9PHA**  01MAR05  SC     POLICYHOLDER ADDRESS VERIFICATION REPORT   **
+UCPOUT**  13APR05  BP     ADD UCP FLAG AND DATE TO 2110 OUTPUT       **
+UCPUPL**  13JUN05  SC     UCP UPLOAD                                 **
+MFPFU2**  01OCT05  CLB    SET UP CASH DESTINATION RECORDS FOR SEG-   **
+MFPFU2**                  FUNDS. + CLEAN UP SOME CODE...             **
+MFFFU2**  01OCT05  GW     NEW BUSINESS REQUIREMENTS (USED TAG MFPFU2)**
+MFFOP1**  01OCT05  SW     CREATE THREE NEW R2110 FIELDS AND REMOVE   **
+MFFOP1**                  UNUSED FILED                               **
+MFFUPL**  01OCT05  CLB    MODS FOR MANUSTEP SEGFUNDS                 **
+5-0520**  01OCT05  CLB    CHECK FOR CORP POLS AFTER STCKY # CALL,9407**
+5-0514**  01OCT05  RNL    FIX SALES REP EXP. & SA CONF. METHOD       **
+B50518**  01OCT05  BP     MANUFLEX FUNDS FUNCTIONAL TESTING BUG LOG  **
+B50518**                  RESET POL ISS EFF DT FOR DHY CONVERSIONS   **
+B50548**  01OCT05  BP     SET RFS-CFN-STAT-CHNG-DT                   **
+5-0584**  01OCT05  SW     PUT THE LITERAL 'SA' ON THE INSURED FOR    **
+5-0584**                  SA RIDERS                                  **
+P03349**  21NOV05  CTS    COMPRESS THE KANJI AND KATAKANA CLIENT NAME**
+IPDDUP**  06OCT06  SUG    ADD SUPPORT FOR IPDD RIDERS                **
+ABF124**  14MAR07  CTS    ADDED AN END-IF TERMINATOR FOR PREVENTING  **
+ABF124**                  INFINITE LOOP (SUBSIDIARY CHANGE AS PART   **
+ABF124**                  OF ABF124 BUG)                             **
+FEID01**  22APR08  CTS    LCD AND ID CALC - CHANGES                  **
+AGU013**  25AUG08  CTS    FIX TO RE-CALCULATE FINAL DISPOSITION DATE **
+AGU013**                  FOR DHY POLICIES WITH CWA DATE>=CUT-OFF DT ** 
+MP55OU**  23AUG08  CTS    ADDED NEW LEVELS OF UNDER WRITTING         **
+BU4644**  06OCT08  CTS    CHANGES DONE TO SUPRESS THE LCD CALC       **
+BU4644**                  FOR MYKEMPO POLICIES                       **
+NWLSPN**  12JUN09  CTS    CHANGES IN POLICY ASSIGNMEMT PROCESS FOR   **
+NWLSPN**                  NEW WHOLE LIFE PRODUCTS                    ** 
+NWLXML**  22JUN09  CTS    CHANGES DONE FOR UPLOADING ANNUITY PERIOD  **
+NWLXML**                  FIELD AND WRITE XML MESSAGE EXTRACT        **
+NWLCWA**  11AUG09  CTS    CHANGES DONE TO SET CHANNEL TYPE CODE      **
+ATF013**  02SEP09  CTS    CHANGES DONE TO SET THE POLICY ASSIGNED DT **
+ATF013**                  OF NWL TO APPLICATION RECEIVED DATE AND    **
+ATF013**                  SET APPLICATION RECV DATE TO CWA PROCESS   **
+ATF013**                  DATE FOR UL PRODUCTS IN CASE OF SUCCESSFUL **
+ATF013**                  CWA PAYMENT                                **
+EN7281**  22DEC09  CTS    CHANGED FOR CLIENT MATCHING FOR ADDRESS    **
+EN8937**  17JUN09  CTS    ADD LOGIC FOR CHECKING DALG SEQ # TO       **
+EN8937**                  PREVENT DUPLICATES                         **
+EN9703**  12NOV10  CTS    CHANGES DONE TO STOP THE PROCESSING OF     **
+EN9703**                  INSURED CONSENT FORM REQUIRED              **
+MP143B**  17MAR11  CTS    CHANGES TO ADD PRODUCT APPLICATION TYPE    **
+MP143B**                  CODE FOR AMI POLICIES                      **
+MP161D**  28SEP11  CTS    CHANGES TO ADD PRODUCT APPLICATION TYPE    **
+MP161D**                  CODE FOR NIP POLICIES                      **
+C12392**  11NOV11  CTS    INTRODUCED NEW PROGRAM ASRUUBEN TO POPULATE**
+C12392**                  TBENE TABLE FROM TUBEN UPLOAD TABLE        **
+MP168A**  14NOV11  CTS    IMPLEMENTING THE CHANGES FOR THE PA CHANNEL**
+MP168A**                  CASHLESS  PROCESSING                       **
+C16246**  24FEB12  CTS    DHY POLICIES ARE NOT GETTING SETTLED       **
+C16246**                  ALTHOUGH THEY HAVE BEEN ISSUED             **
+Q18254**  17MAY12  CTS    CHANGES IN MP171G -UNDERWRITING BUSINESS   **
+Q18386**  17MAY12  CTS    CHANGES IN MP171G -UNDERWRITING BUSINESS   **
+MP176B**  17MAY12  CTS    CHANGES TO ASSIGN SEQUENTIAL POLICY NUMBER **
+TVI001**  11JUN12  CTS    TO ADD NEW INSURANCE TYPE CODE FOR TVI     **
+TVI002**  07MAY12  CTS    TVI - XML UPLOAD CHANGES                   **
+M176B1**  10JUL12  CTS    CHANGES TO RATE AGE CALC FOR AGE LAST CALC **
+M176B1**                  MTHD AND SET ISS SUP IND FOR BULK POLICIES **
+TVITMP**  14AUG12  CTS    TVI003 - TEMP CHANGES FOR SETTING SUPPRESS **
+TVITMP**                  ISSUE IND FOR HANDLING RATE AGE CHANGE     **
+C19775**  01FEB12  CTS    CHANGES DONE FOR ACCEPTING BENEFICIARY NAME**
+C19775**                  IF BENEFICIARY IS COMPANY AND RELATIONSHIP **
+C19775**                  IS PH OR S AND COMPANY NAME IS PRESENT IN  **
+C19775**                  UPLOADED APPLICATION                       **
+C20954**  27SEP13  CTS    PS-SD117855 CHANGES FOR AGENT SHARE        **
+C20954**                  ALLOCATION AT CVG LEVEL WHEN THE AGENT AND **
+C20954**                  CO-AGENT ARE SAME                          **
+MP241B**  19NOV13  CTS    CHANGES TO ADD PRODUCT APPLICATION TYPE    **
+MP241B**                  CODE FOR NWLII POLICIES                    **
+MP242B**  20DEC13  CTS    CHANGES TO ADD PRODUCT APPLICATION TYPE    **  
+MP242B**                  CODE FOR ARM2 POLICIES                     **
+MP245C**  03MAR14  CTS    SPWL_XML & CWA UPLOAD CHANGES              **
+MP265A**  10OCT14  CTS    NOMURA_XML UPLOAD CHANGES                  **
+MP261E**  10OCT14  CTS    MP261 PPRVD NOTICE CHANGES                 **
+M271N1**  28MAR15  CTS    XML UPLOAD CHANGES FOR FRA                 **
+M271N2**  09APR15  CTS    NEW BUSINESS CHANGES FOR FRA               **
+MP280B**  05AUG15  CTS    CHANGES TO ADD PRODUCT APPLICATION TYPE    **  
+MP280B**                  CODE FOR ARM3 POLICIES                     **
+MP281B**  02SEP15  CTS    CHANGES DONE AS PART OF RETAIL CANCER      **
+R11602**  08FEB16  CTS    CHANGES DONE FOR BENEFICIARY NAME FOR FRA  **
+MP270C**  03MAR16  CTS    CHANGES DONE AS A PART OF EPOS             **
+MP270A**  23MAR16  CTS    CHANGES AS PART OF E-POS APPLICATION XML   **   
+MP270F**  18APR16  CTS    CHANGES AS PART EPOS CLEAR CASE            ** 
+R12024**  25MAY16  CTS    CHANGES FOR UNDERWRITING REVIEW FLAG       **
+R12549**  02NOV16  CTS    CHANGES FOR FRA OCCP-ID CODE FIX           **
+M319N1**  05JAN17         FIELD ADDED AS PART OF FXWL XML CHANGES    **
+MP334A**  14NOV17  CTS    CHANGES DONE FOR THE SUCCESSOR CATEGORY    **
+MP332A**  24OCT17  CTS    XML CHANGES FOR MONEY LAUNDERING           ** 
+M328C2**  27FEB18  CTS    POPULATE POLICY ID IN TREQT TABLE FOR THE  **
+M328C2**                  REQUIREMENTS GIVEN AS PART OF NEW BUSINESS **
+M328C2**                  NOT ARRIVED DOCUMENT REPORT
+101192**  31AUG18  CTS    FIX TO POPULATE HE MANU PTNR IND           **
+MP310C**  09MAY18  CTS    CHANGES DONE FOR THE INCOMPLETENESS DETAILS**
+MP310H**  17JUL18  CTS    CHANGES DONE FOR MULTIPLE PENDING POLICIES **
+MP310E**  05AUG18   MP310E - INGENIUM  SCV INTERFACE                 **
+MP310F**  01OCT18  CTS    CHANGES DONE FOR MULTIPLE DAY BATCHES      **
+109590**  09NOV18  CTS    CHANGES DONE FOR MULTIPLE PENDING POLICIES **
+109682**  21DEC18  CTS    CHANGES FOR INCOMPLETENESS COMMENT DETAILS **
+109904**  15FEB19  CTS    FIX TO ALLOW MULTIPLE 98R90 REQTS          **
+109938**  21FEB19  CTS    CHANGES DONE FOR CLEAR CASE START CONDITION**
+109987**  25FEB19  CTS    CHANGES DONE TO STOP OVERRIDING BLANKS     **
+110437**  08APR19  CTS    CHANGES FOR BENE MORAL RISK CLEAR CASE     **
+TV2003**  20DEC18   CTS    CHANGES FOR SULV2 NEW BUSINESS            **
+111665**  15APR19  CTS     FIX FOR SULV2 XML CHANGES                 **
+110572**  28MAY19  CTS    CHECK FOR 31R15 REQUIREMENT CREATION       **
+112130**  06JUN19  CTS    CHANGES FOR MULTIPLE 98 REQUIREMENTS       ** 
+110437**  15JUN19  CTS    CHANGES DONE AS PART OF MP310              **
+R14974**  17JUL19  CTS    INC03195407 - FIX TO SET THE MULTIPLE POL  **
+R14974**                  INDICATOR CORRECTLY                        **
+MP310I**  08AUG19  CTS    FIX DONE FOR MP310 POST PRODUCTION ISSUE   **
+018396**  16MAY19  CTS    CHANGES FOR APPLICATION XML                **
+FFF001**  17JUL19  CTS    CHANGES DONE FOR FFF PLAN AND RATE SETUP   **
+FFF002**  01AUG19  CTS    CHANGES FOR OCCUPATION CODE                **
+116623**  25SEP19  CTS    CHANGES FOR 31R15 CHECK                    **
+18396A**  02DEC19  CTS    CHANGES FOR EPOS PHASE 2                   **
+M310K1**  09JAN20  CTS    CHANGES DONE FOR MP310 PRODUCTION ISSUE    **
+122553**  04APR20  CTS    FIX TO CREATE 31R15 REQT FOR CASES WHERE   **
+122553**                  INSURED AND OWNER CLIENT ID ARE THE SAME   **
+122553**                  AND INSURED IS THE SAME PERSON WITH A DIFF **
+122553**                  CLIENT ID AND WITH ANOTHER PENDING POLICY  **
+UYS092**  31OCT19  CTS    ADMIN POLCERT ASSIGNMENT STATUS CHANGES    **
+UYS072**  17JAN20  CTS    KANJI SAMAKATA-BU CHANGES AT POLICY LEVEL  **
+UYS110**  26JUN20  CTS    OVERWRITING ACCOUNT INFORMATION AND        ** 
+UYS110**                  COLLECTION BANK ACCOUNT CONFIRMATION LIST  **
+128574**  20JUN20  CTS    CHANGES FOR EH SKIP CORPOERATE POLICY      **
+128584**  24AUG20  CTS    FIX DONE TO DELETE VOICED SOUND MARK /     ** 
+128584**                  P-SOUND MARK IN ACCOUNT HOLDER NAME        **
+130512**  23SEP20  CTS    FIX FOR SMBC NB EXTRACTS                   **
+R16098**  25MAR21  CTS    CHANGES FOR CORPORATE BENEFICIARY KANA NAME**
+R16171**  18MAY21  CTS    COMMENTING CODE RELATED TO ALPHA SEARCH    **
+R16171**                  WEBSERVICE INTERACTION WITH SCV EXTERNAL   **
+R16171**                  SYSTEM                                     **
+023800**  30DEC21  CTS    CIVIL CODE CHECK FOR NEW BUSINESS UNDER AGE**
+CR0008**  24DEC21  CTS    FIX FOR CIVIL CODE DEFECT (CRCV08) NEW     **
+CR0008**                  BUSINESS UNDER AGE                         **
+CR0025**  18FEB22  CTS    FIX FOR CIVIL CODE DEFECT (CRCV25) CHANGES **
+CR0026**  28FEB22  CTS    FIX FOR CIVIL CODE DEFECT (CRCV26) IN TO   **
+CR0026**                  CALCULATE THE CLIENT AGE BASED ON SIGNED   **
+CR0026**                  DATE AND NOT UPLOAD DATE                   **
+TLB002**  03MAY16  CTS    CHANGES AS PART OF TLB XML CHANGES         **
+TLB58A**  03JUN21  CTS    POLICY ID NUMBERING FOR COLI PRODUCTS      **
+TL0291**  20OCT21  CTS    TLB041 - BENE NAME LENGTH INCREASE         **
+UYS002**  01MAR21  CTS    CHANGES AS PART OF UNISYS XML CHANGES      **
+TLB08E**  16MAY22  CTS    UNISYS BYPASSING NUWRN TRIGGER IF THERE ARE**
+      **                  OS REQ FOR UW FOR BULK & BUNDLE POLICIES   ** 
+TL0572**  19JAN22  CTS    CHNAGES OF INSURED ADDRESS RETENTION MTD   **
+TL0614**  21FEB21  CTS    FIX FOR INSURED ADDRESS STATUS             **
+S21828**  30AUG22  CTS    BUG FIX FOR UDSD-1828                      **
+S21974**  12AUG22  CTS    BUG FIX FOR UDSD-1974 - INSRD MISMATCH     **
+R16256**  15JUL21  CTS    CHANGES DONE NOT TO DEFAULT CLIENT SMOKER  **
+R16256**                  CD FOR A MATCHED CLIENT ID IF SMOKER CODE  **
+R16256**                  IN APPLICATION XML IS BLANK                **
+27624A**  17AUG23  CTS    CHANGES DONE FOR BIRT-DATE FIELD AS PART OF** 
+27624A**                  STP SPEC                                   **
+26878B**  11APR23  CTS    ENHANCE CONTROL OVER ELDERLY & SPECIFIC    **
+26878B**                  POLICY (PHASE 2)                           **
+26878D**  08JUN23  CTS    ENHANCE CONTROL OVER ELDERLY & SPECIFIC    **
+26878D**                  POLICY (PHASE 2)-SUPPORT APOLLO SYS        **
+EP1923**  09AUG23  CTS    ELDERLY PHASE 2 DEFECT ECOESPP-1923        **
+NV3N01** 26AUG22   CTS    SULV3 NEW BUSINESS BATCH AND ONLINE        **
+NV3N01**  27FEB22  CTS   CHANGES DONE AS PART OF SULV3               **
+SV1923**  15MAY23  CTS   FIX FOR ALLOCATION AMOUNT FIX FOR SULV3     **
+R18957**  29FEB24  CTS   CLIENT INCOME INCIDENT CHANGES              **
+28610A**  10APR24  CTS    ADDITION OF NEW PROD-APP-TYP-CD FOR SPWL & **        
+28610A**                  BEAVER (SP24)                              ** 
+29746F**  07OCT24  CTS    CHANGES DONE AS PART OF CERBERUS           **
+CRB168**  06NOV24  CTS   FIX FOR CERBERUS NEW BUSINESS               **
+29746G**  17DEC24  CTS   CHANGES FOR NEW REPORT SPWLV2 COUPON        **
+29746G**                 ACCOUNT CONFIRMATION LIST                   **
+CR1848**  01FEB25  CTS   FIX FOR CERBERUS COUPON ACCOUNT INFORMATION **
+CR2061**  11FEB25  CTS   FIX FOR 9900 COUPON PAYOUT BANK INFORMATION **
+R20265**  18SEP25  CTS   FIX FOR THE RLSE0020265 INC07880743   INC   **
+NVCP1A**  02APR24  CTS    ADDITION OF NEW PROD-APP-TYP-CD FOR ONTARIO**
+NVCR01**  03JUL25  CTS    CHANGES DONE AS PART OF ONTARIO REINSURANCE**
+      *****************************************************************
+
+      **********************
+       ENVIRONMENT DIVISION.
+      **********************
+
+       INPUT-OUTPUT SECTION.
+
+      ***************
+       DATA DIVISION.
+      ***************
+
+       FILE SECTION.
+
+       WORKING-STORAGE SECTION.
+
+       COPY XCWWPGWS REPLACING '$VAR1' BY 'ASBM9400'.
+
+       COPY SQLCA.
+
+       COPY XCWWCVGM.
+
+       01  WS-PGM-WORK-AREA.
+PR006F*    05  WS-USER-ID                  PIC X(08)  VALUE 'MANUFLEX'.
+PR006F     05  WS-USER-ID                  PIC X(08)  VALUE 'UPLOAD'.
+           05  WS-ERROR-SW                 PIC X(01).
+               88  WS-ERROR-FOUND          VALUE 'Y'.
+           05  WS-COMPANY-CODE             PIC X(02).
+           05  WS-APP-ID                   PIC X(15).
+           05  WS-INSURED-NAME             PIC X(20).
+           05  WS-PIC-COUNTER              PIC Z(06)9.
+B00995     05  WS-CORP-NAME                PIC X(50).
+           05  WS-PCOM-CO-AUD-CTR-LOB-CD   PIC X(01).
+           05  WS-PHNT-TXT                   PIC X(08).
+           05  WS-PHNT-NUM REDEFINES WS-PHNT-TXT PIC 9(8).
+           05  X                           PIC S9(04) COMP SYNC.
+           05  Y                           PIC S9(04) COMP SYNC.
+           05  WS-CVG                      PIC 9(02)  VALUE ZERO.
+           05  WS-COMPANY-NAME.
+               10  WS-COMPANY-NAME-FIRST25 PIC X(25).
+               10  WS-COMPANY-NAME-LAST25  PIC X(25).
+           05  WS-POL-APP-SIGN-DT          PIC X(10).
+           05  WS-BNK-ACCT-NUM             PIC 9.
+           05  WS-PROCESS-DATE-INFO.
+               10  WS-PROC-DT-TXT          PIC X(21) VALUE
+                   'PROCESS DATE        ='.
+               10  WS-PROCESS-DATE         PIC X(10).
+P00653     05  WS-SCAN-FIELD                PIC X(50).
+P00653     05  WS-PHONETIC-NAME.
+P00653         10  WS-PHONETIC-NAME-N       PIC 9(08).
+P00653         10  FILLER                   PIC X(42).
+P00734     05  WS-HOLD-CLI-SMKR-CD          PIC X.
+M00024     05  WS-DEFAULT-CORP-TAX-MO       PIC X(2)  VALUE '03'.
+B10959     05  WS-NM-PHNT                   PIC X(08).
+B10959     05  WS-NM-PHNT-NUM REDEFINES WS-NM-PHNT PIC 9(08).
+MFFUPL     05  WS-ESC-CHRG-AMT              PIC S9(13)V9(02) COMP-3.
+MFFUPL     05  WS-CTL-TOT-AMT               PIC S9(13)V9(02) COMP-3.
+MFFUPL     05  WS-CTL-TOT-PCT               PIC S9(03)V9(04) COMP.
+MFFUPL     05  WS-LAST-CDSI-ALLOC-NUM       PIC S9(03) COMP-3.
+P03349     05  WS-DB-SPACE                  PIC X(02) VALUE X'8140'.
+P03349     05  WS-SB-SPACE-SPACE            PIC X(02) VALUE X'2020'.
+P03349     05  WS-SB-SPACE                  PIC X(01) VALUE X'20'.
+P03349     05  WS-I                         PIC 9(04) COMP.
+P03349     05  WS-J                         PIC 9(04) COMP.
+P03349     05  WS-LEN-NM                    PIC S9(02).
+P03349     05  WS-LEN-REMN                  PIC S9(02).
+P03349     05  WS-DB-SPACE-COUNT            PIC S9(02).
+P03349     05  WS-SPACE-CHECK               PIC X(01).
+P03349         88  SB-SPACE                 VALUE 'Y'.
+P03349         88  NOT-SB-SPACE             VALUE 'N'.
+NWLSPN     05  WS-PROD-APP-TYP-CD           PIC X(02).
+NWLSPN         88 WS-PROD-APP-TYP-UL        VALUE 'MF' 'MM' 'MS' 'P1'.
+MP176B*MP161D         88 WS-PROD-APP-TYP-TRAD      VALUE 'WL' 'AM' 'IP'.
+TVI002*MP176B         88 WS-PROD-APP-TYP-TRAD      VALUE 'WL' 'AM' 'IP' 'RM'.
+TVI002         88 WS-PROD-APP-TYP-TRAD      VALUE 
+MP241B*TVI002                                       'WL' 'AM' 'IP' 'RM' 'VI'.
+MP242B*MP241B                               'WL' 'AM' 'IP' 'RM' 'VI' 'W2'.
+MP245C*MP242B                             'WL' 'AM' 'IP' 'RM' 'VI' 'W2' 'R2'.
+M271N1*MP245C                       'WL' 'AM' 'IP' 'RM' 'VI' 'W2' 'R2' 'SW'.
+MP280B*M271N1                  'WL' 'AM' 'IP' 'RM' 'VI' 'W2' 'R2' 'SW' 'FA'.
+MP281B*MP280B                'WL' 'AM' 'IP' 'RM' 'VI' 'W2' 'R2' 'SW' 'FA' 'R3'.
+MP281B                   'WL' 'AM' 'IP' 'RM' 'VI' 'W2' 'R2'
+M319N1*M281B                  'SW' 'FA' 'R3' 'RC'.
+111665*M319N1                   'SW' 'FA' 'R3' 'RC' 'FW'.
+FFF001*111665                   'SW' 'FA' 'R3' 'RC' 'FW' 'V2'.
+TLB002*FFF001                   'SW' 'FA' 'R3' 'RC' 'FW' 'V2' 'FF'.
+NV3N01*TLB002             'SW' 'FA' 'R3' 'RC' 'FW' 'V2' 'FF'
+NV3N01             'SW' 'FA' 'R3' 'RC' 'FW' 'V2' 'FF' 'V3'
+NVCP1A             'VC'
+29746F*28610A             'S2' 'SP'
+29746F             'S2' 'SP' 'S3' 'SQ' 
+UYS002*TLB002              'TL'.
+UYS002             'IT' 'CR' 'NI' 'CT' 'LT' 'SL' 'TI' 'NT' 'TL'.
+R12549         88 WS-PROD-APP-TYP-FRA       VALUE 'FA'.
+FFF002         88 WS-PROD-APP-TYP-FFF       VALUE 'FF'.
+MP161D*MP143B         88 WS-PROD-APP-TYP-TRAD      VALUE 'WL' 'AM'.
+MP143B*NWLSPN         88 WS-PROD-APP-TYP-TRAD      VALUE 'WL'.
+NWLXML     05  WS-APP-UPLD-DT               PIC X(10).
+NWLXML     05  WS-APP-CHNL-CD               PIC X(01).
+NWLXML         88  WS-APP-CHNL-PA-UL        VALUE 'U'.
+NWLXML         88  WS-APP-CHNL-NWL-MGA      VALUE 'M'.
+NWLXML         88  WS-APP-CHNL-NWL-WMD      VALUE 'W'.
+NWLXML         88  WS-APP-CHNL-NWL-PA       VALUE 'P'.
+NWLXML     05  WS-APP-REJ-REASN-CD          PIC X(01).
+NWLXML         88  WS-APP-REJ-REASN-FAIL    VALUE 'F'.
+NWLXML         88  WS-APP-REJ-REASN-DUPL    VALUE 'D'.
+NWLXML         88  WS-APP-REJ-REASN-ERR     VALUE 'E'.
+MP310H*Q18254     05  WS-POL-STAT-PENDING-CNT      PIC 9(01).
+MP310H     05  WS-POL-STAT-PENDING-CNT      PIC 9(03).
+MP310H     05  WS-PENDING-POL-CNT           PIC 9(01).
+109590     05  WS-HLD-POL-ID                PIC X(10).
+Q18254     05  WS-POL-ID                    PIC X(10).
+TV2003*TVITMP     05  WS-AGE-AT-UPLD               PIC 9(03).
+TV2003*TVITMP     05  WS-AGE-AT-ILL-EXPIRY         PIC 9(03).
+MP265A     05  WS-RUN-TYP-IND               PIC X(01).
+MP265A         88  WS-RUN-TYP-EARLY         VALUE 'E'.
+MP265A         88  WS-RUN-TYP-REG           VALUE 'R'.
+MP310F         88  WS-RUN-TYP-DAY           VALUE 'D'.
+MP310F*MP265A         88  WS-RUN-TYP-VALID         VALUE 'E' 'R'. 
+MP310F         88  WS-RUN-TYP-VALID         VALUE 'E' 'R' 'D'.
+MP265A
+M271N2     05  WS-CLI-OCCP-ID               PIC X(10).
+R16171*MP310E     05  WS-SYS-CTL-ID                 PIC X(08).
+R16171*MP310E         88  WS-SYS-ID-CTL-DEFAULT     VALUE 'INGENIUM'.
+R16171*MP310E     05  WS-EVNT-SUB                   PIC S9(3) COMP-3.
+R16171*MP310E     05  WS-PREV-POL-ID                PIC X(10).
+R16171*MP310E     05  WS-SRCH			     PIC 9(02) VALUE 15.
+R16171*MP310E     05  WS-BCF-CARDS.
+R16171*MP310E         10  WS-BCF-END-DATE           PIC X(10).
+R16171*MP310E         10  WS-BCF-BRANCH-ID          OCCURS 500
+R16171*MP310E                                       PIC X(10).
+R16171*MP310E     05  WS-SEARCH-END-SW              PIC X(01).
+R16171*MP310E         88  WS-SEARCH-END-YES         VALUE 'Y'.
+R16171*MP310E         88  WS-SEARCH-END-NO          VALUE 'N'.
+R16171*MP310E     05  WS-SUM-TOT-AMT		     PIC 9(15).
+109682     05  WS-NEW-SEQUENCE               PIC 9(03).
+109682     05  WS-OLD-SEQUENCE               PIC 9(03).
+109682     05  WS-REWRITE-REQT-KEY           PIC X(21).
+109682     05  WS-DATE                       PIC X(10).
+109862     05  WS-TST-DT                     PIC X(10).
+109682     05  WS-CLI-ID                     PIC 9(10).
+109682     05  WS-REQIR-POL-ID               PIC X(10).
+109682     05  WS-POL-CLI-CD                 PIC X(01).
+109682         88  WS-POLICY-LEVEL           VALUE 'P'.
+109682         88  WS-CLIENT-LEVEL           VALUE 'C'.
+109682     05  WS-REQIR-CODE                 PIC X(05).
+109682     05  WS-REQIR-STAT-CD              PIC X(03).
+109682         88  WS-REQIR-STAT-NEED-TO-ORDER  VALUE 'NTO'.
+109682     05  WS-RSLT-CD                    PIC X(01).
+109682         88  WS-RSLT-NOT-FOUND         VALUE '0'.
+109682         88  WS-RSLT-OUTSTNDG-FOUND    VALUE '1'.
+109682         88  WS-RSLT-WRITTEN           VALUE '2'.
+109682     05  WS-RTAB-IND                   PIC X(01).
+109682         88  WS-RTAB-OK                VALUE 'Y'.
+109682         88  WS-RTAB-NOT-FOUND         VALUE 'N'.
+109682     05  WS-RETRN-CD                   PIC S9(04) COMP.
+109682         88  WS-RETRN-OK               VALUE ZERO.
+109682         88  WS-RETRN-NO-RTAB-ERROR    VALUE +1.
+109682         88  WS-RETRN-DALG-ERROR       VALUE +2.
+R16171*110437     05  WS-BNFY-SEQ-NUM           PIC S9(03) COMP-3.
+UYS072     05  WS-OWN-KJ-OVRID-ADDR-TXT      PIC X(64).
+UYS110     05  WS-PREV-ACCT-HLDR-NAME      PIC X(50).
+UYS110     05  WS-NEW-ACCT-HLDR-NAME       PIC X(50).
+29746G     05  WS-PREV-PAYO-ACCT-TYP-CD      PIC X(01).
+29746G     05  WS-NEW-PAYO-ACCT-TYP-CD       PIC X(01).
+TLB08E     05  WS-POL-NUWRN-SUPRES-IND       PIC X(01).
+TLB08E         88  WS-POL-NUWRN-SUPRES-YES   VALUE 'Y'.
+TLB08E         88  WS-POL-NUWRN-SUPRES-NO    VALUE 'N'.
+TLB08E     05  WS-NUWRN-CLI-ID               PIC X(10).
+TL0291     05  WS-BENY-NAME-COMBINED.
+TL0291         10  WS-BENY-NM-FIRST         PIC X(50).
+TL0291         10  WS-BENY-NM-LAST          PIC X(50).
+TL0572     05  WS-CLI-ADDR-LOC-CD           PIC X(08).
+TL0572     05  WS-INSRD-ADDR-LOC-CD         PIC X(08).
+TL0572     05  WS-CLI-ADDR-KJ-TXT           PIC X(50).
+TL0572     05  WS-CLI-ADDR-ADDL-TXT         PIC X(60).
+TL0572     05  WS-CLI-ADDR-LN-2-TXT         PIC X(30).
+TL0572     05  WS-OWNER-ADDR-CD             PIC X(08).
+26878B     05  WS-HOLD-CLI-ID               PIC X(10).
+EP1923     05  WS-INSRD-CNTR                PIC 9(03).
+SV1923     05  WS-MTHLY-STD-PREM-AMT        PIC S9(13)V99 COMP-3.
+NV3N01     05  WS-TREATY-FND-IND               PIC X(01).
+NV3N01         88  WS-TREATY-FND-YES           VALUE 'Y'.
+NV3N01         88  WS-TREATY-FND-NO            VALUE 'N'.
+NV3N01     05  WS-EDIT-FND                     PIC X(01).
+NV3N01         88  WS-EDIT-FND-YES             VALUE 'Y'.
+NV3N01         88  WS-EDIT-FND-NO              VALUE 'N'.
+NV3N01     05  WS-REINS-TRTY-NUM               PIC X(05).
+NV3N01     05  WS-SUB1                         PIC S9(2).
+NV3N01     05  WS-CONCAT-REINS-NUM-CD.
+NV3N01         10 WS-CONCAT-REINS-NUM          PIC X(04).
+NV3N01         10 WS-CONCAT-REINS-CTR          PIC X(02).
+NV3N01     05  WS-REINS-UNIQ-NUM               PIC X(05).
+NV3N01     05  WS-AU-REINS-CO-ID               PIC X(02).
+NV3N01     05  WS-REINS-CED-PCT-AUTO           PIC X(40)  
+NV3N01                                         VALUE SPACES.
+NV3N01     05  WS-REINS-CED-PCT-AU REDEFINES WS-REINS-CED-PCT-AUTO.
+NV3N01         10 WS-REINS-CED-PCT-AU1         PIC 9(03).
+NV3N01         10 FILLER                       PIC X(37).
+NV3N01     05  WS-AU-UWGDECN-TYP-CD            PIC X(02).
+NV3N01         88 WS-AU-UWGDECN-TYP-VALID      VALUE '11'.
+NV3N01
+29746F     05  WS-PAYO-BNK-ACCT-NUM            PIC 9(01).
+R20265     05  WS-PLAN-SAV-ACUM-IND            PIC X(01).
+R20265         88  WS-PLAN-SAV-ACUM-YES        VALUE 'Y'.
+R20265         88  WS-PLAN-SAV-ACUM-NO         VALUE 'N'.
+R20265     05  WS-PLAN-COLI-PROD-IND           PIC X(01).
+R20265         88  WS-PLAN-COLI-PROD-YES       VALUE 'Y'.
+R20265         88  WS-PLAN-COLI-PROD-NO        VALUE 'N'.
+26878B
+       01  WS-SUBSCRIPTS.
+           05  WS-SUB                      PIC S9(04) COMP SYNC.
+           05  WS-BEN-SUB                  PIC S9(04) COMP SYNC.
+           05  WS-BENE-CLI-SUB             PIC S9(04) COMP SYNC.
+           05  WS-CVGC-SUB                 PIC S9(04) COMP SYNC.
+           05  CLI-SUB                     PIC S9(04) COMP SYNC.
+           05  ADDR-SUB                    PIC S9(04) COMP SYNC.
+           05  WS-UTTB-SUB                 PIC S9(04) COMP SYNC.
+           05  WS-OWNR-SUB                 PIC S9(04) COMP SYNC.
+B01120     05  WS-BASE-SEARCH-SUB          PIC S9(04) COMP SYNC.
+
+       01  WS-APP-HEADER-INFO.
+           05  WS-APP-PROD-CD              PIC 9.
+               88  WS-APP-IS-LIFE-PROD          VALUE 1.
+               88  WS-APP-IS-DISABILITY-PROD    VALUE 2.
+               88  WS-APP-IS-IMM-ANNUITY-PROD   VALUE 3.
+               88  WS-APP-IS-DEF-ANNUITY-PROD   VALUE 4.
+               88  WS-APP-IS-HEALTH-PROD        VALUE 5.
+           05  WS-SERV-AGT-ID              PIC X(06).
+
+       01  WS-CLI-ID-TABLE.
+           05  WS-CLI-INFO                 OCCURS 50.
+               10  WS-CLI-TYPE-CD          PIC 9(01).
+                   88  WS-CLI-IS-PERSON             VALUE 0.
+                   88  WS-CLI-IS-COMPANY            VALUE 1.
+               10  WS-CLI-BASE-CD          PIC 9(01).
+                   88  WS-CLI-BASE-INSURED          VALUE 1.
+               10  WS-CLI-RIDER-CD         PIC 9(01).
+                   88  WS-CLI-RIDER-INSURED         VALUE 1.
+               10  WS-CLI-PRIM-OWN-CD      PIC 9(01).
+                   88  WS-CLI-PRIMARY-OWNER         VALUE 1.
+               10  WS-CLI-OTHR-OWN-CD      PIC 9(01).
+                   88  WS-CLI-OTHER-OWNER           VALUE 1.
+               10  WS-CLI-SPOUS-CD         PIC 9(01).
+                   88  WS-CLI-SPOUSE                VALUE 1.
+               10  WS-CLI-BNFY-CD          PIC 9(01).
+                   88  WS-CLI-BENEFICIARY           VALUE 1.
+               10  WS-CLI-PHYS-CD          PIC 9(01).
+                   88  WS-CLI-PHYSICIAN             VALUE 1.
+
+       01  WS-CLI-ADDR-TABLE.
+           05  WS-CLI-ADDR-INFO            OCCURS 5.
+               10  FILLER                  PIC X(12).
+               10  WS-CLI-ADDR-TYP-ID      PIC X(02).
+               10  WS-CLI-ADDR-SEQ-NUM     PIC 9(03).
+               10  FILLER                  PIC X(207).
+
+MFPFU2*01  WS-CVG-CLI-TABLE.
+MFPFU2*    05  WS-CVG-CLI-TBL              OCCURS 999.
+MFPFU2*        10  WS-CVG-CLI-ID           PIC X(10).
+MFPFU2*        10  WS-CVG-PLAN-ID          PIC X(06).
+MFPFU2*        10  WS-CVG-STICKER-ID       PIC X(11).
+
+HNB014 01  WS-INSRD-CLI-ID-TABLE.
+HNB014     05  WS-INSRD-CLI-INFO           OCCURS 999.
+HNB014         10  WS-INSRD-CLI-ID         PIC X(10).
+HNB014
+HNB014 01  WS-INSRD-MATCH-IND              PIC X.
+HNB014     88 WS-INSRD-MATCH-YES           VALUE 'Y'.
+HNB014     88 WS-INSRD-MATCH-NO            VALUE 'N'.
+HNB014
+HNB014 01  WS-ERROR-IND                    PIC X.
+HNB014     88 WS-ERROR-YES                 VALUE 'Y'.
+HNB014     88 WS-ERROR-NO                  VALUE 'N'.
+HNB014
+HNB014 01  WS-TOT-LIMIT-INSRD              PIC 9(03) VALUE 999.
+HNB014 01  WS-TOT-INSRD                    PIC 9(03).
+HNB203
+HNB203 01  WS-TOT-DB-AMT                   PIC S9(15)V99 COMP-3.
+HNB203
+HNB203 01  WS-CLI-SUR-NM                   PIC X(25).
+
+       01  WS-CLI-CONTACT-TABLE.
+           05  WS-CLI-CONTACT              OCCURS 2.
+               10  WS-CLI-CNTCT-ID-CD      PIC X(02).
+               10  WS-CLI-CNTCT-ID-TXT     PIC X(20).
+
+R16171*MP310E 01  WS-AUTHENTICATE-XML.
+R16171*MP310E     05  FILLER                    PIC X(20)
+R16171*MP310E         VALUE '<?xml version="1.0" '.
+R16171*MP310E     05  FILLER                    PIC X(20)
+R16171*MP310E         VALUE 'encoding="UTF-8"?>  '.
+R16171*MP310E     05  FILLER                    PIC X(10)
+R16171*MP310E         VALUE '<Request> '.
+R16171*MP310E     05  FILLER                    PIC X(22)
+R16171*MP310E         VALUE '<PathFinderConnector> '.
+R16171*MP310E     05  FILLER                    PIC X(20)
+R16171*MP310E         VALUE '<Token>0001</Token> '.
+R16171*MP310E     05  FILLER                    PIC X(23)
+R16171*MP310E         VALUE '<Sequence>0</Sequence> '.
+R16171*MP310E     05  FILLER                    PIC X(32)
+R16171*MP310E         VALUE '<Message>Authenticate</Message> '.
+R16171*MP310E     05  FILLER                    PIC X(23)
+R16171*MP310E         VALUE '<ConnectionTimeout>LONG'.
+R16171*MP310E     05  FILLER                    PIC X(21)
+R16171*MP310E         VALUE '</ConnectionTimeout> '.
+R16171*MP310E     05  FILLER                    PIC X(23)
+R16171*MP310E         VALUE '</PathFinderConnector> '.
+R16171*MP310E     05  FILLER                    PIC X(10)
+R16171*MP310E         VALUE '</Request>'.
+MP310E
+R16171*R14974 01  WS-COMMIT-XML.
+R16171*R14974     05  FILLER                    PIC X(20)
+R16171*R14974         VALUE '<?xml version="1.0" '.
+R16171*R14974     05  FILLER                    PIC X(20)
+R16171*R14974         VALUE 'encoding="UTF-8"?>  '.
+R16171*R14974     05  FILLER                    PIC X(10)
+R16171*R14974         VALUE '<Request> '.
+R16171*R14974     05  FILLER                    PIC X(22)
+R16171*R14974         VALUE '<PathFinderConnector> '.
+R16171*R14974     05  FILLER                    PIC X(20)
+R16171*R14974         VALUE '<Token>0001</Token> '.
+R16171*R14974     05  FILLER                    PIC X(23)
+R16171*R14974         VALUE '<Sequence>2</Sequence> '.
+R16171*R14974     05  FILLER                    PIC X(26)
+R16171*R14974         VALUE '<Message>Commit</Message> '.
+R16171*R14974     05  FILLER                    PIC X(23)
+R16171*R14974         VALUE '</PathFinderConnector> '.
+R16171*R14974     05  FILLER                    PIC X(10)
+R16171*R14974         VALUE '</Request>'.
+               
+R16171*MP310E 01  WS-XML-BUFFER                        PIC X(5000).         
+R16171*MP310E 
+R16171*MP310E 01  WS-PFC-RESPONSE                      PIC X(5000). 
+       
+       01  WS-HOLD-AREAS.
+           05  WS-HOLD-POLICY-NUM          PIC X(10).
+           05  WS-HOLD-LINE-OF-BUSINESS    PIC X(01).
+               88  WS-LIFE-POLICY          VALUE 'L'.
+               88  WS-DI-POLICY            VALUE 'H'.
+               88  WS-IMM-ANN-POLICY       VALUE 'A'.
+               88  WS-DEF-ANN-POLICY       VALUE 'E'.
+               88  WS-ANNUITY-POLICY       VALUE 'E', 'A'.
+           05  WS-CLIENTS-IN-APP           PIC S9(04) COMP.
+           05  WS-PRIMARY-INSD-CLI-ID      PIC X(10).
+02NB01     05  WS-BASE-INSRD-CLI-ID        PIC X(10).
+02NB01     05  WS-BASE-INSRD-STCKR-ID      PIC X(11).
+           05  WS-POL-ISS-LOC-CD           PIC X(02).
+           05  WS-SBSDRY-CO-ID             PIC X(02).
+           05  WS-POL-CTRY-CD              PIC X(02).
+           05  WS-POL-APP-SIGN-IND         PIC X(01).
+           05  WS-POL-MIB-SIGN-CD          PIC X(01).
+P00653     05  WS-CORP-NAME-MATCHED-IND       PIC X(01).
+P00653         88  WS-CORP-NAME-MATCHED-YES   VALUE 'Y'.
+P00653         88  WS-CORP-NAME-MATCHED-NO    VALUE 'N'.
+           05  WS-PAC-CLI-MATCH-IND        PIC X(01).
+               88  WS-PAC-CLIENT-MATCHED   VALUE 'Y'.
+               88  WS-PAC-CLIENT-NOT-MATCHED   VALUE 'N'.
+           05  WS-APPL-FORM-NO             PIC 9(15).
+           05  WS-APPL-FORM-NO-X           REDEFINES
+               WS-APPL-FORM-NO             PIC X(15).
+           05  WS-ALLOC-PCT                PIC S9(03)V9(04) COMP-3.
+           05  WS-PAYO-IND                 PIC X(01).
+               88  WS-PAYO-DCA             VALUE 'C'.
+               88  WS-PAYO-AR              VALUE 'R'.
+           05  WS-DIA-CVG                  PIC 9(02)  VALUE ZERO.
+           05  WS-GIA-CVG                  PIC 9(02)  VALUE ZERO.
+           05  WS-CVG-ALLOC                OCCURS 20 TIMES.
+               10  WS-CVG-ALLOC-PCT1       PIC 9(03)V9(04)  COMP-3.
+               10  WS-CVG-ALLOC-PCT2       PIC 9(03)V9(04)  COMP-3.
+MFFUPL*    05  WS-PALC-CVG-CTR             PIC 9(02).
+           05  WS-MESSAGE-NUMBER           PIC 9(04).
+           05  WS-MESSAGE-NUMBER-X         REDEFINES
+               WS-MESSAGE-NUMBER           PIC X(04).
+           05  WS-MESSAGE-ARRAY-MAX-SIZE   PIC S9(03) COMP-3 VALUE +25.
+           05  WS-MESSAGE-SET-ARRAY.
+               10  WS-MESSAGE-SET-SW       PIC X OCCURS 25.
+                   88  WS-MESSAGE-SET      VALUE 'Y'.
+           05  WS-REQT-TABLE.
+               10  WS-REQT-DETAILS         OCCURS 11 TIMES.
+                   15  WS-REQT-CODE        PIC X(05).
+                   15  WS-REQT-STATUS      PIC X(03).
+MFFOP1     05  WS-SEG-FUND-CD              PIC X(02).
+MFFOP1         88  WS-SEG-FUND-YES         VALUE 'SA'.
+MFFOP1         88  WS-SEG-FUND-NO          VALUE '  '.
+MFFOP1*    05  WS-POL-CNVR-TYP-DHY-CD      PIC X(01)  VALUE '1'.
+MFFOP1     05  WS-POL-CHNG-TYP-CD          PIC X(02).
+MFFOP1         88  WS-POL-CNVR-TYP-DHY      VALUE 'C '.
+MFFOP1         88  WS-POL-CNVR-TYP-UCP      VALUE 'SW'.
+MFFOP1         88  WS-MY-KEMPO-TYP-MATURITY VALUE 'M1'.
+MFFOP1         88  WS-MY-KEMPO-TYP-MID-TERM VALUE 'M2'.
+IPDDUP     05  WS-CVG-PRES-CNVR-FACE-AMT    PIC S9(13)V99 COMP-3.
+IPDDUP
+      *** THE POL AND CVG BENE HOLD AREAS SHOULD BE THE SAME SIZE AS
+      *** THE LAPUP-BENE-REL-TABLE AREA (CURRENTLY 12 X 76 CHARS)
+
+           05  WS-BENE-HOLD-AREAS.
+               10  WS-POL-BENE-HOLD-AREA      PIC X(912).
+               10  WS-CVG-BENE-HOLD-AREAS.
+                   15  WS-CVG-BENE-HOLD-AREA  PIC X(912)
+                                              OCCURS 20 TIMES.
+MP9PHA     05  WS-CLADR-CLI-ID             PIC X(10).
+MP9PHA     05  WS-ADDR-CD                  PIC X(08).
+MP9PHA     05  WS-SAMAKATA-BU              PIC X(60).
+MP9PHA     05  WS-ILLUS-ADDR-CD            PIC X(08).
+MP9PHA     05  WS-ILLUS-ADDR-TXT.
+MP9PHA         10  WS-ILLUS-SAMAKATA-BU.
+MP9PHA             15  WS-ILLUS-SAMAKATA-BU-1 PIC X(20).
+MP9PHA             15  WS-ILLUS-SAMAKATA-BU-2 PIC X(20).
+MP9PHA             15  WS-ILLUS-SAMAKATA-BU-3 PIC X(20).
+MP9PHA         10  WS-ILLUS-ADDR-MORE-TXT  PIC X(12).
+MP9PHA     05  WS-PRTX-VAR-1-INFO.
+MP9PHA         10  WS-PRTX-NEW-APP-UPLD-CD PIC X(01).
+MP9PHA             88 NEW-POLICY-UPLDED    VALUE 'Y'.
+MP9PHA             88 NON-NEW-POLICY       VALUE 'N'.
+MP9PHA         10  WS-UCLI-SEQ-NUM         PIC X(02).
+MP9PHA         10  FILLER                  PIC X(17) VALUE SPACES.
+P03349     05  WS-NM-UNCOMP-FIRST          PIC X(50).
+P03349     05  WS-NM-UNCOMP-LAST           PIC X(50).
+P03349     05  WS-COMPRESSED-NAME          PIC X(50).
+NV3N01     05  WS-COMPRESSED-NAME-X        PIC X(50).
+P03349     05  WS-NM.
+P03349         10  WS-NM-FIRST             PIC X(01).
+P03349         10  WS-NM-REST              PIC X(49).
+P03349     05  WS-NM-COMPRESSED            PIC X(50).
+P03349     05  WS-NM-COMP-DATA-R           REDEFINES
+P03349                                     WS-NM-COMPRESSED.
+P03349         10  WS-NM-COMP              PIC X
+P03349                                     OCCURS 50 TIMES.
+P03349     05  WS-NM-DBCS-DATA             PIC X(50).
+P03349     05  WS-NM-DBCS-DATA-R           REDEFINES
+P03349                                     WS-NM-DBCS-DATA.
+P03349         10  WS-NM-DBCS              PIC X
+P03349                                     OCCURS 50 TIMES.
+26878B     05 WS-CLI-FIN-ASSET-AMT         PIC X(15).
+26878B     05 WS-CLI-FIN-ASSET-AMT-N       REDEFINES
+26878B        WS-CLI-FIN-ASSET-AMT         PIC 9(15).
+26878B               
+       01  WS-PROG-SWITCHES.
+           05  WS-AGT-EQUAL-SHARES-SW      PIC X.
+               88  WS-AGT-EQUAL-SHARES     VALUE 'Y'.
+
+       01  WS-COUNTERS.
+           05  WS-RECORDS-IN-APP           PIC 9(07)  VALUE ZEROS.
+           05  WS-PARM-CARD-COUNTER        PIC 9(07)  VALUE ZEROS.
+B10015     05  WS-APP-REC-COUNTER          PIC 9(07)  VALUE ZEROS.
+
+       01  WS-SWITCHES.
+           05  WS-FATAL-ERROR-SW             PIC X.
+               88  WS-FATAL-ERROR            VALUE 'Y'.
+           05  WS-PROGRAM-ID-FOUND-SW        PIC X.
+               88  WS-PROGRAM-ID-FOUND       VALUE 'Y'.
+           05  WS-COMPANY-FOUND-SW           PIC X.
+               88  WS-COMPANY-FOUND          VALUE 'Y'.
+           05  WS-RUN-DATE-FOUND-SW          PIC X.
+               88  WS-RUN-DATE-FOUND         VALUE 'Y'.
+           05  WS-PROCESS-DATE-FOUND-SW      PIC X.
+               88  WS-PROCESS-DATE-FOUND     VALUE 'Y'.
+           05  WS-ALL-COMPANY-CARDS-READ-SW  PIC X.
+               88  WS-ALL-COMPANY-CARDS-READ VALUE 'Y'.
+B01120     05  WS-BASE-INSURED-STATUS        PIC X.
+B01120         88 BASE-INSURED-FOUND         VALUE 'Y'.
+B01120         88 BASE-INSURED-NOT-FOUND     VALUE 'N'.
+MFFUPL     05  WS-CDI-DEL-FAIL-IND           PIC X.
+MFFUPL         88  WS-CDI-DEL-FAIL-YES       VALUE 'Y'.
+MFFUPL         88  WS-CDI-DEL-FAIL-NO        VALUE 'N'.
+MP265A     05  WS-RUN-TYP-FOUND-SW           PIC X.
+MP265A         88  WS-RUN-TYP-FOUND          VALUE 'Y'.
+MP261E*------------------------------------------------------
+MP261E*  DETAIL LIST FOR Client Unmatched List 
+MP261E*------------------------------------------------------      
+MP261E 01  WS-CLUM-LIST.
+MP261E     05  FILLER                       PIC X(01) VALUE '"'. 
+MP261E     05  WS-CLUM-HDR              PIC X(03).
+MP261E     05  FILLER                       PIC X(03) VALUE '","'.
+MP261E     05  WS-CLUM-APP-ID           PIC X(15).
+MP261E     05  FILLER                       PIC X(03) VALUE '","'.
+MP261E     05  WS-CLUM-POL-ID           PIC X(10).    
+MP261E     05  FILLER                       PIC X(03) VALUE '","'.
+MP261E     05  WS-CLUM-CLI-ID           PIC X(10).    
+MP261E     05  FILLER                       PIC X(03) VALUE '","'.
+MP261E     05  WS-CLUM-KANJI-NM.
+MP261E         10  WS-CLUM-KANJI-SUR-NM     PIC X(25).
+MP261E         10  WS-CLUM-KANJI-GIV-NM     PIC X(25).
+MP261E     05  FILLER                       PIC X(03) VALUE '","'.
+MP261E     05  WS-CLUM-KANA-NM.
+MP261E         10  WS-CLUM-KANA-SUR-NM      PIC X(25).
+MP261E         10  WS-CLUM-KANA-GIV-NM      PIC X(25).
+MP261E     05  FILLER                       PIC X(03) VALUE '","'.
+MP261E     05  WS-CLUM-ADDR-CD              PIC X(08). 
+MP261E     05  FILLER                       PIC X(03) VALUE '","'.
+MP261E     05  WS-CLUM-ADDR-TXT.
+MP261E         10  WS-CLUM-ADDR-1-TXT 	    PIC X(60).
+MP261E         10  WS-CLUM-ADDR-2-TXT 	    PIC X(12).
+MP261E     05  FILLER                       PIC X(03) VALUE '","'.
+MP261E*-------------------------
+MP261E* WORK AREA FOR THE CLUM
+MP261E*------------------------
+MP261E 01  WS-WORK-AREA.
+MP261E     05  WS-XML-HDR		    PIC X(03) VALUE 'MLK'.
+MP261E     05  WS-CLIA-HDR		    PIC X(03) VALUE 'ING'..
+MP261E     05  WS-CLI-NM                    PIC X(51).
+MP261E     05  WS-ADDR-TXT.
+MP261E         10  WS-ADDR-1-TXT		    PIC X(60).
+MP261E         10  WS-ADDR-2-TXT		    PIC X(12).
+MP261E     05  WS-CLI-INDV-GIV-NM           PIC X(25).
+MP261E     05  WS-CLI-INDV-MID-NM           PIC X(01).
+MP261E     05  WS-CLI-INDV-SUR-NM           PIC X(25).
+023800     05  WS-MINR-CHG-AGE              PIC S9(03).
+023800     05  WS-MINR-CHG-EFF-DT           PIC X(10).  
+
+      *****************************************************************
+      * COMMON COPYBOOKS                                              *
+      *****************************************************************
+
+       COPY XCWTFCMD.
+      /
+TL0572 COPY XCWL9124.
+TL0572/	  
+       COPY XCWWWKDT.
+      /
+       COPY XCWWCKPT.
+           05  WCKPT-TBL-KEY-AREA.
+               10  FILLER                   PIC X(01).
+           05  WCKPT-GLOBAL-AREA            PIC X(992).
+P00045     05  WCKPT-LPGA-PARM-INFO         PIC X(200).
+           05  WCKPT-INPUT-PARM-AREA.
+B10015*        10  WCKPT-BCF-REC-COUNT      PIC S9(07).
+B10015         10  WCKPT-REC-COUNT          PIC S9(07).
+
+      *****************************************************************
+      * ALL COUNTERS TO BE RESTORED SHOULD BE DEFINED HERE
+      *****************************************************************
+           05  WCKPT-OTHER-AREA.
+      *****************************************************************
+      * ALL MISCELLANEOUS VARIABLES SHOULD BE DEFINED HERE
+      *****************************************************************
+               10  FILLER                   PIC X(01).
+      /
+       COPY XCWL0800.
+      /
+      *****************************************************************
+      * CALLED MODULE PARAMETER INFORMATION                           *
+      *****************************************************************
+
+P02229 COPY XCWL0035.
+R16171*MP310E COPY XCWL0013.
+R16171*MP310E COPY XCWLBUFR.
+R14974 COPY XCWL0466.
+       COPY ACWL2130.
+       COPY ACWLAPUP.
+       COPY ACWLCLIB.
+       COPY ACWLUPOL.
+       COPY ACWLUCLI.
+      /
+       COPY ACWWAPIN.
+       COPY ACWWI570.
+       COPY ACWWI953.
+      /
+       COPY CCWL0953.
+      /
+       COPY CCWL0066.
+
+       COPY CCWL0083.
+
+       COPY NCWL0302.
+
+MP9PHA COPY NCWL0303.
+
+       COPY CCWL0183.
+       COPY CCWL0840.
+       COPY CCWL0832.
+       COPY CCWL2430.
+
+HNB005 COPY CCWL2435.
+
+       COPY NCWL2437.
+
+       COPY CCWL2800.
+P00653 COPY CCWL2810.
+       COPY CCWL5120.
+      /
+       COPY CCWL6180.
+      /
+       COPY CCWL0620.
+
+       COPY CCWWCVGS.
+      /
+       COPY NCWL0080.
+
+       COPY NCWL0301.
+       COPY CCWL0570.
+      /
+       COPY CCWL6060.
+       COPY CCWL5950.
+      /
+       COPY NCWL0760.
+       COPY NCWL0960.
+      /
+       COPY CCWL8240.
+      /
+B01730 COPY CCWL9215.
+      /
+       COPY NCWWPARM.
+PR006Q COPY XCWLPTR.
+      /
+       COPY XCWL0005.
+       COPY XCWL0015.
+       COPY XCWL0040.
+       COPY XCWL0290.
+       COPY XCWL0280.
+       COPY XCWL1580.
+       COPY XCWL1610.
+       COPY XCWL1640.
+       COPY XCWL1660.
+       COPY XCWL1670.
+       COPY XCWL1680.
+       COPY XCWLDTLK.
+       COPY NCWL9140.
+       COPY CCWL9285.
+B01137 COPY CCWL9196.
+PR006Q COPY CCWL9846.
+MFFUPL/
+MFFUPL COPY CCWL9806.
+MFFUPL COPY NCWL9407.
+MFFUPL COPY FCWL8200.
+MFFUPL COPY FCWL8210.
+MFFUPL COPY FCWLFUND.
+MFFUPL COPY SCWLSEGF.
+MFFUPL COPY SCWL0500.
+MFFUPL COPY XCWL0289.
+IPDDUP COPY CCWL9876.
+FEID01 COPY CCWL9555.
+TV2003*TVITMP COPY CCWL5670.
+
+HNB014 COPY CCWWINDX.
+      /
+EN7281 COPY CCWL2440.
+EN7281/
+R16171*MP310E COPY CCWLSCVS.
+R16171*MP310E COPY CCWLALPS.
+R16171*MP310E COPY XCWL0319.
+       COPY CCWL0010.
+109682 COPY CCWWLOCK.
+109682 COPY XCWL8090.
+R16171*109938 COPY NCWL9316.
+R16171*109938 COPY XCWWTIME.
+      /
+TLB08E COPY CCWL9228.
+      *****************************************************************
+      * I/O COPYBOOKS                                                 *
+      *****************************************************************
+      *
+      * APPLICATION UPLOAD TABLES
+      /
+       COPY ACFWUPOL.
+       COPY ACFRUPOL.
+      /
+       COPY ACFWUCVG.
+       COPY ACFRUCVG.
+      /
+       COPY ACFWUCLI.
+       COPY ACFRUCLI.
+      /
+C12392 COPY ACFWUBEN.
+C12392 COPY ACFRUBEN.
+C12392/
+02NB01 COPY ACFWUCNV.
+02NB01 COPY ACFRUCNV.
+02NB01/
+02NB01 COPY CCFWPOLX.
+02NB01 COPY CCFRPOLX.
+      /
+PR006Q COPY CCFWPOLK.
+PR006Q COPY CCFRPOLK.
+      /
+       COPY CCFRCWAR.
+       COPY CCFWCWAR.
+      /
+NWLXML COPY ACFRXMLE.
+NWLXML COPY ACFWXMLE.
+NWLXML
+       COPY ACSW2100.
+       COPY ACSR2100.
+      /
+P00045*COPY ACSW2110.
+P00045 COPY ACFW2110.
+P00045 COPY ACFR2110.
+       COPY ACSR2110.
+      /
+B10015 COPY ACSW9400.
+B10015 COPY ACSR9400.
+      /
+P00045*COPY ACSW2120.
+P00045 COPY ACFW2120.
+P00045 COPY ACFR2120.
+       COPY ACSR2120.
+NWLXML/
+MP261E COPY ACFWCLUM.
+MP261E COPY ACFRCLUM.
+MP261E COPY ACSRCLUM.
+MP261E/
+NWLXML COPY ACSWXMEX.
+NWLXML COPY ACSRXMEX.
+      /
+MP310C COPY ACFWUAPE.
+MP310C COPY ACFRUAPE.
+      /      
+      *
+      * ADMIN FILES
+      *
+       COPY CCFWBENC.
+       COPY CCFWBENE.
+       COPY CCFRBENE.
+      /
+       COPY CCFWBNKA.
+       COPY CCFRBNKA.
+      /
+       COPY CCFWBNKB.
+       COPY CCFRBNKB.
+      /
+       COPY CCFWCLI.
+       COPY CCFRCLI.
+       COPY CCFHCLI.
+      /
+       COPY CCFWCLIA.
+       COPY CCFRCLIA.
+      /
+       COPY CCFWCLIB.
+       COPY CCFRCLIB.
+      /
+       COPY CCFWCLIC.
+       COPY CCFRCLIC.
+      /
+       COPY NCFWCLIU.
+       COPY NCFRCLIU.
+MP261E COPY NCFWCLUS.       
+HNB203/
+HNB203 COPY NCFWCLUA.
+      /
+       COPY CCFWCLII.
+       COPY CCFRCLII.
+      /
+       COPY CCFWCLIN.
+      /
+       COPY CCFWCLNC.
+       COPY CCFRCLNC.
+      /
+M310K1 COPY CCFWCLNN.
+M310K1 COPY CCFWCLID.
+       COPY CCFWCLNM.
+       COPY CCFRCLNM.
+      /
+       COPY CCFWCVG.
+       COPY CCFRCVG.
+      /
+       COPY CCFRCVGA.
+      /
+       COPY CCFWCVGC.
+       COPY CCFRCVGC.
+      /
+HNB014 COPY CCFWCCLI.
+      /
+       COPY CCFWEDIT.
+       COPY CCFREDIT.
+      /
+       COPY CCFWEHST.
+       COPY CCFREHST.
+      /
+       COPY CCFWIR.
+       COPY CCFRIR.
+      /
+       COPY CCFWLI.
+       COPY CCFRLI.
+      /
+       COPY CCFWPACH.
+       COPY CCFRPACH.
+      /
+       COPY CCFWPACK.
+       COPY CCFRPACK.
+      /
+       COPY CCFWPCOM.
+       COPY CCFRPCOM.
+      /
+       COPY CCFWSCOM.
+       COPY CCFRSCOM.
+      /
+       COPY CCFWPSYS.
+       COPY CCFRPSYS.
+      /
+       COPY CCFWPD.
+       COPY CCFRPD.
+      /
+       COPY CCFWPH.
+       COPY CCFRPH.
+      /
+       COPY CCFWPOL.
+       COPY CCFRPOL.
+       COPY CCFHPOL.
+      /
+       COPY CCFWPOLC.
+       COPY CCFRPOLC.
+      /
+       COPY CCFWRH.
+       COPY CCFRRH.
+      /
+       COPY CCFWRT.
+      /
+       COPY CCFWRL.
+       COPY CCFRRL.
+      /
+       COPY CCFRQT.
+      /
+       COPY CCFWUV.
+       COPY CCFRUV.
+      /
+       COPY CCFRCAIN.
+       COPY CCFWCAIN.
+      /
+       COPY CCFRCDSI.
+       COPY CCFWCDSI.
+      /
+       COPY CCFWPOLP.
+       COPY CCFRPOLP.
+      /
+       COPY CCFWMAST.
+       COPY CCFRMAST.
+      /
+P00653 COPY CCFWCLND.
+      *
+MFFUPL COPY SCFWFC.
+MFFUPL COPY SCFRFC.
+MFFUPL/
+MFFUPL COPY SCFWFS.
+MFFUPL COPY SCFRFS.
+MFFUPL/
+       COPY XCSWBCF.
+       COPY XCSRBCF.
+      /
+       COPY XCSWOCF.
+       COPY XCSROCF.
+      /
+       COPY XCFWUSEC.
+       COPY XCFRUSEC.
+      /
+NWLXML COPY CCFWPOLF.      
+NWLXML/
+109682 COPY NCFWRTAB.
+109682 COPY NCFRRTAB.
+109682 COPY NCFWREQT.
+109682 COPY NCFRREQT.
+UYS110 COPY NCFW9565.
+UYS110 COPY NCFR9565.
+023800/
+023800 COPY CCFWTRNS.
+023800 COPY CCFRTRNS.
+TL0572 COPY CCFWCLIZ.
+TL0572 COPY CCFWADCD.
+TL0572 COPY CCFRADCD.
+NV3N01 COPY CCFRRINS.
+NV3N01 COPY CCFWRINS.
+NV3N01 COPY CCFRETAB.
+NV3N01 COPY CCFWETAB.
+26878B
+26878B COPY NCFWTTAB.
+26878B COPY NCFRTTAB.
+      *****************************************************************
+      * INPUT PARAMETER INFORMATION                                   *
+      *****************************************************************
+
+       01  WGLOB-GLOBAL-AREA.
+       COPY XCWWGLOB.
+      /
+       COPY CCWLPGA.
+      /
+      ********************
+       PROCEDURE DIVISION.
+      ********************
+
+      *--------------
+       0000-MAINLINE.
+      *--------------
+
+           PERFORM  0100-OPEN-FILES
+               THRU 0100-OPEN-FILES-X.
+
+           PERFORM  0200-INITIALIZE
+               THRU 0200-INITIALIZE-X.
+
+           PERFORM  1000-PROCESS-TRANSACTIONS
+               THRU 1000-PROCESS-TRANSACTIONS-X.
+
+      * READ THE FIRST APPLICATION FROM THE CONTROL CARD
+
+           PERFORM  8100-READ-APP-ID
+               THRU 8100-READ-APP-ID-X.
+
+           PERFORM  3000-PROCESS-EACH-APP
+               THRU 3000-PROCESS-EACH-APP-X
+               UNTIL WAPIN-NO-MORE-APPS.
+
+           PERFORM  7500-PRINT-GRAND-TOTALS
+               THRU 7500-PRINT-GRAND-TOTALS-X.
+
+           PERFORM  9999-CLOSE-FILES
+               THRU 9999-CLOSE-FILES-X.
+
+P02229     PERFORM  0035-1000-COMMIT
+P02229         THRU 0035-1000-COMMIT-X.
+
+           STOP RUN.
+
+       0000-MAINLINE-X.
+           EXIT.
+      /
+      *----------------
+       0100-OPEN-FILES.
+      *----------------
+      *
+      * THESE FILES ARE REQUIRED IN ALL BATCH PROGRAMS THAT REQUIRE
+      * CONTROL CARDS (I.E. EXCLUDING THE INITIALIZATION PROGRAMS)
+      *
+P00045*    PERFORM  OCF-3000-OPEN-OUTPUT
+P00045*        THRU OCF-3000-OPEN-OUTPUT-X.
+
+P00045     PERFORM  OCF-5000-OPEN-EXTEND
+P00045         THRU OCF-5000-OPEN-EXTEND-X.
+
+           PERFORM  BCF-1000-OPEN-INPUT
+               THRU BCF-1000-OPEN-INPUT-X.
+
+B10015     PERFORM  9400-1000-OPEN-INPUT
+B10015         THRU 9400-1000-OPEN-INPUT-X.
+
+NWLXML     PERFORM  XMUL-3000-OPEN-OUTPUT
+NWLXML         THRU XMUL-3000-OPEN-OUTPUT-X.
+NWLXML
+NWLXML     PERFORM  XMPA-3000-OPEN-OUTPUT
+NWLXML         THRU XMPA-3000-OPEN-OUTPUT-X.
+NWLXML
+NWLXML     PERFORM  XMGA-3000-OPEN-OUTPUT
+NWLXML         THRU XMGA-3000-OPEN-OUTPUT-X.
+NWLXML
+NWLXML     PERFORM  XWMD-3000-OPEN-OUTPUT
+NWLXML         THRU XWMD-3000-OPEN-OUTPUT-X.
+NWLXML
+P00045*    PERFORM  2110-3000-OPEN-OUTPUT
+P00045*        THRU 2110-3000-OPEN-OUTPUT-X.
+
+P00045*    PERFORM  2120-3000-OPEN-OUTPUT
+P00045*        THRU 2120-3000-OPEN-OUTPUT-X.
+
+       0100-OPEN-FILES-X.
+           EXIT.
+      /
+      *----------------
+       0200-INITIALIZE.
+      *----------------
+
+           MOVE WPGWS-CRNT-PGM-ID      TO L0960-PROGRAM-ID.
+           MOVE SPACES                 TO L0960-COMPANY-CODE.
+B10015     MOVE ZERO                   TO WS-APP-REC-COUNTER.
+
+           PERFORM  0960-2000-INIT-DEFAULT
+               THRU 0960-2000-INIT-DEFAULT-X.
+
+           MOVE WS-USER-ID             TO WGLOB-USER-ID.
+
+           PERFORM  8000-INIT-TITLES
+               THRU 8000-INIT-TITLES-X.
+
+           PERFORM  PGA-1000-BUILD-PARMS
+               THRU PGA-1000-BUILD-PARMS-X.
+
+       0200-INITIALIZE-X.
+           EXIT.
+      /
+      *--------------------------
+       1000-PROCESS-TRANSACTIONS.
+      *--------------------------
+      *
+      * PROCESS TRANSACTIONS - EDIT CONTROL CARDS AND, IF NO ERRORS
+      * ARE FOUND, PROCESS THE TRANS FILE FOR EACH COMPANY INPUT
+      *
+           PERFORM  1100-EDIT-CONTROL-CARDS
+               THRU 1100-EDIT-CONTROL-CARDS-X.
+
+           IF  WS-FATAL-ERROR
+               GO TO 1000-PROCESS-TRANSACTIONS-X
+           END-IF.
+      *
+      * REPOSITION CONTROL CARD FILE AT THE BEGINNING
+      *
+           PERFORM  BCF-4000-CLOSE
+               THRU BCF-4000-CLOSE-X.
+
+           PERFORM  BCF-1000-OPEN-INPUT
+               THRU BCF-1000-OPEN-INPUT-X.
+
+           MOVE ZERO TO WS-PARM-CARD-COUNTER.
+      *
+      * BYPASS THE PROGRAM ID CARD
+      *
+           PERFORM  BCF-1000-READ
+               THRU BCF-1000-READ-X.
+
+           ADD 1 TO WS-PARM-CARD-COUNTER.
+      *
+      * PROCESS THE PARM FILE FOR EACH COMPANY
+      *
+           PERFORM  8200-READ-CONTROL-CARD
+               THRU 8200-READ-CONTROL-CARD-X.
+
+      * ONLY ALLOW FOR PROCESSING OF ONE COMPANY.
+
+           PERFORM  2000-PROCESS-COMPANY
+              THRU  2000-PROCESS-COMPANY-X.
+
+      * IF PROCESS DATE EXISTS, READ DATE CARD
+
+           IF WS-PROCESS-DATE-FOUND
+              PERFORM 8200-READ-CONTROL-CARD
+                 THRU 8200-READ-CONTROL-CARD-X
+           END-IF.
+
+      * INITIALIZATION PROCESS FOR CHECKPOINT/RESTART
+
+           PERFORM  CKPT-CHECK-RESTART-INIT
+               THRU CKPT-CHECK-RESTART-INIT-X.
+
+           PERFORM  0800-1000-BUILD-PARM-INFO
+               THRU 0800-1000-BUILD-PARM-INFO-X.
+
+           MOVE WPGWS-CRNT-PGM-ID    TO  L0800-CHKPT-PGM-ID.
+           MOVE WGLOB-CHKPT-INSTC-ID TO  L0800-CHKPT-INSTC-ID.
+           MOVE WGLOB-COMPANY-CODE   TO  L0800-CO-ID.
+           MOVE LENGTH OF WCKPT-WORK-AREA
+                                     TO  L0800-CHKPT-WRK-INFO-LEN.
+
+           PERFORM  0800-1000-INIT-CKPT
+               THRU 0800-1000-INIT-CKPT-X.
+
+           IF  L0800-CHKPT-STAT-RUNNING
+               PERFORM  1010-RESTRE-CKPT-RSTAR-VALU
+                   THRU 1010-RESTRE-CKPT-RSTAR-VALU-X
+      * MSG: PROGRAM RESTART FOR @1
+               MOVE 'XS00000099'     TO  WGLOB-MSG-REF-INFO
+               MOVE WPGWS-CRNT-PGM-ID TO WGLOB-MSG-PARM (1)
+               PERFORM  0260-2000-GET-MESSAGE
+                   THRU 0260-2000-GET-MESSAGE-X
+               MOVE WGLOB-MSG-TXT    TO L0040-INPUT-LINE
+               PERFORM  0040-3000-WRITE-OTHER
+                   THRU 0040-3000-WRITE-OTHER-X
+           END-IF.
+
+       1000-PROCESS-TRANSACTIONS-X.
+           EXIT.
+      /
+      *----------------------------
+       1010-RESTRE-CKPT-RSTAR-VALU.
+      *----------------------------
+
+           MOVE L0800-CHKPT-WRK-INFO-TEXT
+                                        TO WCKPT-WORK-AREA.
+           MOVE WCKPT-GLOBAL-AREA       TO WGLOB-GLOBAL-AREA.
+P00045     MOVE WCKPT-LPGA-PARM-INFO    TO LPGA-PARM-INFO.
+
+B10015*    PERFORM 8200-READ-CONTROL-CARD
+B10015*       THRU 8200-READ-CONTROL-CARD-X
+B10015*       UNTIL WS-PARM-CARD-COUNTER = WCKPT-BCF-REC-COUNT.
+
+B10015     PERFORM  8100-READ-APP-ID
+B10015         THRU 8100-READ-APP-ID-X
+B10015         UNTIL WS-APP-REC-COUNTER = WCKPT-REC-COUNT.
+
+       1010-RESTRE-CKPT-RSTAR-VALU-X.
+           EXIT.
+      /
+      *------------------------
+       1100-EDIT-CONTROL-CARDS.
+      *------------------------
+      *
+      * PERFORM INITIAL EDITS ON CONTROL CARD FILE, THEN LOOP THRU
+      * FILE AND EDIT EACH CARD
+      *
+           MOVE 'N'                    TO WS-FATAL-ERROR-SW.
+           MOVE 'N'                    TO WS-COMPANY-FOUND-SW.
+           MOVE 'N'                    TO WS-PROGRAM-ID-FOUND-SW.
+           MOVE 'N'                    TO WS-RUN-DATE-FOUND-SW.
+           MOVE 'N'                    TO WS-PROCESS-DATE-FOUND-SW.
+MP265A     MOVE 'N'                         TO WS-RUN-TYP-FOUND-SW.        
+
+           PERFORM  8200-READ-CONTROL-CARD
+               THRU 8200-READ-CONTROL-CARD-X.
+
+           IF  WBCF-SEQ-IO-EOF
+               SET WS-FATAL-ERROR      TO TRUE
+      *MSG: CONTROL CARD FILE EMPTY, NO PROCESSING DONE
+               MOVE 'XS00000151'       TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+               GO TO 1100-EDIT-CONTROL-CARDS-X
+           END-IF.
+
+           MOVE RBCF-SEQ-REC-INFO      TO WPARM-CARD-AREA.
+
+           IF  NOT WPARM-PROGRAM-ID
+               SET WS-FATAL-ERROR      TO TRUE
+      *MSG: FIRST CONTROL CARD MUST BE PROGRAM ID CARD
+               MOVE 'XS00000147'       TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+           END-IF.
+
+           PERFORM  1110-EDIT-CONTROL-CARD
+               THRU 1110-EDIT-CONTROL-CARD-X
+               UNTIL WBCF-SEQ-IO-EOF.
+
+           IF  NOT WS-PROGRAM-ID-FOUND
+               SET WS-FATAL-ERROR      TO TRUE
+      *MSG: MISSING PROGRAM ID CARD
+               MOVE 'XS00000122'       TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+           END-IF.
+
+           IF  NOT WS-COMPANY-FOUND
+               SET WS-FATAL-ERROR      TO TRUE
+      *MSG: COMPANY CONTROL CARD MISSING
+               MOVE 'XS00000134'       TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+           END-IF.
+
+           IF  WGLOB-SYSTEM-DATE-INT < WGLOB-PROCESS-DATE
+               SET WS-FATAL-ERROR      TO TRUE
+      *MSG: SYSTEM DATE MUST BE >= PROCESS DATE
+               MOVE 'AS94000001'       TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+           END-IF.
+      *
+      * PRINT CONTROL CARD TOTALS
+      *
+      *MSG: TOTAL NUMBER OF PARM CARDS READ @1
+           MOVE 'XS00000142'           TO WGLOB-MSG-REF-INFO.
+           MOVE WS-PARM-CARD-COUNTER   TO WS-PIC-COUNTER.
+           MOVE WS-PIC-COUNTER         TO WGLOB-MSG-PARM (1).
+
+           PERFORM  0260-2000-GET-MESSAGE
+               THRU 0260-2000-GET-MESSAGE-X.
+
+           MOVE WGLOB-MSG-TXT          TO L0040-INPUT-LINE.
+
+           PERFORM  0040-3000-WRITE-OTHER
+               THRU 0040-3000-WRITE-OTHER-X.
+
+           PERFORM  0040-4000-WRITE-ERROR-TOTAL
+               THRU 0040-4000-WRITE-ERROR-TOTAL-X.
+
+       1100-EDIT-CONTROL-CARDS-X.
+           EXIT.
+      /
+      *-----------------------
+       1110-EDIT-CONTROL-CARD.
+      *-----------------------
+      *
+      * EDIT AN INDIVIDUAL CONTROL CARD
+      * MOVE THE CONTROL CARD TO A PARAMETER LAYOUT
+      *
+           MOVE RBCF-SEQ-REC-INFO      TO WPARM-CARD-AREA.
+
+           EVALUATE TRUE
+
+               WHEN WPARM-PROGRAM-ID
+                    PERFORM  1111-EDIT-PROGRAM-ID
+                        THRU 1111-EDIT-PROGRAM-ID-X
+
+               WHEN WPARM-COMPANY-CODE
+                    PERFORM  1112-EDIT-COMPANY-CODE
+                        THRU 1112-EDIT-COMPANY-CODE-X
+
+               WHEN WPARM-RUN-DATE
+                    PERFORM  1114-EDIT-RUN-DATE
+                        THRU 1114-EDIT-RUN-DATE-X
+
+               WHEN WPARM-PROCESS-DATE
+                    PERFORM  1115-EDIT-PROCESS-DATE
+                        THRU 1115-EDIT-PROCESS-DATE-X
+                      
+MP265A         WHEN WPARM-RUN-TYPE
+MP265A              PERFORM  1116-EDIT-RUN-TYP
+MP265A                  THRU 1116-EDIT-RUN-TYP-X
+MP265A                  
+B10015*        WHEN WPARM-APPLICATION-ID
+B10015*             MOVE WPARM-VALUE TO WS-APP-ID
+
+               WHEN OTHER
+                    SET WS-FATAL-ERROR TO TRUE
+      *MSG: INVALID PARM CARD TYPE
+                    MOVE 'XS00000152'  TO WGLOB-MSG-REF-INFO
+                    PERFORM  0260-1000-GENERATE-MESSAGE
+                        THRU 0260-1000-GENERATE-MESSAGE-X
+
+           END-EVALUATE.
+
+      * READ MASTER CONTROL TABLE FOR PROCESSING DATE - THIS WILL OVERRIDE
+      * THE PROCESS DATE ON THE CONTROL CARD IF THE PROCESS DATE IS NOT
+      * PRESENT.  PRIOR TO PRINTING THE APPLICATIONS ID, LETS PROCESS AND
+      * PRINT THE PROCESS DATE.
+
+B10015*    IF WPARM-APPLICATION-ID
+           IF NOT WS-PROCESS-DATE-FOUND
+               MOVE SPACES                 TO RMAST-KEY
+               MOVE WGLOB-COMPANY-CODE     TO WMAST-CO-ID
+
+               PERFORM  MAST-1000-READ
+                   THRU MAST-1000-READ-X
+
+               IF NOT WMAST-IO-OK
+                   MOVE WMAST-KEY          TO WGLOB-MSG-PARM (1)
+                   MOVE 'AS94000029'       TO WGLOB-MSG-REF-INFO
+                   PERFORM  0260-1000-GENERATE-MESSAGE
+                       THRU 0260-1000-GENERATE-MESSAGE-X
+                   PERFORM  0030-5000-LOGIC-ERROR
+                       THRU 0030-5000-LOGIC-ERROR-X
+               END-IF
+
+               MOVE RMAST-APPL-CTL-PRCES-DT TO WGLOB-PROCESS-DATE
+                                              WS-PROCESS-DATE
+B10015*    END-IF
+           END-IF.
+      *
+      * PRINT CONTROL CARD
+      *
+           MOVE RBCF-SEQ-REC-INFO      TO L0040-INPUT-LINE.
+
+           PERFORM  0040-3000-WRITE-OTHER
+              THRU  0040-3000-WRITE-OTHER-X.
+
+           PERFORM  8200-READ-CONTROL-CARD
+               THRU 8200-READ-CONTROL-CARD-X.
+
+       1110-EDIT-CONTROL-CARD-X.
+           EXIT.
+      /
+      *---------------------
+       1111-EDIT-PROGRAM-ID.
+      *---------------------
+      *
+      * EDIT PROGRAM ID AGAINST HARD CODED VALUE AND ENSURE THAT
+      * THERE IS ONLY ONE
+      *
+           IF  WS-PROGRAM-ID-FOUND
+               SET WS-FATAL-ERROR      TO TRUE
+      *MSG: MUST ONLY HAVE ONE PROGRAM ID CARD
+               MOVE 'XS00000162'       TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+           END-IF.
+
+           SET WS-PROGRAM-ID-FOUND     TO TRUE.
+
+           IF  WPARM-VALUE = WPGWS-CRNT-PGM-ID
+               NEXT SENTENCE
+           ELSE
+               SET WS-FATAL-ERROR      TO TRUE
+      *MSG: INVALID PROGRAM ID CARD
+               MOVE 'XS00000121'       TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+           END-IF.
+
+       1111-EDIT-PROGRAM-ID-X.
+           EXIT.
+      /
+      *-----------------------
+       1112-EDIT-COMPANY-CODE.
+      *-----------------------
+      *
+      * EDIT COMPANY CODE CARD DEPENDING ON WHETHER PCOM
+      *
+           MOVE 'N'                    TO WS-RUN-DATE-FOUND-SW.
+
+           IF  WPCOM-COMPANY-NOT-REQUIRED
+               IF  WS-COMPANY-FOUND
+                   SET WS-FATAL-ERROR  TO TRUE
+      *MSG: NO MULTI-COMPANY-CAN ONLY HAVE 1 COMPANY CARD
+                   MOVE 'XS00000163'   TO WGLOB-MSG-REF-INFO
+                   PERFORM  0260-1000-GENERATE-MESSAGE
+                       THRU 0260-1000-GENERATE-MESSAGE-X
+               END-IF
+           END-IF.
+
+           SET WS-COMPANY-FOUND        TO TRUE.
+
+           IF  WPCOM-COMPANY-NOT-REQUIRED
+               IF  WPARM-VALUE = SPACES
+                   GO TO 1112-EDIT-COMPANY-CODE-X
+               ELSE
+                   SET WS-FATAL-ERROR  TO TRUE
+      *MSG: COMPANY CODE MUST EQUAL SPACES-PCOM MULTI-COMP OFF
+                   MOVE 'XS00000148'   TO WGLOB-MSG-REF-INFO
+                   PERFORM  0260-1000-GENERATE-MESSAGE
+                       THRU 0260-1000-GENERATE-MESSAGE-X
+                   GO TO 1112-EDIT-COMPANY-CODE-X
+               END-IF
+           END-IF.
+
+           MOVE WGLOB-COMPANY-CODE     TO WS-COMPANY-CODE.
+           MOVE WPARM-VALUE            TO WGLOB-COMPANY-CODE.
+
+           PERFORM  PCOM-1000-READ
+               THRU PCOM-1000-READ-X.
+
+           MOVE WS-COMPANY-CODE        TO WGLOB-COMPANY-CODE.
+
+           IF  NOT WPCOM-IO-OK
+               SET WS-FATAL-ERROR      TO TRUE
+      *MSG: COMPANY CODE INVALID, NO PCOM RECORD EXISTS
+               MOVE 'XS00000149'       TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+           END-IF.
+
+       1112-EDIT-COMPANY-CODE-X.
+           EXIT.
+      /
+      *-------------------
+       1114-EDIT-RUN-DATE.
+      *-------------------
+      *
+      * EDIT RUN DATE AND ENSURE THAT THERE IS ONLY ONE PER COMPANY
+      *
+           IF  NOT WS-COMPANY-FOUND
+               SET WS-FATAL-ERROR      TO TRUE
+      *MSG: COMPANY CARD MUST PRECEDE THIS DATA CARD
+               MOVE 'XS00000175'       TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+           END-IF.
+
+           IF  WS-RUN-DATE-FOUND
+               SET WS-FATAL-ERROR      TO TRUE
+      *MSG: MUST ONLY HAVE ONE RUN DATE CARD PER COMPANY
+               MOVE 'XS00000164'       TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+           END-IF.
+
+           SET WS-RUN-DATE-FOUND       TO TRUE.
+           MOVE WPARM-VALUE            TO L1640-EXTERNAL-DATE.
+      *    SET L1640-USE-LEAP-YEAR     TO TRUE.
+
+           PERFORM  1640-6000-CTL-CARD-TO-INT
+               THRU 1640-6000-CTL-CARD-TO-INT-X.
+
+           IF  L1640-NOT-VALID
+               SET WS-FATAL-ERROR      TO TRUE
+      *MSG: RUN DATE MUST BE A VALID DATE IN DDMMMYYYY FORMAT
+      *MSG: RUN DATE MUST BE IN VALID DATE FORMAT
+               MOVE 'XS00000165'       TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+           END-IF.
+
+       1114-EDIT-RUN-DATE-X.
+           EXIT.
+      /
+      *-----------------------
+       1115-EDIT-PROCESS-DATE.
+      *-----------------------
+      *
+      * EDIT PROCESS DATE AND ENSURE THAT THERE IS ONLY ONE PER
+      * COMPANY.
+
+           IF  NOT WS-COMPANY-FOUND
+               SET WS-FATAL-ERROR      TO TRUE
+      *MSG: COMPANY CARD MUST PRECEDE THIS DATA CARD
+               MOVE 'XS00000175'       TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+           END-IF.
+
+           IF  WS-PROCESS-DATE-FOUND
+               SET WS-FATAL-ERROR      TO TRUE
+      *MSG: MUST ONLY HAVE ONE RUN DATE CARD PER COMPANY
+               MOVE 'XS00000164'       TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+           END-IF.
+
+           SET WS-PROCESS-DATE-FOUND   TO TRUE.
+
+           MOVE WPARM-VALUE            TO L1640-EXTERNAL-DATE.
+           PERFORM  1640-6000-CTL-CARD-TO-INT
+               THRU 1640-6000-CTL-CARD-TO-INT-X.
+
+           IF  L1640-NOT-VALID
+               SET WS-FATAL-ERROR      TO TRUE
+      *MSG: INVALID PROCESS DATE - FORMAT MUST BE DDMMMYYYY
+      *MSG: INVALID PROCESS DATE
+               MOVE 'XS00000159'       TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+           END-IF.
+
+           MOVE L1640-INTERNAL-DATE TO WGLOB-PROCESS-DATE.
+
+       1115-EDIT-PROCESS-DATE-X.
+           EXIT.
+      /
+MP265A*------------------
+MP265A 1116-EDIT-RUN-TYP.
+MP265A*------------------
+MP265A
+MP265A     MOVE WPARM-VALUE                 TO WS-RUN-TYP-IND.
+MP265A
+MP265A     IF NOT WS-RUN-TYP-VALID         
+MP265A         SET WS-FATAL-ERROR           TO TRUE
+MP265A*MSG: INVALID RUN TYPE INFORMATION IN THE CONTROL CARD
+MP265A         MOVE 'XS00009007'            TO WGLOB-MSG-REF-INFO
+MP265A         PERFORM  0260-1000-GENERATE-MESSAGE
+MP265A             THRU 0260-1000-GENERATE-MESSAGE-X
+MP265A     END-IF.
+MP265A
+MP265A     SET WS-RUN-TYP-FOUND             TO TRUE.
+MP265A
+MP265A 1116-EDIT-RUN-TYP-X.
+MP265A     EXIT.
+MP265A/      
+      *---------------------
+       2000-PROCESS-COMPANY.
+      *---------------------
+      *
+      * FIRST CARD MUST BE COMPANY CARD
+      *
+           MOVE RBCF-SEQ-REC-INFO      TO WPARM-CARD-AREA.
+           MOVE WPARM-VALUE            TO WS-COMPANY-CODE.
+      *
+      * INITIALIZE GLOBAL AREA AND REPORTS FOR COMPANY
+      *
+           MOVE WS-COMPANY-CODE        TO L0960-COMPANY-CODE.
+
+           PERFORM  0960-3000-INIT-COMPANY
+               THRU 0960-3000-INIT-COMPANY-X.
+
+           PERFORM 0290-1000-BUILD-PARM-INFO
+              THRU 0290-1000-BUILD-PARM-INFO-X.
+
+           PERFORM  8000-INIT-TITLES
+               THRU 8000-INIT-TITLES-X.
+      *
+      * GET THE REPORT HEADING
+
+      *MSG: COMPANY RUN MESSAGES
+           MOVE 'XS00000161'           TO WGLOB-MSG-REF-INFO.
+           PERFORM  0260-2000-GET-MESSAGE
+               THRU 0260-2000-GET-MESSAGE-X.
+           MOVE WGLOB-MSG-TXT          TO L0040-HDG-LINE-3.
+
+           PERFORM  0040-1000-INIT-TITLE
+               THRU 0040-1000-INIT-TITLE-X.
+
+           PERFORM  PCOM-1000-READ
+               THRU PCOM-1000-READ-X.
+
+           IF  WPCOM-IO-OK
+               MOVE RPCOM-CO-AUD-CTR-LOB-CD TO WS-PCOM-CO-AUD-CTR-LOB-CD
+           ELSE
+      *MSG: COMPANY PROFILE RECORD NOT FOUND (@1)
+               MOVE 'AS94000002'       TO WGLOB-MSG-REF-INFO
+               MOVE WGLOB-COMPANY-CODE TO WGLOB-MSG-PARM (1)
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+               PERFORM  0030-5000-LOGIC-ERROR
+                   THRU 0030-5000-LOGIC-ERROR-X
+           END-IF.
+
+       2000-PROCESS-COMPANY-X.
+           EXIT.
+      /
+      *----------------------
+       3000-PROCESS-EACH-APP.
+      *----------------------
+      
+TL0572   MOVE SPACES                        TO WS-INSRD-ADDR-LOC-CD.
+EP1923   MOVE ZEROES                        TO WS-INSRD-CNTR.
+
+           PERFORM  3001-INIT-NEW-APP
+               THRU 3001-INIT-NEW-APP-X.
+
+P00045* CKPT/RESTART NEEDS TO KNOW WHICH APP HAS JUST BEEN COMPLETED IN CASE
+P00045* OF FAILURE.
+P00045*MSG: NOW PROCESSING APPLICATION NUMBER: @1
+P00045     MOVE 'AS94000037'       TO WGLOB-MSG-REF-INFO.
+P00045     MOVE WS-APP-ID          TO WGLOB-MSG-PARM (1).
+P00045     PERFORM  0260-1000-GENERATE-MESSAGE
+P00045         THRU 0260-1000-GENERATE-MESSAGE-X.
+
+B10319* HERE WE WANT TO CHECK FOR A DUPLICATE APPLICATION SLIPPING
+B10319* THROUGH THE CRACKS.
+
+B10319     MOVE WS-APP-ID TO WUPOL-APP-ID.
+B10319     PERFORM UPOL-1000-READ
+B10319        THRU UPOL-1000-READ-X.
+B10319
+B10319     IF  WUPOL-IO-NOT-FOUND
+B10319*MSG: UPLOAD POLICY RECORD FOR APP ID (@1) DOES NOT EXIST
+B10319         MOVE 'AS94000027'       TO WGLOB-MSG-REF-INFO
+B10319         MOVE WUPOL-APP-ID       TO WGLOB-MSG-PARM (1)
+B10319         PERFORM  9000-BUILD-MESSAGE-EXTRACT
+B10319            THRU  9000-BUILD-MESSAGE-EXTRACT-X
+NWLXML         PERFORM  9010-BUILD-CHANNEL-EXTRACT
+NWLXML             THRU 9010-BUILD-CHANNEL-EXTRACT-X
+NWLXML         SET  WS-APP-REJ-REASN-FAIL   TO TRUE
+NWLXML         PERFORM  9020-WRITE-XML-ERR-HIST
+NWLXML             THRU 9020-WRITE-XML-ERR-HIST-X
+B10319         PERFORM 8100-READ-APP-ID
+B10319            THRU 8100-READ-APP-ID-X
+B10319         GO TO 3000-PROCESS-EACH-APP-X
+B10319     END-IF.
+MP265A
+MP310F*MP265A     MOVE 'EBAGT'                 TO WEDIT-ETBL-TYP-ID
+MP310F*MP265A     MOVE RUPOL-SALES-REP-NUM     TO WEDIT-ETBL-VALU-ID
+MP310F*MP265A     MOVE WGLOB-USER-LANG         TO WEDIT-ETBL-LANG-CD  
+MP310F*MP265A
+MP310F*MP265A     PERFORM  EDIT-1000-READ
+MP310F*MP265A         THRU EDIT-1000-READ-X
+MP310F*MP265A 
+MP310F*MP265A     IF  WEDIT-IO-OK
+MP310F*MP265A         IF  WS-RUN-TYP-REG
+MP310F*MP265A             PERFORM  8100-READ-APP-ID
+MP310F*MP265A                 THRU 8100-READ-APP-ID-X
+MP310F*MP265A             GO TO 3000-PROCESS-EACH-APP-X
+MP310F*MP265A         END-IF
+MP310F*MP265A     ELSE
+MP310F*MP265A         IF  WS-RUN-TYP-EARLY
+MP310F*MP265A             PERFORM  8100-READ-APP-ID
+MP310F*MP265A                 THRU 8100-READ-APP-ID-X
+MP310F*MP265A             GO TO 3000-PROCESS-EACH-APP-X
+MP310F*MP265A        END-IF
+MP310F*MP265A     END-IF.
+MP310F*MP265A
+B10319     IF RUPOL-POL-ID = 'MCL'
+B10319        CONTINUE
+B10319     ELSE
+B10319*MSG: DUPLICATE APPLICATION ID @1 ALREADY EXISTS..PROCESSING BYPASSED
+B10319         MOVE 'AS94000034'       TO WGLOB-MSG-REF-INFO
+B10319         MOVE RUPOL-APP-ID       TO WGLOB-MSG-PARM (1)
+B10319         PERFORM  9000-BUILD-MESSAGE-EXTRACT
+B10319            THRU  9000-BUILD-MESSAGE-EXTRACT-X
+NWLXML         PERFORM  9010-BUILD-CHANNEL-EXTRACT
+NWLXML             THRU 9010-BUILD-CHANNEL-EXTRACT-X
+NWLXML         SET  WS-APP-REJ-REASN-DUPL   TO TRUE
+NWLXML         PERFORM  9020-WRITE-XML-ERR-HIST
+NWLXML             THRU 9020-WRITE-XML-ERR-HIST-X
+B10319         PERFORM 8100-READ-APP-ID
+B10319            THRU 8100-READ-APP-ID-X
+B10319         GO TO 3000-PROCESS-EACH-APP-X
+B10319     END-IF.
+NWLXML
+NWLXML     MOVE  WS-APP-ID                  TO WPOLF-POL-APP-FORM-ID.
+NWLXML     PERFORM  POLF-1000-READ
+NWLXML         THRU POLF-1000-READ-X.
+NWLXML
+NWLXML     IF  WPOLF-IO-OK
+NWLXML*MSG: APPLICATION ID @1 ALREADY CREATED ONLINE  PROCESSING BYPASSED
+NWLXML         MOVE 'AS94009717'            TO WGLOB-MSG-REF-INFO
+NWLXML         MOVE RUPOL-APP-ID            TO WGLOB-MSG-PARM (1)
+NWLXML         PERFORM  9000-BUILD-MESSAGE-EXTRACT
+NWLXML            THRU  9000-BUILD-MESSAGE-EXTRACT-X
+NWLXML         PERFORM  9010-BUILD-CHANNEL-EXTRACT
+NWLXML             THRU 9010-BUILD-CHANNEL-EXTRACT-X
+NWLXML         SET  WS-APP-REJ-REASN-ERR    TO TRUE
+NWLXML         PERFORM  9020-WRITE-XML-ERR-HIST
+NWLXML             THRU 9020-WRITE-XML-ERR-HIST-X
+NWLXML         PERFORM 8100-READ-APP-ID
+NWLXML            THRU 8100-READ-APP-ID-X
+NWLXML         GO TO 3000-PROCESS-EACH-APP-X
+NWLXML     END-IF.
+EN8937
+EN8937* IF MORE THAN 800 DALG RECORDS HAVE BEEN WRITTEN, LETS
+EN8937* RETRIEVE THE SYSTEM TIME AGAIN IN ORDER TO PREVENT
+EN8937* DUPLICATION OF DALG RECORDS.  WE ALSO WANT TO START
+EN8937* WITH A ZERO SEQUENCE NUMBER AS A FURTHER PRECAUTION.
+EN8937
+EN8937     IF LPGA-DALG-SEQUENCE > 800
+EN8937        PERFORM  1610-1000-GET-DATE-TIME
+EN8937            THRU 1610-1000-GET-DATE-TIME-X
+EN8937        MOVE L1610-SYSTEM-TIME TO WGLOB-SYSTEM-TIME
+EN8937        MOVE ZEROES            TO LPGA-DALG-SEQUENCE
+EN8937     END-IF.
+EN8937
+
+      * HERE WE WILL WANT THE POLICY ID ASSIGNED EARLY BECAUSE CLIU WILL
+      * REQUIRE IT.
+
+           PERFORM  5300-ASSIGN-POL-ID
+               THRU 5300-ASSIGN-POL-ID-X.
+
+      * LETS CREATE A SKELETON RECORD OF POL BECAUSE CLIU NEEDS POL TO
+      * BE CREATED FOR THE FOREIGN KEY ASSIGMENT.  WE WILL THEN READ FOR
+      * UPDATE AND REWRITE LATER ON.
+
+           PERFORM POL-1000-CREATE
+              THRU POL-1000-CREATE-X.
+
+HNB203     SET RPOL-POL-APP-UPLD-YES         TO TRUE.
+HNB203
+           PERFORM POL-1000-WRITE
+              THRU POL-1000-WRITE-X.
+
+           PERFORM POL-1000-READ-FOR-UPDATE
+              THRU POL-1000-READ-FOR-UPDATE-X.
+
+           PERFORM 7100-SET-UCLI-KEYS
+              THRU 7100-SET-UCLI-KEYS-X.
+
+           PERFORM UCLI-1000-BROWSE
+              THRU UCLI-1000-BROWSE-X.
+
+           PERFORM UCLI-2000-READ-NEXT
+              THRU UCLI-2000-READ-NEXT-X.
+
+           IF  WUCLI-IO-EOF
+      *MSG: UPLOAD CLIENT RECORD NOT FOUND FOR APP ID (@1)
+               MOVE 'AS94000009'       TO WGLOB-MSG-REF-INFO
+               MOVE WUCLI-APP-ID       TO WGLOB-MSG-PARM (1)
+               PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                  THRU  9000-BUILD-MESSAGE-EXTRACT-X
+               PERFORM UCLI-3000-END-BROWSE
+                  THRU UCLI-3000-END-BROWSE-X
+P00048         PERFORM POL-3000-UNLOCK
+P00048            THRU POL-3000-UNLOCK-X
+               PERFORM 8100-READ-APP-ID
+                  THRU 8100-READ-APP-ID-X
+               GO TO 3000-PROCESS-EACH-APP-X
+           END-IF.
+TL0572		   
+TL0572     MOVE SPACES                       TO WS-OWNER-ADDR-CD.
+TL0572	   
+           PERFORM  4000-PROCESS-EACH-CLIENT
+               THRU 4000-PROCESS-EACH-CLIENT-X
+               UNTIL WUCLI-IO-EOF.
+TL0572
+TL0572     MOVE SPACES                       TO WS-OWNER-ADDR-CD.
+TL0572
+           PERFORM UCLI-3000-END-BROWSE
+              THRU UCLI-3000-END-BROWSE-X.
+
+           MOVE CLI-SUB                TO WS-CLIENTS-IN-APP.
+
+           MOVE ZERO TO WS-OWNR-SUB.
+           PERFORM  3300-PROCESS-OWNER-INFO
+               THRU 3300-PROCESS-OWNER-INFO-X
+               VARYING WS-OWNR-SUB FROM 1 BY 1
+               UNTIL   WS-OWNR-SUB > CLI-SUB.
+
+           PERFORM  5000-PROCESS-POLICY
+               THRU 5000-PROCESS-POLICY-X.
+
+TL0572     IF  RPOL-COLI-PROD-YES
+TL0572         PERFORM  7600-UPDT-INSRD-ADDR-CODE
+TL0572             THRU 7600-UPDT-INSRD-ADDR-CODE-X
+TL0572     END-IF.
+TL0572
+           PERFORM  3095-SAVE-CHECKPOINT
+               THRU 3095-SAVE-CHECKPOINT-X.
+R16171*MP310E               
+R16171*MP310F     IF  WS-RUN-TYP-DAY 
+R16171*110188         MOVE 'EBAGT'                 TO WEDIT-ETBL-TYP-ID
+R16171*110188         MOVE RUPOL-SALES-REP-NUM     TO WEDIT-ETBL-VALU-ID
+R16171*110188         MOVE WGLOB-USER-LANG         TO WEDIT-ETBL-LANG-CD  
+R16171*110188 	       
+R16171*110188         PERFORM  EDIT-1000-READ
+R16171*110188             THRU EDIT-1000-READ-X
+R16171*110188 	       
+R16171*110188         IF  WEDIT-IO-OK
+R16171*110188             PERFORM  8100-READ-APP-ID
+R16171*110188                 THRU 8100-READ-APP-ID-X
+R16171*MP310E             GO TO 3000-PROCESS-EACH-APP-X
+R16171*MP310E         END-IF
+R16171*MP310E 
+R16171*MP310E SCV LIMIT CHECK REQUEST XML BUILD. 
+R16171*MP310E 
+R16171*MP310E         PERFORM  5980-PRCES-LMT-CHK-RQST
+R16171*MP310E             THRU 5980-PRCES-LMT-CHK-RQST-X
+R16171*MP310E 
+R16171*MP310E         IF  LSCVS-RETRN-ERROR
+R16171*MP310E         OR  LSCVS-ERR-CD <> ' '
+R16171*MP310E             PERFORM  8100-READ-APP-ID
+R16171*MP310E                 THRU 8100-READ-APP-ID-X
+R16171*MP310E 
+R16171*MP310E             GO TO 3000-PROCESS-EACH-APP-X
+R16171*MP310E         END-IF
+R16171*MP310E  UPDATE TCLIU TABLE WITH THE SCV SELECTION FILE REESPONSE
+R16171*MP310E  DATA.
+R16171*MP310E 
+R16171*MP310E     MOVE WS-BASE-INSRD-CLI-ID     TO WCLIU-CLI-ID
+R16171*MP310E     MOVE WS-BASE-INSRD-STCKR-ID   TO WCLIU-STCKR-ID
+R16171*MP310E     MOVE WPOL-POL-ID              TO WCLIU-POL-ID
+R16171*MP310E 
+R16171*MP310E     PERFORM  CLIU-1000-READ-FOR-UPDATE
+R16171*MP310E         THRU CLIU-1000-READ-FOR-UPDATE-X
+R16171*MP310E 
+R16171*MP310E SCV LIMIT CHECK RESPONSE PARSE. 
+R16171*MP310E 
+R16171*MP310E         PERFORM  5985-PRCES-LMT-CHK-RESP
+R16171*MP310E             THRU 5985-PRCES-LMT-CHK-RESP-X
+R16171*MP310E 
+R16171*MP310E         IF  LSCVS-RETRN-ERROR
+R16171*MP310E         OR  LSCVS-ERR-CD <> ' '
+R16171*MP310E            PERFORM CLIU-3000-UNLOCK
+R16171*MP310E               THRU CLIU-3000-UNLOCK-X
+R16171*            PERFORM  8100-READ-APP-ID
+R16171*                THRU 8100-READ-APP-ID-X
+R16171*MP310E             GO TO 3000-PROCESS-EACH-APP-X
+R16171*MP310E         END-IF
+R16171*R14974         PERFORM  0013-1000-BUILD-PARM-INFO
+R16171*R14974             THRU 0013-1000-BUILD-PARM-INFO-X
+R16171*R14974            
+R16171*R14974         PERFORM  0013-3000-CLOS-COMUN
+R16171*R14974             THRU 0013-3000-CLOS-COMUN-X      
+R16171*R14974 
+R16171*R14974         SET WGLOB-PFC-COMUN-STAT-NOT-STRT TO TRUE  
+R16171*MP310E 
+R16171*MP310E 
+R16171*MP310E 
+R16171*MP310E SCV ALPHA SEARCH REQUEST XML BUILD. 
+R16171*MP310E 
+R16171*MP310E     PERFORM 6100-PRCES-ALPHA-SRCH-RQST
+R16171*MP310E        THRU 6100-PRCES-ALPHA-SRCH-RQST-X
+R16171*MP310E 
+R16171*
+R16171*MP310E     IF  LALPS-RETRN-ERROR
+R16171*MP310E     OR  LALPS-ERR-CD <> ' '
+R16171*MP310E            PERFORM CLIU-3000-UNLOCK
+R16171*MP310E               THRU CLIU-3000-UNLOCK-X
+R16171*        PERFORM  8100-READ-APP-ID
+R16171*            THRU 8100-READ-APP-ID-X
+R16171*MP310E         GO TO 3000-PROCESS-EACH-APP-X
+R16171*MP310E     END-IF
+R16171*MP310E 
+R16171*    PERFORM  POL-1000-READ-FOR-UPDATE
+R16171*        THRU POL-1000-READ-FOR-UPDATE-X
+R16171*MP310E SCV ALPHA SEARCH RESPONSE PARSE. -AUTH CHECK DATA
+R16171*MP310E 
+R16171*MP310E         PERFORM  6125-PRCES-LC-RESULT-RESP
+R16171*MP310E             THRU 6125-PRCES-LC-RESULT-RESP-X
+R16171*MP310E             VARYING I FROM 1 BY 1
+R16171*MP310E             UNTIL   I > WS-SRCH
+R16171*MP310E 
+R16171*    PERFORM  POL-2000-REWRITE
+R16171*        THRU POL-2000-REWRITE-X
+R16171*MP310E SCV ALPHA SEARCH RESPONSE PARSE. -AUTH CHECK DATA
+R16171*MP310E 
+R16171*MP310E         PERFORM  6150-PRCES-AUTH-RESULT-RESP
+R16171*MP310E             THRU 6150-PRCES-AUTH-RESULT-RESP-X
+R16171*MP310E             VARYING I FROM 1 BY 1
+R16171*MP310E             UNTIL   I > WS-SRCH
+R16171*MP310E 
+R16171*MP310E  REWRITE TCLIU TABLE WITH THE SCV ALPHA SEARCH REESPONSE
+R16171*MP310E  DATA.
+R16171*MP310E 
+R16171*MP310E         PERFORM  CLIU-2000-REWRITE
+R16171*MP310E             THRU CLIU-2000-REWRITE-X
+R16171*MP310E 
+R16171*MP310E         IF  LALPS-RETRN-ERROR
+R16171*            PERFORM  8100-READ-APP-ID
+R16171*                THRU 8100-READ-APP-ID-X
+R16171*MP310E             GO TO 3000-PROCESS-EACH-APP-X
+R16171*MP310E         END-IF
+R16171*MP310E 
+R16171*MP310E  REQT RECORD FOR THIS INSURED IS TO BE UPDATED,
+R16171*MP310E  IF 'REQT' RECORD IS NOT FOUND THEN CREATE ONE WITH
+R16171*MP310E  'REVIEWED AND ACCCEPTED'.
+R16171*MP310E 
+R16171*MP310E        PERFORM  6155-UPDATE-REQT-REC
+R16171*MP310E            THRU 6155-UPDATE-REQT-REC-X   
+R16171*MP310E 
+R16171*109938 
+R16171*109938  TO TRIGGER THE CLEAR CASE CONDITION FOR NO UW(FRA) AND PAPERLESS
+R16171*109938         IF  RCLIU-UW-TYP-NONE
+R16171*109938         AND RPOL-PAPR-LESS-APP-YES
+R16171*109938             PERFORM  6110-START-CLEAR-CASE
+R16171*109938                 THRU 6110-START-CLEAR-CASE-X
+R16171*109938     
+R16171*109938         END-IF
+R16171*R14974 
+R16171*R14974         MOVE 174                 TO LBUFR-BUFFER-LEN
+R16171*R14974         MOVE WS-COMMIT-XML       TO LBUFR-BUFFER-TXT
+R16171*R14974     
+R16171*R14974  CALL XSDU0013 TO SEND BUFFER
+R16171*R14974 
+R16171*R14974         PERFORM  0013-1000-BUILD-PARM-INFO
+R16171*R14974             THRU 0013-1000-BUILD-PARM-INFO-X
+R16171*R14974 
+R16171*R14974         PERFORM  0013-1000-SEND-PFC-SRVR
+R16171*R14974             THRU 0013-1000-SEND-PFC-SRVR-X
+R16171*R14974 
+R16171*R14974   CALL XSDU0013 TO RETRIEVE PATHFINDER RESPONSE
+R16171*R14974 
+R16171*R14974         PERFORM  0013-1000-BUILD-PARM-INFO
+R16171*R14974             THRU 0013-1000-BUILD-PARM-INFO-X
+R16171*R14974         MOVE LOW-VALUES              TO L0013-TERM-PATTERN-TXT
+R16171*R14974         MOVE 11                      TO L0013-TERM-PATTERN-LEN
+R16171*R14974         MOVE '</Response>'
+R16171*R14974             TO L0013-TERM-PATTERN-TXT(1:L0013-TERM-PATTERN-LEN)
+R16171*R14974         PERFORM  0013-1500-RECV-PFC-SRVR
+R16171*R14974             THRU 0013-1500-RECV-PFC-SRVR-X
+R16171*R14974 
+R16171*R14974         PERFORM  0013-1000-BUILD-PARM-INFO
+R16171*R14974             THRU 0013-1000-BUILD-PARM-INFO-X
+R16171*R14974            
+R16171*R14974         PERFORM  0013-3000-CLOS-COMUN
+R16171*R14974             THRU 0013-3000-CLOS-COMUN-X      
+R16171*R14974 
+R16171*R14974         SET WGLOB-PFC-COMUN-STAT-NOT-STRT TO TRUE               
+R16171*R14974 
+R16171*MP310F     END-IF.
+
+
+           PERFORM  8100-READ-APP-ID
+               THRU 8100-READ-APP-ID-X.
+
+       3000-PROCESS-EACH-APP-X.
+           EXIT.
+      /
+      *------------------
+       3001-INIT-NEW-APP.
+      *------------------
+
+           MOVE ZERO                 TO CLI-SUB.
+           MOVE ZERO                 TO WS-BENE-CLI-SUB.
+           MOVE ZERO                 TO LAPUP-AGNT-CNT.
+           MOVE ZERO                 TO WS-CLIENTS-IN-APP.
+           MOVE ZERO                 TO WS-RECORDS-IN-APP.
+           MOVE SPACE                TO WS-HOLD-POLICY-NUM.
+           MOVE SPACE                TO WS-HOLD-LINE-OF-BUSINESS.
+           MOVE ALL '0'              TO WS-CLI-ID-TABLE.
+           MOVE SPACE                TO WS-SERV-AGT-ID.
+           MOVE SPACE                TO WS-APPL-FORM-NO-X.
+           MOVE SPACE                TO WS-POL-ISS-LOC-CD.
+           MOVE SPACE                TO WS-SBSDRY-CO-ID.
+           MOVE SPACE                TO WS-POL-CTRY-CD.
+           MOVE SPACE                TO LAPUP-CVGA-AGT-ID (1).
+           MOVE ZERO                 TO LAPUP-CVGA-CVG-AGT-SHR-PCT (1).
+           MOVE SPACE                TO LAPUP-CVGA-AGT-ID (2).
+           MOVE ZERO                 TO LAPUP-CVGA-CVG-AGT-SHR-PCT (2).
+           MOVE SPACE                TO LAPUP-CVGA-AGT-ID (3).
+           MOVE ZERO                 TO LAPUP-CVGA-CVG-AGT-SHR-PCT (3).
+           MOVE SPACE                TO LAPUP-CLI-TABLE.
+           MOVE ZERO                 TO LAPUP-BENE-SUB.
+           MOVE SPACES               TO LAPUP-BENE-REL-TABLE.
+           MOVE ZERO                 TO LAPUP-CLI-SUB.
+02NB01     MOVE ZERO                 TO LAPUP-UCNV-SUB.
+02NB01     MOVE SPACES               TO WS-BASE-INSRD-CLI-ID.
+02NB01     MOVE SPACES               TO WS-BASE-INSRD-STCKR-ID.
+           MOVE SPACES               TO LAPUP-EMAIL-ADDRESS.
+B00995     MOVE SPACES               TO WS-CORP-NAME.
+5-0584*MFFOP1  MOVE SPACES               TO WS-SEG-FUND-CD.
+MFFOP1     MOVE SPACES               TO WS-POL-CHNG-TYP-CD.
+
+MFPFU2*    PERFORM  3002-INIT-MESSAGE-ARRAY
+MFPFU2*        THRU 3002-INIT-MESSAGE-ARRAY-X
+MFPFU2*        VARYING X FROM 1 BY 1
+MFPFU2*        UNTIL   X GREATER THAN 25.
+MFPFU2*
+MFPFU2*    PERFORM  3003-INIT-OWNER-ARRAY
+MFPFU2*        THRU 3003-INIT-OWNER-ARRAY-X
+MFPFU2*        VARYING X FROM 1 BY 1
+MFPFU2*        UNTIL   X GREATER THAN 5.
+MFPFU2
+MFPFU2     PERFORM
+MFPFU2         VARYING X FROM +1 BY +1
+MFPFU2         UNTIL   X > +25
+MFPFU2
+MFPFU2         MOVE 'N'              TO WS-MESSAGE-SET-SW (X)
+MFPFU2
+MFPFU2     END-PERFORM.
+MFPFU2
+MFPFU2     PERFORM
+MFPFU2         VARYING X FROM +1 BY +1
+MFPFU2         UNTIL   X > +5
+MFPFU2
+MFPFU2         MOVE SPACE            TO LAPUP-POLC-OWN-REL-INFO (X)
+MFPFU2
+MFPFU2     END-PERFORM.
+MFPFU2
+           MOVE 'N'                  TO LAPUP-INVALID-PLAN-SW.
+           MOVE 'N'                  TO LUPOL-POL-REPL-CD.
+           MOVE 'N'                  TO WS-POL-APP-SIGN-IND.
+           MOVE 'N'                  TO WS-AGT-EQUAL-SHARES-SW.
+           MOVE WWKDT-ZERO-DT        TO WS-POL-APP-SIGN-DT.
+MFFUPL     INITIALIZE                   LAPUP-SA-UW-INFO.
+MFFUPL     INITIALIZE                   LAPUP-FCFS-TABLE.
+MFFUPL     INITIALIZE                   LAPUP-ALLOC-INP-TABLE.
+MFFUPL     INITIALIZE                   LAPUP-ALLOC-INL-TABLE.
+MFFUPL     INITIALIZE                   LAPUP-ALLOC-DIP-TABLE.
+MFFUPL     INITIALIZE                   LAPUP-ALLOC-CNV-TABLE.
+MFFUPL     MOVE ZEROES               TO WS-ESC-CHRG-AMT.
+
+      *
+      * THE FOLLOWING FIELDS ARE INITIALIZED BECAUSE THEY APPEAR IN
+      * MESSAGES, AND WE DON'T WANT TO CONFUSE THE USERS
+      *
+           MOVE SPACE                TO WPOL-POL-ID.
+           MOVE SPACE                TO RPOL-SERV-BR-ID.
+
+NWLXML     MOVE WGLOB-PROCESS-DATE          TO WS-APP-UPLD-DT.
+TV2003     MOVE SPACES                      TO LAPUP-TRG-HIT-CNVR-RT.
+TV2003
+       3001-INIT-NEW-APP-X.
+           EXIT.
+      /
+MFPFU2*------------------------
+MFPFU2*3002-INIT-MESSAGE-ARRAY.
+MFPFU2*------------------------
+MFPFU2*
+MFPFU2*    MOVE 'N'                    TO WS-MESSAGE-SET-SW (X).
+MFPFU2*
+MFPFU2*3002-INIT-MESSAGE-ARRAY-X.
+MFPFU2*    EXIT.
+MFPFU2/
+MFPFU2*----------------------
+MFPFU2*3003-INIT-OWNER-ARRAY.
+MFPFU2*----------------------
+MFPFU2*
+MFPFU2*    MOVE SPACE                  TO LAPUP-POLC-OWN-REL-INFO (X).
+MFPFU2*
+MFPFU2*3003-INIT-OWNER-ARRAY-X.
+MFPFU2*    EXIT.
+MFPFU2/
+      *---------------------
+       3095-SAVE-CHECKPOINT.
+      *---------------------
+
+           PERFORM  CKPT-CHECK-RESTART-FREQ
+               THRU CKPT-CHECK-RESTART-FREQ-X.
+
+           IF  WCKPT-CKPT-FREQ-YES
+               PERFORM  3096-SAVE-VARIABLE-IN-WCKPT
+                   THRU 3096-SAVE-VARIABLE-IN-WCKPT-X
+               PERFORM  0800-2000-COMMIT-CKPT
+                   THRU 0800-2000-COMMIT-CKPT-X
+               PERFORM  CKPT-CHECK-RESTART-INIT
+                   THRU CKPT-CHECK-RESTART-INIT-X
+           END-IF.
+
+       3095-SAVE-CHECKPOINT-X.
+           EXIT.
+
+      /
+      *----------------------------
+       3096-SAVE-VARIABLE-IN-WCKPT.
+      *----------------------------
+
+B10015*    MOVE WS-PARM-CARD-COUNTER     TO WCKPT-BCF-REC-COUNT.
+B10015     MOVE WS-APP-REC-COUNTER       TO WCKPT-REC-COUNT.
+           MOVE WGLOB-GLOBAL-AREA        TO WCKPT-GLOBAL-AREA.
+P00045     MOVE LPGA-PARM-INFO           TO WCKPT-LPGA-PARM-INFO.
+           MOVE WCKPT-WORK-AREA          TO L0800-CHKPT-WRK-INFO-TEXT.
+
+       3096-SAVE-VARIABLE-IN-WCKPT-X.
+           EXIT.
+      /
+      *------------------------
+       3300-PROCESS-OWNER-INFO.
+      *------------------------
+
+      * HERE WE WANT TO MAKE THE POLICY HOLDER INFO THE POLICY OWNER
+
+           MOVE LAPUP-POL-CLI-REL-TYP-CD (WS-OWNR-SUB)
+                                               TO LAPUP-INPUT-DATA.
+MFFUPL     PERFORM  TNLT-1000-TRNSLT-UPPER-CASE
+MFFUPL         THRU TNLT-1000-TRNSLT-UPPER-CASE-X.
+MFFUPL*    PERFORM 8500-TRANSLATE-UPPER-CASE
+MFFUPL*       THRU 8500-TRANSLATE-UPPER-CASE-X.
+
+           IF LAPUP-INPUT-DATA = 'OWNER'
+              MOVE LAPUP-CLI-ID (WS-OWNR-SUB)  TO
+                                        LAPUP-POLC-OWN-CLI-ID (1)
+              MOVE 'P'               TO LAPUP-POLC-OWN-TYP-CD (1)
+              MOVE 'PR'              TO LAPUP-POLC-OWN-ADDR-TYP (1)
+              MOVE RCLIA-CLI-CTRY-CD  TO WS-POL-CTRY-CD
+              MOVE LAPUP-CLI-ISS-LOC-CD (WS-OWNR-SUB)
+                                            TO WS-POL-ISS-LOC-CD
+UYS072        MOVE LAPUP-OWN-KJ-OVRID-ADDR-TXT (WS-OWNR-SUB)
+UYS072                                      TO WS-OWN-KJ-OVRID-ADDR-TXT
+           END-IF.
+
+       3300-PROCESS-OWNER-INFO-X.
+           EXIT.
+      /
+      *-------------------------
+       4000-PROCESS-EACH-CLIENT.
+      *-------------------------
+
+           PERFORM  4100-INITIALIZE-CLIENT-INFO
+               THRU 4100-INITIALIZE-CLIENT-INFO-X.
+
+           PERFORM  4500-PROCESS-EACH-CLIENT
+               THRU 4500-PROCESS-EACH-CLIENT-X.
+
+           PERFORM  4900-FINALIZE-CLIENT-INFO
+               THRU 4900-FINALIZE-CLIENT-INFO-X.
+
+           PERFORM  UCLI-2000-READ-NEXT
+               THRU UCLI-2000-READ-NEXT-X.
+
+       4000-PROCESS-EACH-CLIENT-X.
+           EXIT.
+      /
+      *----------------------------
+       4100-INITIALIZE-CLIENT-INFO.
+      *----------------------------
+
+           MOVE SPACE                  TO WS-CLI-ADDR-TABLE.
+MFPFU2*    MOVE SPACE                  TO WS-CVG-CLI-TABLE.
+           MOVE SPACE                  TO WS-CLI-CONTACT-TABLE.
+           MOVE SPACE                  TO WS-REQT-TABLE.
+           MOVE ZERO                   TO ADDR-SUB.
+
+           INITIALIZE WCLIC-KEY.
+           INITIALIZE WCLIA-KEY.
+           INITIALIZE WCLI-KEY.
+           INITIALIZE WCLNM-KEY.
+           INITIALIZE WCLIU-KEY.
+           INITIALIZE RCLIC-REC-INFO.
+HNB002     INITIALIZE WCLII-KEY.
+
+           PERFORM  CLI-1000-CREATE
+               THRU CLI-1000-CREATE-X.
+
+           PERFORM  CLIA-1000-CREATE
+               THRU CLIA-1000-CREATE-X.
+
+           PERFORM  CLIC-1000-CREATE
+               THRU CLIC-1000-CREATE-X.
+
+           PERFORM  CLIU-1000-CREATE
+               THRU CLIU-1000-CREATE-X.
+
+           PERFORM  CLNM-1000-CREATE
+               THRU CLNM-1000-CREATE-X.
+
+           MOVE RCLNM-REC-INFO         TO LUCLI-CRNT-CLNM-REC.
+           MOVE RCLNM-REC-INFO         TO LUCLI-PREV-CLNM-REC.
+
+           PERFORM  CLNC-1000-CREATE
+               THRU CLNC-1000-CREATE-X.
+
+HNB002     PERFORM  CLII-1000-CREATE
+HNB002         THRU CLII-1000-CREATE-X.
+
+       4100-INITIALIZE-CLIENT-INFO-X.
+           EXIT.
+      /
+      *-------------------------
+       4500-PROCESS-EACH-CLIENT.
+      *-------------------------
+
+
+           PERFORM  UCLI-1000-PROCESS-UCLI-FIELD
+               THRU UCLI-1000-PROCESS-UCLI-FIELD-X.
+
+           MOVE LAPUP-CLI-SUB               TO CLI-SUB.
+
+      * HERE WE WANT TO SETUP CLIENT MATCHING AND CLIENT ID CREATION
+
+           PERFORM  4910-SCAN-CLIENT-FIELDS
+               THRU 4910-SCAN-CLIENT-FIELDS-X.
+
+      * SINCE EACH CLIENT CAN HAVE TWO BENEFICIARIES (DEATH & PROXY) WE
+      * MUST MOVE THE CLIENT ID OF THE INSURED TO A WORK AREA FOR EACH
+      * BENEFIARY.  THIS INSURED CLIENT ID WILL BE STORED ON THE BENE
+      * TABLE SO WE CAN ASSOCIATE EACH BENEFICIARY TO THE INSURED.
+
+C12392*          IF LAPUP-BENE-EXISTS
+B10017*       PERFORM  4920-SETUP-BENE-INSRD
+B10017*           THRU 4920-SETUP-BENE-INSRD-X 2 TIMES
+C12392*B10017        PERFORM  4920-SETUP-BENE-INSRD
+C12392*B10017            THRU 4920-SETUP-BENE-INSRD-X
+C12392*          END-IF.
+C12392
+C12392*CALL ASRUUBEN TO POPULATE TBENE.
+C12392
+C12392
+C12392        MOVE WS-APP-ID                   TO WUBEN-APP-ID
+C12392                                            WUBEN-ENDBR-APP-ID.
+C12392        MOVE RUCLI-STCKR-ID              TO WUBEN-STCKR-ID
+C12392                                            WUBEN-ENDBR-STCKR-ID.
+C12392        MOVE LOW-VALUES                  TO WUBEN-SEQ-NUM.
+C12392        MOVE HIGH-VALUES                 TO WUBEN-ENDBR-SEQ-NUM.
+C12392        MOVE LOW-VALUES                  TO WUBEN-BEN-TYP-CD.
+C12392        MOVE HIGH-VALUES                 TO WUBEN-ENDBR-BEN-TYP-CD.
+C12392
+C12392        PERFORM UBEN-1000-BROWSE
+C12392           THRU UBEN-1000-BROWSE-X.
+C12392
+C12392        PERFORM UBEN-2000-READ-NEXT
+C12392           THRU UBEN-2000-READ-NEXT-X.
+C12392
+C12392        PERFORM  4510-PROCESS-EACH-BENE
+C12392            THRU 4510-PROCESS-EACH-BENE-X
+C12392            UNTIL WUBEN-IO-EOF.
+C12392
+C12392        PERFORM UBEN-3000-END-BROWSE
+C12392           THRU UBEN-3000-END-BROWSE-X.
+C12392         
+C12392
+
+       4500-PROCESS-EACH-CLIENT-X.
+           EXIT.
+      /
+C12392*-----------------------------
+C12392 4510-PROCESS-EACH-BENE.
+C12392*-----------------------------
+C12392
+S21828     IF  RUPOL-PLAN-ID = '32001'
+S21828     AND RUBEN-BEN-REL-CD = 'PH'
+S21828     AND RUBEN-BEN-TYP-DEATH
+S21828         MOVE RUCLI-POL-CLI-INSRD-CD  TO RUBEN-BEN-REL-CD
+S21828     END-IF.
+S21828
+M271N1     MOVE RUPOL-PROD-APP-TYP-CD       TO LAPUP-PROD-APP-TYP-CD.
+M271N1
+C12392     PERFORM  UBEN-1000-PROCESS-UBEN-FIELD
+C12392         THRU UBEN-1000-PROCESS-UBEN-FIELD-X.
+C12392
+C12392     IF LAPUP-BENE-EXISTS
+C12392        PERFORM  4920-SETUP-BENE-INSRD
+C12392            THRU 4920-SETUP-BENE-INSRD-X
+C12392     END-IF.
+C12392
+C12392     PERFORM UBEN-2000-READ-NEXT
+C12392        THRU UBEN-2000-READ-NEXT-X.
+C12392
+C12392 4510-PROCESS-EACH-BENE-X.
+C12392     EXIT.
+C12392/
+
+      *--------------------------
+       4900-FINALIZE-CLIENT-INFO.
+      *--------------------------
+
+           MOVE WCLI-CLI-ID             TO RCLI-CLI-ID.
+
+      * IF CLIENT MATCHED, WE WILL THEN USE EXISTING CLIENT
+      * AND STILL CREATE CLIU RECORD
+
+           IF L2130-CLIENT-MATCHED
+P00653     OR WS-CORP-NAME-MATCHED-YES
+P00734         PERFORM  4902-UPDATE-MATCHED-CLI
+P00734             THRU 4902-UPDATE-MATCHED-CLI-X
+MP9PHA         PERFORM  4904-UPDATE-MATCHED-CLIA
+MP9PHA             THRU 4904-UPDATE-MATCHED-CLIA-X
+               PERFORM  4908-WRITE-CLIU-RECS
+                   THRU 4908-WRITE-CLIU-RECS-X
+HNB002         PERFORM  4905-WRITE-CLII-RECS
+HNB002             THRU 4905-WRITE-CLII-RECS-X
+               GO TO 4900-FINALIZE-CLIENT-INFO-X
+           END-IF.
+
+P00653* IF CLIENT IS COMPANY, OVERRIDE SMOKER STATUS WITH SPACES
+M00024*                       AND DEFAULT CORPORATE TAX REPORT MONTH TO 3
+P00653
+R16256*FOR NEW CLIENT, DEFAULT THE CLI SMOKER CODE TO 'N' IF IT IS 
+R16256*SPACES IN APPLICATION XML
+R16256*
+P00653     IF RCLI-CLI-SEX-COMPANY
+P00653        MOVE SPACES TO RCLI-CLI-SMKR-CD
+M00024        MOVE WS-DEFAULT-CORP-TAX-MO TO RCLI-CORP-TAX-RPT-MO
+R16256     ELSE
+R16256         IF  RCLI-CLI-SMKR-CD = SPACES
+R16256             MOVE 'N'               TO RCLI-CLI-SMKR-CD
+R16256         END-IF
+P00653     END-IF.
+
+B10922* SET THE CLIENT MIB INDICATOR
+B10922
+B10922     SET WPSYS-SYS-CTL-INGENIUM         TO TRUE.
+B10922
+B10922     PERFORM  PSYS-1000-READ
+B10922         THRU PSYS-1000-READ-X.
+B10922
+B10922     IF  WPSYS-IO-OK
+B10922         IF  RPSYS-MIB-COMUN-TYP-PC
+B10922         OR  RPSYS-MIB-COMUN-TYP-NONE
+B10922             SET RCLI-CLI-MIB-IND-CLEAR TO TRUE
+B10922         END-IF
+B10922     END-IF.
+B10922
+           PERFORM  CLI-1000-WRITE
+               THRU  CLI-1000-WRITE-X.
+
+M310K1*CLIENT CAN BE DIFFERENT FOR THE SAME PERSON BASED ON THE
+M310K1*BASED ON THE ADDRESS CODE. SO THE PENDING POLICY CHECK IS 
+M310K1*PERFORMED AGAIN IF NON MATCHING CLIENT IDS. ONE ADDITIONAL
+M310K1*CHECK IS WE ARE GOING TO CHECK BY JUST COMPARING THE NAME
+M310K1*SEX CODE AND YEAR AND MONTH PART OF THE DOB. 
+M310K1
+M310K1     MOVE RUCLI-POL-CLI-REL-TYP-CD    TO LAPUP-INPUT-DATA.
+M310K1     PERFORM  TNLT-1000-TRNSLT-UPPER-CASE
+M310K1         THRU TNLT-1000-TRNSLT-UPPER-CASE-X.
+M310K1
+M310K1     IF  LAPUP-INPUT-DATA = 'INSURED'
+M310K1     AND NOT WS-PROD-APP-TYP-FRA
+M310K1         PERFORM  4927-SPCL-ALPHA-MATCH
+M310K1             THRU 4927-SPCL-ALPHA-MATCH-X
+M310K1
+M310K1         IF  WS-PENDING-POL-CNT > 0
+M310K1             PERFORM  4925-WRITE-NEW-REQT
+M310K1                 THRU 4925-WRITE-NEW-REQT-X
+M310K1         END-IF
+M310K1     END-IF.
+M310K1*
+M310K1*110572
+M310K1*110572     MOVE SPACES                      TO L2130-PARAMETERS-IN.
+M310K1*110572     MOVE LAPUP-CLI-INDV-SUR-NM-KA    TO L2130-LAST-NAME.
+M310K1*110572     MOVE LAPUP-CLI-INDV-GIV-NM-KA    TO L2130-FIRST-INITIAL.
+M310K1*110572     MOVE RCLI-CLI-SEX-CD             TO L2130-SEX.
+M310K1*110572     MOVE SPACE                   TO L2130-SW-SEX.
+M310K1*110572     MOVE 'N'                     TO L2130-SW-BIRTH-DATE.
+M310K1*110572     MOVE 'N'                     TO L2130-SW-ADDR.
+M310K1*110572     PERFORM  2130-0000-ALPHA-MATCH
+M310K1*110572         THRU 2130-0000-ALPHA-MATCH-X.
+M310K1*110572
+M310K1*R14974     MOVE RUCLI-POL-CLI-REL-TYP-CD    TO LAPUP-INPUT-DATA.
+M310K1*R14974     PERFORM  TNLT-1000-TRNSLT-UPPER-CASE
+M310K1*R14974         THRU TNLT-1000-TRNSLT-UPPER-CASE-X.
+M310K1*110572     IF  L2130-CLIENT-MATCHED
+M310K1*R14974     AND LAPUP-INPUT-DATA = 'INSURED'
+M310K1*110572      
+M310K1*110572         MOVE RPOL-POL-ID             TO WS-POL-ID
+M310K1*110572         MOVE RCLI-REC-INFO           TO HCLI-REC-INFO
+M310K1*110572         MOVE L2130-CLIENT-NUMBER     TO WCLI-CLI-ID
+M310K1*110572         PERFORM  CLI-1000-READ
+M310K1*110572             THRU CLI-1000-READ-X
+M310K1*110572     
+M310K1*110572         IF  RCLI-CLI-BTH-DT-YR  = HCLI-CLI-BTH-DT-YR
+M310K1*110572         AND RCLI-CLI-BTH-DT-MO  = HCLI-CLI-BTH-DT-MO
+M310K1*110572             MOVE RPOL-REC-INFO       TO HPOL-REC-INFO
+M310K1*110572             PERFORM  4926-PENDING-POL-CHK
+M310K1*110572                 THRU 4926-PENDING-POL-CHK-X
+M310K1*110572             MOVE HCLI-REC-INFO       TO RCLI-REC-INFO
+M310K1*110572             MOVE HPOL-REC-INFO       TO RPOL-REC-INFO
+M310K1*110572             IF  WS-PENDING-POL-CNT > 0
+M310K1*110572             AND NOT WS-PROD-APP-TYP-FRA
+M310K1*110572
+M310K1*110572                 PERFORM  4925-WRITE-NEW-REQT
+M310K1*110572                     THRU 4925-WRITE-NEW-REQT-X
+M310K1*110572             END-IF
+M310K1*110572         END-IF
+M310K1*110572      
+M310K1*110572         MOVE HCLI-REC-INFO           TO  RCLI-REC-INFO
+M310K1*110572         MOVE RCLI-CLI-ID             TO  WCLI-CLI-ID
+M310K1*110572         MOVE RPOL-POL-ID             TO  WPOL-POL-ID
+M310K1*110572     END-IF
+M310K1*110572
+           PERFORM  4903-WRITE-CLIC-RECS
+               THRU 4903-WRITE-CLIC-RECS-X.
+
+           PERFORM  4901-WRITE-CLIA-RECS
+               THRU 4901-WRITE-CLIA-RECS-X.
+
+           PERFORM  4907-WRITE-CLNC-CLNM-REC
+               THRU 4907-WRITE-CLNC-CLNM-REC-X.
+
+           PERFORM  4908-WRITE-CLIU-RECS
+               THRU 4908-WRITE-CLIU-RECS-X.
+
+HNB002     PERFORM  4905-WRITE-CLII-RECS
+HNB002         THRU 4905-WRITE-CLII-RECS-X.
+MP261E
+MP261E     IF  RUPOL-NON-FACE-TO-FACE-YES
+MP261E     AND LAPUP-INPUT-DATA = 'OWNER'
+MP261E         PERFORM  4919-GEN-PRTX-FOR-PPRVD
+MP261E             THRU 4919-GEN-PRTX-FOR-PPRVD-X
+MP261E     END-IF.
+MP261E
+       4900-FINALIZE-CLIENT-INFO-X.
+           EXIT.
+      /
+      *---------------------
+       4901-WRITE-CLIA-RECS.
+      *---------------------
+
+P00053*    IF  (RCLIA-CLI-ADDR-LN-1-TXT = SPACES
+P00053*    OR RCLIA-CLI-CITY-NM-TXT     = SPACES
+P00053*    OR RCLIA-CLI-PSTL-CD         = SPACES
+P00053*    OR RCLIA-CLI-CTRY-CD         = SPACES)
+P00053*        MOVE 'I'                     TO RCLIA-CLI-ADDR-STAT-CD
+P00053*    END-IF.
+
+P00053*
+P00053*  SET THE ADDRESS STATUS CODE
+P00053*
+P00053*  NOTE: CCPP0491 HAS SIMILAR CODE FOR SETTING THE ADDRESS
+P00053*        STATUS CODE.  IF THIS CODE IS CHANGED, CCPP0491
+P00053*        SHOULD ALSO BE CHANGED.
+P00053*
+P00053     SET  RCLIA-CLI-ADDR-STAT-COMPLETE TO TRUE.
+P00053
+P00053     IF (RCLIA-CLI-ADDR-LOC-CD    = SPACES
+P00053     OR (RCLIA-CLI-ADDR-ADDL-TXT  = SPACES
+P00053     AND RCLIA-CLI-ADDL-TXT-MORE  = SPACES)
+P00053     OR  RCLIA-CLI-CITY-NM-TXT    = SPACES
+P00053     OR  RCLIA-CLI-CRNT-LOC-CD    = SPACES
+P00053     OR  RCLIA-CLI-CTRY-CD        = SPACES
+P00053     OR  RCLIA-CLI-PREFCT-TXT     = SPACES
+P00053     OR  RCLIA-CLI-KA-PREFCT-TXT  = SPACES
+P00053     OR  RCLIA-CLI-KA-CITY-TXT    = SPACES
+P00053     OR  RCLIA-CLI-PSTL-CD        = SPACES)
+P00053         SET  RCLIA-CLI-ADDR-STAT-INCOMPLETE TO TRUE
+P00053*MSG WARNING...ADDRESS INFORMATION IS INCOMPLETE
+P00053         MOVE 'AS94000036'    TO WGLOB-MSG-REF-INFO
+P00053         MOVE WCLIA-CLI-ID       TO WGLOB-MSG-PARM (1)
+P00053         PERFORM 0260-1000-GENERATE-MESSAGE
+P00053            THRU 0260-1000-GENERATE-MESSAGE-X
+P00053     END-IF.
+
+           IF NOT WGLOB-COUNTRY-JAPAN
+               SET WCLIA-CLI-ADDR-GR-ALPHA    TO TRUE
+           ELSE
+               SET WCLIA-CLI-ADDR-GR-KANJI TO TRUE
+           END-IF.
+
+           SET WCLIA-CLI-ADDR-TYP-PRIM-ADDR  TO TRUE.
+           MOVE WCLIA-CLI-ID                TO RCLIA-CLI-ID.
+           MOVE +001                        TO WCLIA-CLI-ADDR-SEQ-NUM-N.
+
+           PERFORM  CLIA-1000-WRITE
+               THRU CLIA-1000-WRITE-X.
+
+       4901-WRITE-CLIA-RECS-X.
+           EXIT.
+      /
+P00734*------------------------
+P00734 4902-UPDATE-MATCHED-CLI.
+P00734*------------------------
+P00734
+P00734* FROM THE CLI RECORD CREATED FOR THE PREVIOUS UCLI RECORD,
+P00734* SAVE THE SMOKER CODE FOR THAT MATCHED CLIENT STILL IN W-S.
+P00734* READ IN THE CLI RECORD FOR UPDATE, MOVE THE NEW SMKR CD, REWRITE.
+P00734
+P00734     MOVE RCLI-CLI-ID                 TO WCLI-CLI-ID.
+R14974     INITIALIZE WS-PENDING-POL-CNT.
+P00734
+P00734     IF RCLI-CLI-SEX-COMPANY
+P00734         MOVE SPACES                  TO WS-HOLD-CLI-SMKR-CD
+P00734     ELSE
+P00734         MOVE RCLI-CLI-SMKR-CD        TO WS-HOLD-CLI-SMKR-CD
+P00734     END-IF.
+M271N2     MOVE RCLI-OCCP-ID                TO WS-CLI-OCCP-ID.  
+P00734
+P00734     PERFORM  CLI-1000-READ-FOR-UPDATE
+P00734         THRU CLI-1000-READ-FOR-UPDATE-X.
+P00734
+P00734     IF WCLI-IO-OK
+R12549*M271N2         IF NOT RPOL-PROD-APP-TYP-FRA
+FFF002*R12549         IF NOT WS-PROD-APP-TYP-FRA
+FFF002         IF NOT (WS-PROD-APP-TYP-FRA
+FFF002         OR WS-PROD-APP-TYP-FFF)
+109987         AND WS-CLI-OCCP-ID <> SPACES
+M271N2             MOVE WS-CLI-OCCP-ID      TO RCLI-OCCP-ID
+M271N2             MOVE WS-CLI-OCCP-ID      TO RCLI-CLI-OCCP-CLAS-CD
+M271N2         END-IF
+R16256*P00734         MOVE WS-HOLD-CLI-SMKR-CD     TO RCLI-CLI-SMKR-CD
+R16256
+R16256* FOR AN EXISTING CLIENT OVERRIDE SMOKER CODE ONLY IF NOT BLANK
+R16256
+R16256         IF  WS-HOLD-CLI-SMKR-CD <> SPACES
+R16256         OR  RCLI-CLI-SEX-COMPANY
+R16256             MOVE WS-HOLD-CLI-SMKR-CD TO RCLI-CLI-SMKR-CD
+R16256         END-IF
+Q18254
+Q18254         MOVE RPOL-REC-INFO           TO HPOL-REC-INFO
+Q18254         MOVE RPOL-POL-ID             TO WS-POL-ID
+Q18386         INITIALIZE WS-POL-STAT-PENDING-CNT
+109590*MP310H         INITIALIZE WS-PENDING-POL-CNT 
+Q18254         PERFORM  4911-CHK-UWGDECN-STATUS
+Q18254             THRU 4911-CHK-UWGDECN-STATUS-X
+Q18254
+Q18254         MOVE HPOL-REC-INFO           TO RPOL-REC-INFO
+Q18254         MOVE WS-POL-ID               TO WPOL-POL-ID
+Q18254         MOVE SPACES                  TO WS-POL-ID
+Q18254
+Q18254         IF  WS-POL-STAT-PENDING-CNT = 0
+Q18254             MOVE SPACES              TO RCLI-CLI-UWGDECN-TYP-CD
+Q18254         END-IF
+Q18254
+P00734         PERFORM  CLI-2000-REWRITE
+P00734             THRU CLI-2000-REWRITE-X
+P00734     END-IF.
+122553     MOVE RUCLI-POL-CLI-REL-TYP-CD    TO LAPUP-INPUT-DATA.
+122553
+122553     PERFORM  TNLT-1000-TRNSLT-UPPER-CASE
+122553         THRU TNLT-1000-TRNSLT-UPPER-CASE-X.
+122553
+122553     IF  LAPUP-INPUT-DATA = 'INSURED'
+122553     AND NOT WS-PROD-APP-TYP-FRA
+122553         PERFORM  4927-SPCL-ALPHA-MATCH
+122553             THRU 4927-SPCL-ALPHA-MATCH-X
+122553
+122553         IF  WS-PENDING-POL-CNT > 0
+122553             PERFORM  4925-WRITE-NEW-REQT
+122553                 THRU 4925-WRITE-NEW-REQT-X
+122553         END-IF
+122553     END-IF.
+P00734
+MP310H* CREATING THE NEW REQUIREMENT FOR THE MULTIPLE PENDING POLICIES
+M310K1*MP310H     IF  WS-PENDING-POL-CNT > 0
+M310K1*116623*FFF002*MP310H     AND NOT WS-PROD-APP-TYP-FRA
+116623*FFF002     AND NOT (WS-PROD-APP-TYP-FRA
+116623*FFF002     OR WS-PROD-APP-TYP-FFF)
+M310K1*116623     AND NOT WS-PROD-APP-TYP-FRA
+110572
+122553*110572         PERFORM  4925-WRITE-NEW-REQT
+122553*110572             THRU 4925-WRITE-NEW-REQT-X
+110572
+M310K1*110572     END-IF.
+MP310H* SEARCH FOR ANY UNDERWRITING APPLICATION REQUIREMENTS
+MP310H* ON THIS CLIENT
+111572*MP310H
+111572*MP310H         SET L0080-CLIENT-LEVEL       TO TRUE
+111572*MP310H         MOVE RCLI-CLI-ID             TO L0080-CLI-ID
+111572*MP310H         MOVE '31R15'                 TO L0080-REQIR-CODE
+111572*MP310H
+111572*MP310H         PERFORM  0080-1000-SEARCH-ONE
+111572*MP310H             THRU 0080-1000-SEARCH-ONE-X
+111572*MP310H
+111572*MP310H         IF  L0080-RSLT-OUTSTNDG-FOUND
+111572*MP310H             GO TO 4902-UPDATE-MATCHED-CLI-X
+111572*MP310H         ELSE
+111572*MP310H             MOVE RPOL-POL-ID         TO L0080-REQIR-POL-ID
+111572*MP310H             SET L0080-REQIR-STAT-ORDERED 
+111572*MP310H                                      TO TRUE         
+111572*MP310H             PERFORM  0080-4000-WRITE
+111572*MP310H                 THRU 0080-4000-WRITE-X 
+111572*MP310H          
+111572*MP310H             IF NOT L0080-RETRN-OK
+111572*MP310H*MSG: REQUIREMENT TYPE (@1) NOT GENERATED FOR POLICY (@2).
+111572*MP310H                 MOVE L0080-REQIR-CODE    TO WGLOB-MSG-PARM (1)
+111572*MP310H                 MOVE RPOL-POL-ID         TO WGLOB-MSG-PARM (2)
+111572*MP310H                 MOVE 'AS94009712'        TO WGLOB-MSG-REF-INFO
+111572*MP310H                 PERFORM  0260-1000-GENERATE-MESSAGE
+111572*MP310H                     THRU 0260-1000-GENERATE-MESSAGE-X
+111572*MP310H                 SET WS-ERROR-YES         TO TRUE
+111572*MP310H                 GO TO 4902-UPDATE-MATCHED-CLI-X
+111572*MP310H             END-IF
+111572*MP310H         END-IF
+111572*MP310H     END-IF.
+111572*MP310H
+P00734 4902-UPDATE-MATCHED-CLI-X.
+P00734     EXIT.
+P00734/
+      *---------------------
+       4903-WRITE-CLIC-RECS.
+      *---------------------
+
+           MOVE WCLI-CLI-ID             TO RCLIC-CLI-ID.
+           MOVE RCLIC-KEY               TO WCLIC-KEY.
+
+           PERFORM  CLIC-1000-READ
+               THRU CLIC-1000-READ-X.
+
+           IF  WCLIC-IO-OK
+      *MSG: CLIENT CONTACT RECORD (@1) ALREADY EXISTS - @2
+               MOVE 'AS94000003'           TO WGLOB-MSG-REF-INFO
+               MOVE RCLIC-KEY              TO WGLOB-MSG-PARM (1)
+               MOVE RCLIC-CLI-CNTCT-ID-TXT TO WGLOB-MSG-PARM (2)
+               PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                   THRU 9000-BUILD-MESSAGE-EXTRACT-X
+           ELSE
+               PERFORM  CLIC-1000-WRITE
+                   THRU CLIC-1000-WRITE-X
+           END-IF.
+
+       4903-WRITE-CLIC-RECS-X.
+           EXIT.
+
+MP9PHA*-------------------------
+MP9PHA 4904-UPDATE-MATCHED-CLIA.
+MP9PHA*-------------------------
+MP9PHA
+MP9PHA* IF THE CLIENT IS MATCHED, CHECK CLIENT'S ADDRESS CODE
+MP9PHA* AND SAMAKATA-BU TO SEE IF THEY ARE THE SAME
+MP9PHA
+MP9PHA* BASED ON L2130-CLIENT-NUMBER TO GET ADDRESS CODE AND
+MP9PHA* SAMAKATA-BU FROM RCLIA TABLE
+MP9PHA
+MP9PHA     MOVE SPACE                      TO WS-ADDR-CD
+MP9PHA                                        WS-SAMAKATA-BU
+MP9PHA                                        WS-ILLUS-ADDR-TXT
+MP9PHA                                        WS-ILLUS-ADDR-CD.
+MP9PHA
+MP9PHA     IF L2130-CLIENT-MATCHED
+MP9PHA         MOVE L2130-CLIENT-NUMBER    TO WS-CLADR-CLI-ID
+MP9PHA     ELSE
+MP9PHA         IF WS-CORP-NAME-MATCHED-YES
+MP9PHA             MOVE RCLNC-CLI-ID       TO WS-CLADR-CLI-ID
+MP9PHA         END-IF
+MP9PHA     END-IF.
+MP9PHA
+MP9PHA     MOVE LOW-VALUES                 TO WCLIA-KEY.
+MP9PHA     MOVE WS-CLADR-CLI-ID            TO WCLIA-CLI-ID.
+MP9PHA     MOVE HIGH-VALUES                TO WCLIA-ENDBR-KEY.
+MP9PHA     MOVE WS-CLADR-CLI-ID            TO WCLIA-ENDBR-CLI-ID.
+MP9PHA
+MP9PHA     PERFORM  CLIA-1000-BROWSE
+MP9PHA         THRU CLIA-1000-BROWSE-X.
+MP9PHA
+MP9PHA     PERFORM  CLIA-2000-READ-NEXT
+MP9PHA         THRU CLIA-2000-READ-NEXT-X.
+MP9PHA
+MP9PHA     IF WCLIA-IO-OK
+MP9PHA         MOVE RCLIA-CLI-ADDR-LOC-CD   TO WS-ADDR-CD
+MP9PHA         MOVE RCLIA-CLI-ADDR-ADDL-TXT TO WS-SAMAKATA-BU
+MP261E                                         WS-ADDR-1-TXT
+MP261E         MOVE RCLIA-CLI-ADDR-MORE-TXT TO WS-ADDR-2-TXT
+MP261E         
+MP9PHA     ELSE
+MP9PHA         PERFORM CLIA-3000-END-BROWSE
+MP9PHA            THRU CLIA-3000-END-BROWSE-X
+MP9PHA         GO TO 4904-UPDATE-MATCHED-CLIA-X
+MP9PHA     END-IF.
+MP261E     STRING WS-ADDR-1-TXT,WS-ADDR-2-TXT
+MP261E        DELIMITED BY ' ' INTO WS-ADDR-TXT.
+MP9PHA               
+MP9PHA     MOVE RUCLI-CLI-ADDR-TXT         TO WS-ILLUS-ADDR-TXT.
+MP9PHA     MOVE RUCLI-CLI-ADDR-CD          TO WS-ILLUS-ADDR-CD.
+MP9PHA
+MP261E     MOVE RUCLI-POL-CLI-REL-TYP-CD   TO LAPUP-INPUT-DATA.
+MP261E     PERFORM  TNLT-1000-TRNSLT-UPPER-CASE
+MP261E         THRU TNLT-1000-TRNSLT-UPPER-CASE-X.
+MP261E* CREATE CLIENT UNMATCHED NOTICE
+MP261E     IF RUPOL-NON-FACE-TO-FACE-YES
+MP261E     AND WS-ADDR-TXT NOT = WS-ILLUS-ADDR-TXT
+MP261E     AND LAPUP-INPUT-DATA = 'OWNER'
+MP261E          PERFORM  4923-GEN-MNOTI-FOR-CLUM
+MP261E              THRU 4923-GEN-MNOTI-FOR-CLUM-X
+MP261E          PERFORM  6910-WRITE-CLUM-REPORT
+MP261E              THRU 6910-WRITE-CLUM-REPORT-X
+MP261E          PERFORM  4924-GEN-INOTI-FOR-CLUM
+MP261E              THRU 4924-GEN-INOTI-FOR-CLUM-X
+MP261E          PERFORM  6910-WRITE-CLUM-REPORT
+MP261E              THRU 6910-WRITE-CLUM-REPORT-X
+MP261E     END-IF.
+MP9PHA* CREATE PRTX RECORD FOR ACTUATE POLICYHOLDER
+MP9PHA* ADDRESS VERIFICATION REPORT (CLADR)
+MP9PHA
+MP9PHA     IF WS-ILLUS-ADDR-CD     NOT = WS-ADDR-CD
+MP9PHA     OR WS-ILLUS-SAMAKATA-BU NOT = WS-SAMAKATA-BU
+MP9PHA         PERFORM  4909-GEN-PRTX-FOR-CLADR
+MP9PHA             THRU 4909-GEN-PRTX-FOR-CLADR-X
+MP9PHA     END-IF.
+MP9PHA
+MP261E     IF WS-ILLUS-ADDR-TXT = WS-ADDR-TXT
+MP261E     AND RUPOL-NON-FACE-TO-FACE-YES
+MP261E     AND LAPUP-INPUT-DATA = 'OWNER'
+MP261E         PERFORM  4919-GEN-PRTX-FOR-PPRVD
+MP261E             THRU 4919-GEN-PRTX-FOR-PPRVD-X
+MP261E     END-IF.
+MP261E
+MP9PHA     PERFORM  CLIA-3000-END-BROWSE
+MP9PHA         THRU CLIA-3000-END-BROWSE-X.
+MP9PHA
+MP9PHA 4904-UPDATE-MATCHED-CLIA-X.
+MP9PHA     EXIT.
+MP9PHA
+MP9PHA
+HNB002*---------------------
+HNB002 4905-WRITE-CLII-RECS.
+HNB002*---------------------
+HNB002
+HNB002     IF  RCLII-CLI-EARN-INCM-AMT > 0
+HNB002     OR  RCLII-CLI-NET-WRTH-AMT  > 0
+HNB002     OR  RCLII-CLI-OTHR-INCM-AMT > 0
+R18957     OR  RCLII-CLI-FIN-ASSET-AMT > 0
+HNB002         NEXT SENTENCE
+HNB002     ELSE
+HNB002         GO TO 4905-WRITE-CLII-RECS-X
+HNB002     END-IF.
+HNB002
+HNB002     MOVE WCLI-CLI-ID         TO RCLII-CLI-ID.
+HNB002     MOVE WGLOB-PROCESS-DATE  TO RCLII-CLI-INCM-EFF-DT.
+HNB002     MOVE RCLII-KEY           TO WCLII-KEY.
+HNB002
+HNB002     PERFORM  CLII-1000-READ
+HNB002         THRU CLII-1000-READ-X.
+HNB002
+HNB002     IF  WCLII-IO-OK
+HNB002*MSG: CLIENT INCOME RECORD (@1) ALREADY EXISTS - INFO NOT SAVED
+HNB002         MOVE 'AS94009713'             TO WGLOB-MSG-REF-INFO
+HNB002         MOVE RCLII-KEY                TO WGLOB-MSG-PARM (1)
+HNB002         PERFORM  9000-BUILD-MESSAGE-EXTRACT
+HNB002             THRU 9000-BUILD-MESSAGE-EXTRACT-X
+HNB002     ELSE
+HNB002         IF  RCLII-CLI-EARN-INCM-AMT > 0
+HNB002             MOVE 'A'                  TO RCLII-EARN-INCM-MODE-CD
+HNB002         END-IF
+HNB002         PERFORM  CLII-1000-WRITE
+HNB002             THRU CLII-1000-WRITE-X
+HNB002     END-IF.
+HNB002
+HNB002 4905-WRITE-CLII-RECS-X.
+HNB002     EXIT.
+
+      *-------------------------
+       4907-WRITE-CLNC-CLNM-REC.
+      *-------------------------
+
+02PR63* WRITE KANJI AND KATAKANA COMPANY NAME RECORD
+
+           IF RCLI-CLI-SEX-COMPANY
+               MOVE WCLI-CLI-ID                 TO WCLNC-CLI-ID
+02PR63         MOVE LAPUP-CLI-CO-NM         TO RCLNC-CLI-CO-NM-PHNT-TXT
+02PR63                                         RCLNC-CLI-CO-ENTR-NM
+02PR63                                         RCLNC-CLI-CO-NM
+               IF NOT WGLOB-COUNTRY-JAPAN
+                   SET WCLNC-CLI-CO-GR-ALPHA    TO TRUE
+               ELSE
+                   SET WCLNC-CLI-CO-GR-KANJI TO TRUE
+P00653             PERFORM  4930-CONVERT-PHNT-CONAM
+P00653                THRU  4930-CONVERT-PHNT-CONAM-X
+               END-IF
+               SET WCLNC-CLI-CO-NM-TYP-CLI  TO TRUE
+               PERFORM  CLNC-1000-WRITE
+                   THRU CLNC-1000-WRITE-X
+               MOVE WCLI-CLI-ID             TO WCLNC-CLI-ID
+02PR63         MOVE LAPUP-CLI-KA-CO-NM      TO RCLNC-CLI-CO-NM-PHNT-TXT
+02PR63                                         RCLNC-CLI-CO-ENTR-NM
+02PR63                                         RCLNC-CLI-CO-NM
+               IF NOT WGLOB-COUNTRY-JAPAN
+P00653*            SET WCLNC-CLI-CO-GR-ALPHA    TO TRUE
+P00653             GO TO 4907-WRITE-CLNC-CLNM-REC-X
+               ELSE
+                   SET WCLNC-CLI-CO-GR-KATAKANA TO TRUE
+P00653             PERFORM  4930-CONVERT-PHNT-CONAM
+P00653                THRU  4930-CONVERT-PHNT-CONAM-X
+               END-IF
+               SET WCLNC-CLI-CO-NM-TYP-CLI      TO TRUE
+               PERFORM  CLNC-1000-WRITE
+                   THRU CLNC-1000-WRITE-X
+               GO TO 4907-WRITE-CLNC-CLNM-REC-X
+           END-IF.
+
+      * WRITE KANJI GIVEN NAME AND SURNAME
+
+P03349*COMPRESS KANJI GIVEN NAME BEFORE WRITING INTO THE TABLE
+P03349     MOVE SPACES                        TO WS-NM-UNCOMP-FIRST.
+P03349     MOVE SPACES                        TO WS-NM-UNCOMP-LAST.
+P03349     MOVE LAPUP-CLI-ENTR-GIV-NM-KJ      TO WS-NM-UNCOMP-FIRST.
+P03349
+P03349     PERFORM  4915-COMPRESS-NAME-DATA
+P03349         THRU 4915-COMPRESS-NAME-DATA-X.
+P03349
+P03349     PERFORM  4916-CONVERT-SB-DB-SPACE
+P03349         THRU 4916-CONVERT-SB-DB-SPACE-X.
+P03349
+P03349     MOVE WS-COMPRESSED-NAME            TO RCLNM-ENTR-GIV-NM.
+P03349
+P03349*    MOVE LAPUP-CLI-ENTR-GIV-NM-KJ    TO RCLNM-ENTR-GIV-NM.
+P03349
+P03349*COMPRESS KANJI SUR NAME BEFORE WRITING INTO THE TABLE
+P03349     MOVE SPACES                        TO WS-NM-UNCOMP-FIRST.
+P03349     MOVE SPACES                        TO WS-NM-UNCOMP-LAST.
+P03349     MOVE LAPUP-CLI-ENTR-SUR-NM-KJ      TO WS-NM-UNCOMP-FIRST.
+P03349
+P03349     PERFORM  4915-COMPRESS-NAME-DATA
+P03349         THRU 4915-COMPRESS-NAME-DATA-X.
+P03349
+P03349     PERFORM  4916-CONVERT-SB-DB-SPACE
+P03349         THRU 4916-CONVERT-SB-DB-SPACE-X.
+P03349
+P03349     MOVE WS-COMPRESSED-NAME            TO RCLNM-ENTR-SUR-NM.
+P03349
+P03349*    MOVE LAPUP-CLI-ENTR-SUR-NM-KJ      TO RCLNM-ENTR-SUR-NM.
+           MOVE LAPUP-CLI-INDV-GIV-NM-KJ      TO RCLNM-CLI-INDV-GIV-NM.
+           MOVE LAPUP-CLI-INDV-SUR-NM-KJ      TO RCLNM-CLI-INDV-SUR-NM.
+           MOVE WCLI-CLI-ID                   TO WCLNM-CLI-ID.
+           IF NOT WGLOB-COUNTRY-JAPAN
+               SET WCLNM-CLI-INDV-GR-ALPHA    TO TRUE
+           ELSE
+               SET WCLNM-CLI-INDV-GR-KANJI TO TRUE
+           END-IF.
+           SET WCLNM-CLI-INDV-NM-TYP-CRNT  TO TRUE.
+           MOVE +001                       TO WCLNM-CLI-INDV-SEQ-NUM.
+           PERFORM  CLNM-1000-WRITE
+               THRU CLNM-1000-WRITE-X.
+
+      * WRITE KATAKANA GIVEN NAME AND SURNAME
+
+P03349*COMPRESS KATAKANA GIVEN NAME BEFORE WRITING INTO THE TABLE
+P03349     MOVE SPACES                    TO WS-NM-UNCOMP-FIRST.
+P03349     MOVE SPACES                    TO WS-NM-UNCOMP-LAST.
+P03349     MOVE LAPUP-CLI-ENTR-GIV-NM-KA  TO WS-NM-UNCOMP-FIRST.
+P03349
+P03349     PERFORM  4915-COMPRESS-NAME-DATA
+P03349         THRU 4915-COMPRESS-NAME-DATA-X.
+P03349
+P03349     MOVE WS-COMPRESSED-NAME        TO RCLNM-ENTR-GIV-NM.
+P03349*    MOVE LAPUP-CLI-ENTR-GIV-NM-KA  TO RCLNM-ENTR-GIV-NM.
+P03349
+P03349*COMPRESS KATAKANA GIVEN NAME BEFORE WRITING INTO THE TABLE
+P03349     MOVE SPACES                    TO WS-NM-UNCOMP-FIRST.
+P03349     MOVE SPACES                    TO WS-NM-UNCOMP-LAST.
+P03349     MOVE LAPUP-CLI-ENTR-SUR-NM-KA  TO WS-NM-UNCOMP-FIRST.
+P03349
+P03349     PERFORM  4915-COMPRESS-NAME-DATA
+P03349         THRU 4915-COMPRESS-NAME-DATA-X.
+P03349
+P03349     MOVE WS-COMPRESSED-NAME        TO RCLNM-ENTR-SUR-NM.
+P03349*    MOVE LAPUP-CLI-ENTR-SUR-NM-KA  TO RCLNM-ENTR-SUR-NM.
+           MOVE LAPUP-CLI-INDV-GIV-NM-KA  TO RCLNM-CLI-INDV-GIV-NM.
+           MOVE LAPUP-CLI-INDV-SUR-NM-KA  TO RCLNM-CLI-INDV-SUR-NM.
+B10061     MOVE LAPUP-CLI-INDV-GIV-NM-KA  TO RCLNM-GIV-NM-PHNT-TXT.
+B10061     MOVE LAPUP-CLI-INDV-SUR-NM-KA  TO RCLNM-SUR-NM-PHNT-TXT.
+           MOVE WCLI-CLI-ID               TO WCLNM-CLI-ID.
+B10959*
+B10959* SET UP PHONETIC NAME
+B10959*
+B10959     PERFORM 8600-SETUP-PHONETIC
+B10959        THRU 8600-SETUP-PHONETIC-X.
+B10959
+           IF NOT WGLOB-COUNTRY-JAPAN
+               SET WCLNM-CLI-INDV-GR-ALPHA    TO TRUE
+           ELSE
+               SET WCLNM-CLI-INDV-GR-KATAKANA TO TRUE
+           END-IF.
+
+           SET WCLNM-CLI-INDV-NM-TYP-CRNT  TO TRUE.
+           MOVE +001                       TO WCLNM-CLI-INDV-SEQ-NUM.
+           PERFORM  CLNM-1000-WRITE
+               THRU CLNM-1000-WRITE-X.
+
+       4907-WRITE-CLNC-CLNM-REC-X.
+           EXIT.
+      /
+      *---------------------
+       4908-WRITE-CLIU-RECS.
+      *---------------------
+
+           IF RCLIU-STCKR-ID = SPACES
+               GO TO 4908-WRITE-CLIU-RECS-X
+           END-IF.
+
+02NB01* HERE WE WANT TO STORE OFF THE CLIENT ID AND STICKER ID
+02NB01* OF THE BASE INSURED.  WE WILL USING FOR UPDATING CLIU
+02NB01* LATER ON WITH DB AND HOSP AMTS.
+B10737
+B10737*    IF RCLIU-STCKR-ID = WS-APP-ID
+B10737*        MOVE WCLI-CLI-ID    TO WS-BASE-INSRD-CLI-ID
+B10737*        MOVE RCLIU-STCKR-ID TO WS-BASE-INSRD-STCKR-ID
+B10737*    END-IF.
+B10737
+B10737     IF LAPUP-BASE-INSURED-CLIENT (CLI-SUB)
+B10737         MOVE LAPUP-CLI-ID   (CLI-SUB) TO WS-BASE-INSRD-CLI-ID
+B10737         MOVE LAPUP-STCKR-ID (CLI-SUB) TO WS-BASE-INSRD-STCKR-ID
+B10737     END-IF.
+
+           MOVE WCLI-CLI-ID                  TO RCLIU-CLI-ID.
+           MOVE WPOL-POL-ID                  TO RCLIU-POL-ID.
+           MOVE RCLIU-KEY                    TO WCLIU-KEY.
+
+           PERFORM  CLIU-1000-READ
+               THRU CLIU-1000-READ-X.
+
+           IF  WCLIU-IO-OK
+      *MSG: CLIENT UNDERWRITING RECORD (@1) ALREADY EXISTS
+               MOVE 'AS94000026'             TO WGLOB-MSG-REF-INFO
+               MOVE RCLIU-KEY                TO WGLOB-MSG-PARM (1)
+               PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                   THRU 9000-BUILD-MESSAGE-EXTRACT-X
+           ELSE
+               PERFORM  CLIU-1000-WRITE
+                   THRU CLIU-1000-WRITE-X
+           END-IF.
+
+       4908-WRITE-CLIU-RECS-X.
+           EXIT.
+      /
+
+MP9PHA*------------------------
+MP9PHA 4909-GEN-PRTX-FOR-CLADR.
+MP9PHA*------------------------
+MP9PHA
+MP9PHA     PERFORM 0303-1000-BUILD-PARM-INFO
+MP9PHA        THRU 0303-1000-BUILD-PARM-INFO-X.
+MP9PHA
+MP9PHA     SET L0303-TRNXT-TYP-MISC-PRT  TO TRUE.
+MP9PHA     SET L0303-CLIENT-ADDR-DOC     TO TRUE.
+MP9PHA
+MP9PHA     MOVE WGLOB-PROCESS-DATE       TO L0303-TRNXT-TRXN-EFF-DT.
+MP9PHA     MOVE RPOL-SBSDRY-CO-ID        TO L0303-SBSDRY-CO-ID.
+MP9PHA     MOVE RPOL-POL-ID              TO L0303-POL-ID.
+MP9PHA     MOVE ZEROES                   TO L0303-CVG-NUM-N.
+MP9PHA     MOVE ZEROES                   TO L0303-TRNXT-TRXN-AMT.
+MP9PHA     MOVE WS-CLADR-CLI-ID          TO L0303-CLI-ID.
+MP9PHA
+MP9PHA     SET NEW-POLICY-UPLDED         TO TRUE.
+MP9PHA     MOVE RUCLI-SEQ-NUM            TO WS-UCLI-SEQ-NUM.
+MP9PHA     MOVE WS-PRTX-VAR-1-INFO       TO L0303-TRNXT-VAR-1-INFO.
+MP9PHA
+MP9PHA     PERFORM 0303-1000-WRITE-PRTX-TRAN
+MP9PHA        THRU 0303-1000-WRITE-PRTX-TRAN-X.
+MP9PHA
+MP9PHA 4909-GEN-PRTX-FOR-CLADR-X.
+MP9PHA     EXIT.
+
+
+      *------------------------
+       4910-SCAN-CLIENT-FIELDS.
+      *------------------------
+
+           IF  RCLI-CLI-SEX-CD = 'C'
+               MOVE RCLNC-CLI-CO-NM         TO WS-COMPANY-NAME
+B10582         MOVE LAPUP-CLI-KA-CO-NM      TO WS-CORP-NAME
+           END-IF.
+
+      *  AT THIS POINT, THE CLIENT MATCHING ROUTINE MUST BE CALLED
+      *
+P00653     SET WS-CORP-NAME-MATCHED-NO  TO TRUE.
+P00653     SET L2130-CLIENT-NOT-MATCHED TO TRUE.
+
+R20265*S21974     IF  RPD-PLAN-COLI-PROD-YES
+R20265     IF  WS-PLAN-COLI-PROD-YES
+S21974     AND LAPUP-INPUT-DATA = 'OWNER' 
+S21974         MOVE RUCLI-CLI-ADDR-CD       TO WS-OWNER-ADDR-CD
+S21974     END-IF.
+
+           IF  LAPUP-CLI-ID (CLI-SUB) = SPACES
+P00653         IF RCLI-CLI-SEX-CD = 'C'
+P00653             PERFORM  4940-CONAM-MATCH
+P00653                 THRU 4940-CONAM-MATCH-X
+P00653         ELSE
+                   PERFORM  4912-CLIENT-MATCH
+                       THRU 4912-CLIENT-MATCH-X
+P00653         END-IF
+           END-IF.
+      *
+      * IF THE CLIENT COULD NOT BE MATCHED, WE MUST ASSIGN A NUMBER
+      *
+           IF  LAPUP-CLI-ID (CLI-SUB) = SPACES
+               PERFORM  4913-GET-NEW-CLIENT
+                   THRU 4913-GET-NEW-CLIENT-X
+           END-IF.
+
+           MOVE LAPUP-CLI-ID (CLI-SUB)      TO WCLI-CLI-ID.
+
+       4910-SCAN-CLIENT-FIELDS-X.
+           EXIT.
+      /
+
+Q18254*-----------------------------*
+Q18254 4911-CHK-UWGDECN-STATUS.
+Q18254*-----------------------------*
+Q18254 
+Q18254     MOVE LOW-VALUES                  TO WRL-KEY.
+Q18254     MOVE RCLI-CLI-ID                 TO WRL-CLI-ID.
+Q18254     
+Q18254     MOVE HIGH-VALUES                 TO WRL-ENDBR-KEY.
+Q18254     MOVE RCLI-CLI-ID                 TO WRL-ENDBR-CLI-ID.
+Q18254
+Q18254     PERFORM  RL-1000-BROWSE
+Q18254         THRU RL-1000-BROWSE-X.
+Q18254
+Q18254     PERFORM  RL-2000-READ-NEXT
+Q18254         THRU RL-2000-READ-NEXT-X.
+Q18254
+Q18254     IF  WRL-IO-OK
+Q18254         PERFORM  4917-UNDRTR-DECISION
+Q18254             THRU 4917-UNDRTR-DECISION-X
+MP310H*Q18254             UNTIL (WS-POL-STAT-PENDING-CNT > 0
+109590*MP310H      UNTIL (WS-PENDING-POL-CNT > 0
+109590		   UNTIL (WS-POL-STAT-PENDING-CNT > 0
+Q18254             OR WRL-IO-EOF)
+Q18254     END-IF.
+Q18254
+Q18254     PERFORM  RL-3000-END-BROWSE
+Q18254         THRU RL-3000-END-BROWSE-X.
+110572
+122553*R14974     MOVE RUCLI-POL-CLI-REL-TYP-CD    TO LAPUP-INPUT-DATA.
+122553*R14974     PERFORM  TNLT-1000-TRNSLT-UPPER-CASE
+122553*R14974         THRU TNLT-1000-TRNSLT-UPPER-CASE-X.
+122553*R14974     IF  LAPUP-INPUT-DATA = 'INSURED'
+122553*R14974         PERFORM  4926-PENDING-POL-CHK
+122553*R14974             THRU 4926-PENDING-POL-CHK-X 
+122553*R14974     END-IF.
+R14974
+R14974*110572     PERFORM  4926-PENDING-POL-CHK
+R14974*110572         THRU 4926-PENDING-POL-CHK-X. 
+110572
+111572*109590
+111572*109590     INITIALIZE WS-PENDING-POL-CNT.
+111572*109590     INITIALIZE WS-HLD-POL-ID.
+111572*109590     MOVE LOW-VALUES                  TO WRL-KEY.
+111572*109590     MOVE RCLI-CLI-ID                 TO WRL-CLI-ID.
+111572*109590     
+111572*109590     MOVE HIGH-VALUES                 TO WRL-ENDBR-KEY.
+111572*109590     MOVE RCLI-CLI-ID                 TO WRL-ENDBR-CLI-ID.
+111572*109590
+111572*109590     PERFORM  RL-1000-BROWSE
+111572*109590         THRU RL-1000-BROWSE-X.
+111572*109590
+111572*109590     PERFORM  RL-2000-READ-NEXT
+111572*109590         THRU RL-2000-READ-NEXT-X.
+111572*109590
+111572*109590     IF  WRL-IO-OK
+111572*109590
+111572*109590         PERFORM  4922-MULTP-PEND-POL-CHK
+111572*109590             THRU 4922-MULTP-PEND-POL-CHK-X
+111572*109590             UNTIL (WS-PENDING-POL-CNT > 0
+111572*109590             OR WRL-IO-EOF)
+111572*109590
+111572*109590     END-IF.
+111572*109590
+111572*109590     PERFORM  RL-3000-END-BROWSE
+111572*109590         THRU RL-3000-END-BROWSE-X.
+111572*109590
+Q18254 4911-CHK-UWGDECN-STATUS-X.
+Q18254     EXIT.
+
+      *------------------
+       4912-CLIENT-MATCH.
+      *------------------
+
+           MOVE SPACES                      TO L2130-PARAMETERS-IN.
+           MOVE LAPUP-CLI-INDV-SUR-NM-KA    TO L2130-LAST-NAME.
+           MOVE LAPUP-CLI-INDV-GIV-NM-KA    TO L2130-FIRST-INITIAL.
+           MOVE RCLI-CLI-SEX-CD             TO L2130-SEX.
+           MOVE RCLI-CLI-BTH-DT             TO L2130-BIRTH-DATE.
+EN7281     MOVE RUCLI-CLI-ADDR-CD           TO L2130-ADDR-CD.
+
+R20265*TL0572     IF  RPD-PLAN-COLI-PROD-YES
+R20265     IF  WS-PLAN-COLI-PROD-YES
+TL0572     AND LAPUP-INPUT-DATA = 'OWNER' 
+TL0572         MOVE RUCLI-CLI-ADDR-CD       TO WS-OWNER-ADDR-CD
+TL0572     END-IF.
+TL0572              
+R20265*TL0572     IF  RPD-PLAN-COLI-PROD-YES
+R20265     IF  WS-PLAN-COLI-PROD-YES
+TL0572     AND LAPUP-INPUT-DATA = 'INSURED' 
+TL0572         MOVE WS-OWNER-ADDR-CD        TO L2130-ADDR-CD  
+TL0572         MOVE RUCLI-CLI-ADDR-CD       TO WS-INSRD-ADDR-LOC-CD 
+TL0572     END-IF.
+
+
+           PERFORM  2130-0000-ALPHA-MATCH
+               THRU 2130-0000-ALPHA-MATCH-X.
+
+           IF  L2130-CLIENT-DUPLICATE
+      *MSG: CLIENT (@1, @2) FOUND TWICE, NEW RECORD WILL BE CREATED
+               MOVE 'AS94000004'        TO WGLOB-MSG-REF-INFO
+               MOVE L2130-LAST-NAME     TO WGLOB-MSG-PARM (1)
+               MOVE L2130-FIRST-INITIAL TO WGLOB-MSG-PARM (2)
+               PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                   THRU 9000-BUILD-MESSAGE-EXTRACT-X
+           END-IF.
+
+           IF  L2130-CLIENT-MATCHED
+      *MSG: CLIENT (@1, @2) MATCHED WITH CLIENT# (@3) ON FILE
+               MOVE L2130-CLIENT-NUMBER TO LAPUP-CLI-ID (CLI-SUB)
+               MOVE L2130-CLIENT-NUMBER TO WCLI-CLI-ID
+               MOVE 'AS94000005'        TO WGLOB-MSG-REF-INFO
+               MOVE L2130-LAST-NAME     TO WGLOB-MSG-PARM (1)
+               MOVE L2130-FIRST-INITIAL TO WGLOB-MSG-PARM (2)
+               MOVE L2130-CLIENT-NUMBER TO WGLOB-MSG-PARM (3)
+               PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                   THRU 9000-BUILD-MESSAGE-EXTRACT-X
+           END-IF.
+
+       4912-CLIENT-MATCH-X.
+           EXIT.
+      /
+      *--------------------
+       4913-GET-NEW-CLIENT.
+      *--------------------
+
+           PERFORM  0066-1000-ASSIGN-CLI-ID
+               THRU 0066-1000-ASSIGN-CLI-ID-X.
+
+           IF  L0066-RETRN-OK
+               MOVE L0066-CLIENT-NUMBER  TO WCLI-CLI-ID
+               PERFORM  4914-NEW-CLIENT-KEYS
+                   THRU 4914-NEW-CLIENT-KEYS-X
+           ELSE
+      *MSG: CLIENT NUMBER ASSIGNMENT ERROR - PROGRAM ABENDED
+               MOVE 'AS94000006'         TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+               PERFORM  0030-5000-LOGIC-ERROR
+                   THRU 0030-5000-LOGIC-ERROR-X
+           END-IF.
+
+           IF  CLI-SUB > 0
+               MOVE L0066-CLIENT-NUMBER  TO LAPUP-CLI-ID (CLI-SUB)
+           END-IF.
+
+       4913-GET-NEW-CLIENT-X.
+           EXIT.
+      /
+      *---------------------
+       4914-NEW-CLIENT-KEYS.
+      *---------------------
+      *
+      * RESET OTHER CLIENT RELATED KEYS
+      *
+           MOVE WCLI-CLI-ID            TO WCLIA-CLI-ID.
+           MOVE WCLI-CLI-ID            TO WCLNM-CLI-ID.
+           MOVE WCLI-CLI-ID            TO WCLIC-CLI-ID.
+           MOVE WCLI-CLI-ID            TO WCLIU-CLI-ID.
+           MOVE WCLI-CLI-ID            TO WCLII-CLI-ID.
+
+       4914-NEW-CLIENT-KEYS-X.
+           EXIT.
+      /
+P03349*---------------------
+P03349 4915-COMPRESS-NAME-DATA.
+P03349*---------------------
+P03349
+P03349     MOVE SPACES                 TO L0015-COMP-AREA-IN.
+P03349     MOVE SPACES                 TO L0015-COMP-AREA-OUT.
+P03349     MOVE WS-NM-UNCOMP-FIRST     TO L0015-COMP-AREA-IN-FIRST.
+P03349     MOVE WS-NM-UNCOMP-LAST      TO L0015-COMP-AREA-IN-LAST.
+P03349     MOVE ZEROES                 TO WS-DB-SPACE-COUNT.
+P03349
+P03349*CHANGE DB SPACE TO SB SPACE SO THAT COMPRESSION ROUTINE CAN HANDLE IT
+P03349     INSPECT  L0015-COMP-AREA-IN
+P03349         TALLYING WS-DB-SPACE-COUNT
+P03349         FOR ALL  WS-DB-SPACE
+P03349         REPLACING ALL  WS-DB-SPACE
+P03349                    BY  WS-SB-SPACE-SPACE.
+P03349
+P03349     PERFORM  0015-1000-COMPRESS-BLANKS
+P03349         THRU 0015-1000-COMPRESS-BLANKS-X.
+P03349
+P03349     MOVE SPACES                 TO WS-NM.
+P03349     MOVE SPACES                 TO WS-NM-DBCS-DATA.
+P03349     MOVE SPACES                 TO WS-NM-COMPRESSED.
+P03349     MOVE L0015-COMP-AREA-OUT    TO WS-NM.
+P03349
+P03349*REMOVE THE FIRST BYTE SPACE IF PRESENT. IF INPUT DATA HAS LEADING SPACES
+P03349* COMPRESSION ROUTINE RETURNS A SINGLE BYTE SPACE AT THE FIRST BYTE
+P03349     IF  WS-NM-FIRST = WS-SB-SPACE
+P03349         MOVE WS-NM-REST         TO WS-NM-COMPRESSED
+P03349         SUBTRACT  1
+P03349             FROM   L0015-OUT-SUB
+P03349             GIVING WS-LEN-NM
+P03349     ELSE
+P03349         MOVE WS-NM              TO WS-NM-COMPRESSED
+P03349         MOVE L0015-OUT-SUB      TO WS-LEN-NM
+P03349     END-IF.
+P03349
+P03349     MOVE WS-NM-COMPRESSED       TO WS-COMPRESSED-NAME.
+P03349
+P03349 4915-COMPRESS-NAME-DATA-X.
+P03349     EXIT.
+
+P03349*------------------------
+P03349 4916-CONVERT-SB-DB-SPACE.
+P03349*------------------------
+
+P03349* CHECK FOR DB-SPACE-COUNT ->INDICATES VALID KANJI NAME(NOT LATIN CHARS)
+P03349* IF VALID KANJI NAME CONVERT SINGLE BYTE TO DOUBLE BYTE SPACE
+P03349
+P03349     IF  WS-DB-SPACE-COUNT > 0
+P03349
+P03349         MOVE 1                       TO WS-J
+P03349         PERFORM
+P03349             VARYING WS-I FROM 1 BY 1
+P03349             UNTIL   WS-I >= WS-LEN-NM
+P03349
+P03349             IF  WS-NM-COMP (WS-I) = WS-SB-SPACE
+P03349                 MOVE WS-DB-SPACE
+P03349                   TO WS-NM-DBCS-DATA-R (WS-J:2)
+P03349                 COMPUTE WS-J = WS-J + 2
+P03349                 SET SB-SPACE TO TRUE
+P03349                 PERFORM  4918-CHECK-SB-SPACE
+P03349                     THRU 4918-CHECK-SB-SPACE-X
+P03349                     UNTIL NOT-SB-SPACE OR WS-I >= WS-LEN-NM
+P03349             ELSE
+P03349                 MOVE WS-NM-COMP (WS-I)
+P03349                   TO WS-NM-DBCS (WS-J)
+P03349                 COMPUTE WS-J = WS-J + 1
+P03349             END-IF
+P03349         END-PERFORM
+P03349
+P03349         MOVE WS-NM-DBCS-DATA TO WS-COMPRESSED-NAME
+P03349     END-IF.
+P03349
+P03349 4916-CONVERT-SB-DB-SPACE-X.
+P03349     EXIT.
+
+Q18254*----------------------
+Q18254 4917-UNDRTR-DECISION.
+Q18254*----------------------
+Q18254
+Q18254     IF  RRL-REL-SYS-REF-POL-ID  = WS-POL-ID
+Q18254         PERFORM  RL-2000-READ-NEXT
+Q18254             THRU RL-2000-READ-NEXT-X
+Q18254         GO TO 4917-UNDRTR-DECISION-X
+Q18254     END-IF.
+Q18254
+Q18254     MOVE RRL-REL-SYS-REF-POL-ID      TO WPOL-POL-ID.
+Q18254
+Q18254     PERFORM  POL-1000-READ
+Q18254         THRU POL-1000-READ-X.
+Q18254
+Q18254     IF  WPOL-IO-OK 
+Q18254         IF  RPOL-POL-STAT-PENDING
+Q18254             ADD 1                    TO WS-POL-STAT-PENDING-CNT
+109590*MP310H* TO EXLCUDE THE FRA PRODUCT
+109590*MP310H             IF  NOT RPOL-PROD-APP-TYP-FRA
+109590*MP310H                 ADD 1                TO WS-PENDING-POL-CNT
+109590*MP310H             END-IF
+109590*MP310H
+Q18254         END-IF
+Q18254     END-IF.
+Q18254
+Q18254     PERFORM  RL-2000-READ-NEXT
+Q18254         THRU RL-2000-READ-NEXT-X.
+Q18254
+Q18254 4917-UNDRTR-DECISION-X.
+Q18254     EXIT.
+
+
+109590*------------------------
+109590 4922-MULTP-PEND-POL-CHK.
+109590*-------------------------
+109590
+109590     IF  RRL-REL-SYS-REF-POL-ID  = WS-POL-ID
+109590     OR (NOT RRL-REL-TYP-INSURED)
+109590     OR RRL-REL-SYS-REF-POL-ID  = WS-HLD-POL-ID
+109590         PERFORM  RL-2000-READ-NEXT
+109590             THRU RL-2000-READ-NEXT-X
+109590         GO TO 4922-MULTP-PEND-POL-CHK-X
+109590     END-IF.
+109590
+109590     MOVE RRL-REL-SYS-REF-POL-ID      TO WPOL-POL-ID.
+109590
+109590     PERFORM  POL-1000-READ
+109590         THRU POL-1000-READ-X.
+109590
+109590     IF  WPOL-IO-OK 
+109590     AND RPOL-POL-APP-UPLD-DT = WGLOB-PROCESS-DATE
+116623*FFF002*109590     AND NOT RPOL-PROD-APP-TYP-FRA
+116623*FFF002     AND NOT (RPOL-PROD-APP-TYP-FRA
+116623*FFF002     OR  RPOL-PROD-APP-TYP-FFF)
+116623     AND NOT RPOL-PROD-APP-TYP-FRA
+109590	        ADD 1                TO WS-PENDING-POL-CNT
+109590	        MOVE RPOL-POL-ID     TO WS-HLD-POL-ID
+109590     END-IF.
+109590
+109590
+109590     PERFORM  RL-2000-READ-NEXT
+109590         THRU RL-2000-READ-NEXT-X.
+109590
+109590 	4922-MULTP-PEND-POL-CHK-X.
+109590     EXIT.
+
+P03349*--------------------
+P03349 4918-CHECK-SB-SPACE.
+P03349*--------------------
+P03349
+P03349     IF  WS-NM-COMP (WS-I) = WS-SB-SPACE
+P03349         SET SB-SPACE TO TRUE
+P03349         ADD +1 TO WS-I
+P03349     ELSE
+P03349         SET NOT-SB-SPACE TO TRUE
+P03349         MOVE WS-NM-COMP (WS-I)
+P03349           TO WS-NM-DBCS (WS-J)
+P03349         COMPUTE WS-J = WS-J + 1
+P03349     END-IF.
+P03349
+P03349 4918-CHECK-SB-SPACE-X.
+P03349     EXIT.
+MP261E*------------------------
+MP261E 4919-GEN-PRTX-FOR-PPRVD.
+MP261E*------------------------
+MP261E
+MP261E     PERFORM 0303-1000-BUILD-PARM-INFO
+MP261E        THRU 0303-1000-BUILD-PARM-INFO-X.
+MP261E
+MP261E     SET L0303-TRXNT-TYP-PPRVD-NOTI   TO TRUE.
+MP261E     SET L0303-PROV-LIST-DOC          TO TRUE.
+MP261E
+MP261E     MOVE WGLOB-PROCESS-DATE       TO L0303-TRNXT-TRXN-EFF-DT.
+MP261E     MOVE RPOL-SBSDRY-CO-ID        TO L0303-SBSDRY-CO-ID.
+MP261E     MOVE RPOL-POL-ID              TO L0303-POL-ID.
+MP261E     MOVE ZEROES                   TO L0303-CVG-NUM-N.
+MP261E     MOVE ZEROES                   TO L0303-TRNXT-TRXN-AMT.
+MP261E     MOVE WS-CLADR-CLI-ID          TO L0303-CLI-ID.
+MP261E
+MP261E
+MP261E     PERFORM 0303-1000-WRITE-PRTX-TRAN
+MP261E        THRU 0303-1000-WRITE-PRTX-TRAN-X.
+MP261E
+MP261E 4919-GEN-PRTX-FOR-PPRVD-X.
+MP261E     EXIT.
+MP261E
+      *----------------------
+       4920-SETUP-BENE-INSRD.
+      *----------------------
+
+B10017*    ADD 1 TO WS-BENE-CLI-SUB.
+
+B10017*    MOVE LAPUP-CLI-ID (CLI-SUB) TO
+B10017*         LAPUP-BENE-INSRD-CLI-ID (WS-BENE-CLI-SUB).
+
+B10017     IF LAPUP-DEATH-BENE-EXISTS
+B10017        ADD 1 TO WS-BENE-CLI-SUB
+B10017        MOVE LAPUP-CLI-ID (CLI-SUB) TO
+B10017             LAPUP-BENE-INSRD-CLI-ID (WS-BENE-CLI-SUB)
+B10017     END-IF.
+
+B10017     IF LAPUP-PROXY-BENE-EXISTS
+B10017        ADD 1                       TO WS-BENE-CLI-SUB
+B10017        MOVE LAPUP-CLI-ID (CLI-SUB) TO
+B10017             LAPUP-BENE-INSRD-CLI-ID (WS-BENE-CLI-SUB)
+B10017     END-IF.
+
+IPDDUP     IF LAPUP-IP-DEATH-BENE-EXISTS
+IPDDUP        ADD 1 TO WS-BENE-CLI-SUB
+IPDDUP        MOVE LAPUP-CLI-ID (CLI-SUB) TO
+IPDDUP             LAPUP-BENE-INSRD-CLI-ID (WS-BENE-CLI-SUB)
+IPDDUP     END-IF.
+
+TVI002     IF  LAPUP-MATURITY-BENE-EXISTS
+TVI002         ADD 1 TO WS-BENE-CLI-SUB
+TVI002         MOVE LAPUP-CLI-ID (CLI-SUB)  TO
+TVI002              LAPUP-BENE-INSRD-CLI-ID (WS-BENE-CLI-SUB)
+TVI002     END-IF.
+M271N1
+M271N1     IF  LAPUP-ANUTNT-BENE-EXISTS
+M271N1         ADD 1 TO WS-BENE-CLI-SUB
+M271N1         MOVE LAPUP-CLI-ID (CLI-SUB)  TO
+M271N1              LAPUP-BENE-INSRD-CLI-ID (WS-BENE-CLI-SUB)
+M271N1     END-IF.
+M271N1
+M271N1     IF  LAPUP-SUCSD-ANUTNT-BENE-EXISTS
+M271N1         ADD 1 TO WS-BENE-CLI-SUB
+M271N1         MOVE LAPUP-CLI-ID (CLI-SUB)  TO
+M271N1              LAPUP-BENE-INSRD-CLI-ID (WS-BENE-CLI-SUB)
+M271N1     END-IF.
+UYS002
+UYS002     IF  LAPUP-CANCER-BENE-EXISTS
+UYS002         ADD 1 TO WS-BENE-CLI-SUB
+UYS002         MOVE LAPUP-CLI-ID (CLI-SUB)  TO
+UYS002              LAPUP-BENE-INSRD-CLI-ID (WS-BENE-CLI-SUB)
+UYS002     END-IF.
+       4920-SETUP-BENE-INSRD-X.
+           EXIT.
+      /
+MP261E*------------------------
+MP261E 4923-GEN-MNOTI-FOR-CLUM.
+MP261E*------------------------  
+MP261E     INITIALIZE WS-CLUM-LIST.
+MP261E     MOVE WS-XML-HDR                  TO WS-CLUM-HDR.
+MP261E     MOVE RUCLI-APP-ID                TO WS-CLUM-APP-ID.
+MP261E     MOVE RPOL-POL-ID                 TO WS-CLUM-POL-ID.
+MP261E     MOVE RCLIA-CLI-ID                TO WS-CLUM-CLI-ID.
+MP261E     MOVE RUCLI-CLI-ADDR-CD           TO WS-CLUM-ADDR-CD.
+MP261E     IF  RCLI-CLI-SEX-CD = 'C'
+MP261E         MOVE RUCLI-CLI-KA-CO-NM TO WS-CLUM-KANA-NM
+MP261E	   ELSE
+MP261E         MOVE RUCLI-CLI-KA-GIV-NM     TO WS-CLUM-KANA-GIV-NM
+MP261E         MOVE RUCLI-CLI-KA-SUR-NM     TO WS-CLUM-KANA-SUR-NM 
+MP261E     END-IF.
+MP261E     IF  RCLI-CLI-SEX-CD = 'C'
+MP261E         MOVE RUCLI-CLI-CO-NM TO WS-CLUM-KANJI-NM
+MP261E	   ELSE
+MP261E         MOVE RUCLI-CLI-GIV-NM        TO WS-CLUM-KANJI-GIV-NM
+MP261E         MOVE RUCLI-CLI-SUR-NM        TO WS-CLUM-KANJI-SUR-NM   
+MP261E     END-IF.
+MP261E     MOVE RUCLI-CLI-ADDR-TXT          TO WS-CLUM-ADDR-TXT.
+MP261E
+MP261E 4923-GEN-MNOTI-FOR-CLUM-X.
+MP261E     EXIT.
+      /
+MP261E*------------------------      
+MP261E 4924-GEN-INOTI-FOR-CLUM.      
+MP261E*------------------------ 
+MP261E     INITIALIZE WS-CLUM-LIST.
+MP261E
+MP261E     MOVE LOW-VALUES            TO WCLIU-KEY.
+MP261E     MOVE RCLIA-CLI-ID          TO WCLIU-CLI-ID.
+MP261E     MOVE HIGH-VALUES           TO WCLIU-ENDBR-KEY.
+MP261E     MOVE RCLIA-CLI-ID           TO WCLIU-ENDBR-CLI-ID.
+MP261E
+MP261E     PERFORM  CLIU-1000-BROWSE
+MP261E         THRU CLIU-1000-BROWSE-X.
+MP261E
+MP261E     PERFORM  CLIU-2000-READ-NEXT
+MP261E         THRU CLIU-2000-READ-NEXT-X.
+MP261E        
+MP261E     MOVE WS-CLIA-HDR                 TO WS-CLUM-HDR.
+MP261E     MOVE RCLIU-STCKR-ID              TO WS-CLUM-APP-ID      
+MP261E     MOVE RCLIU-POL-ID                TO WS-CLUM-POL-ID       
+MP261E     MOVE RCLIA-CLI-ID                TO WS-CLUM-CLI-ID      
+MP261E     MOVE RUCLI-CLI-ADDR-CD           TO WS-CLUM-ADDR-CD   
+MP261E     PERFORM  2435-1000-BUILD-PARM-INFO
+MP261E         THRU 2435-1000-BUILD-PARM-INFO-X.
+MP261E     MOVE  RCLIA-CLI-ID           TO  L2435-CLI-ID.
+MP261E     PERFORM  2435-1000-OBTAIN-CLI-INFO
+MP261E         THRU 2435-1000-OBTAIN-CLI-INFO-X.
+MP261E
+MP261E     IF NOT L2435-RETRN-OK
+MP261E*MSG:    'CLIENT RECORD (@1) NOT FOUND'
+MP261E         MOVE 'XS00000058'        TO  WGLOB-MSG-REF-INFO
+MP261E         MOVE L2435-CLI-KEY       TO  WGLOB-MSG-PARM (1)
+MP261E         PERFORM 0260-1000-GENERATE-MESSAGE
+MP261E             THRU 0260-1000-GENERATE-MESSAGE-X
+MP261E     END-IF.
+MP261E
+MP261E     IF  RCLI-CLI-SEX-CD = 'C'
+MP261E         MOVE L2435-CLI-ENTR-CO-NM TO WS-CLUM-KANA-NM
+MP261E	   ELSE
+MP261E         MOVE L2435-CLI-FULL-NAME TO WS-CLUM-KANA-NM
+MP261E     END-IF.
+MP261E     IF  RCLI-CLI-SEX-CD = 'C'
+MP261E         MOVE l2435-CLI-KJ-CO-NM TO WS-CLUM-KANJI-NM
+MP261E	   ELSE
+MP261E         MOVE L2435-CLI-KJ-FULL-NAME TO WS-CLUM-KANJI-NM
+MP261E     END-IF.     
+MP261E
+MP261E     MOVE RCLIA-CLI-ADDR-ADDL-TXT TO WS-CLUM-ADDR-1-TXT.
+MP261E     MOVE RCLIA-CLI-ADDR-MORE-TXT TO WS-CLUM-ADDR-2-TXT.
+MP261E     PERFORM  CLIU-3000-END-BROWSE
+MP261E         THRU CLIU-3000-END-BROWSE-X.
+MP261E      
+MP261E 4924-GEN-INOTI-FOR-CLUM-X.      
+MP261E     EXIT. 
+111572*------------------------
+110572 4925-WRITE-NEW-REQT.
+111572*------------------------
+110572   PERFORM  0080-1000-BUILD-PARM-INFO
+110572       THRU 0080-1000-BUILD-PARM-INFO-X
+110572
+110572   SET L0080-CLIENT-LEVEL       TO TRUE
+110572   MOVE RCLI-CLI-ID             TO L0080-CLI-ID
+110572   MOVE '31R15'                 TO L0080-REQIR-CODE
+110572
+110572   PERFORM  0080-1000-SEARCH-ONE
+110572       THRU 0080-1000-SEARCH-ONE-X
+110572
+110572   IF  L0080-RSLT-OUTSTNDG-FOUND
+110572       GO TO 4925-WRITE-NEW-REQT-X
+110572   ELSE
+110572       MOVE RPOL-POL-ID         TO L0080-REQIR-POL-ID
+110572       SET L0080-REQIR-STAT-ORDERED 
+110572                                TO TRUE      
+M310K1*110572       PERFORM  0080-4000-WRITE
+M310K1*110572           THRU 0080-4000-WRITE-X 
+M310K1       PERFORM  0080-9000-WRITE-NEW-REQT
+M310K1           THRU 0080-9000-WRITE-NEW-REQT-X
+110572    
+110572       IF NOT L0080-RETRN-OK
+111572*MSG: REQUIREMENT TYPE (@1) NOT GENERATED FOR POLICY (@2).
+110572          MOVE L0080-REQIR-CODE    TO WGLOB-MSG-PARM (1)
+110572          MOVE RPOL-POL-ID         TO WGLOB-MSG-PARM (2)
+110572          MOVE 'AS94009712'        TO WGLOB-MSG-REF-INFO
+110572          PERFORM  0260-1000-GENERATE-MESSAGE
+110572              THRU 0260-1000-GENERATE-MESSAGE-X
+110572          SET WS-ERROR-YES         TO TRUE
+110572          GO TO 4925-WRITE-NEW-REQT-X
+110572        END-IF
+110572     END-IF.
+110572
+110572 4925-WRITE-NEW-REQT-X.      
+110572     EXIT.
+110572
+111572*------------------------
+110572 4926-PENDING-POL-CHK.
+111572*------------------------
+110572
+110572     INITIALIZE WS-PENDING-POL-CNT.
+110572     INITIALIZE WS-HLD-POL-ID.
+110572     MOVE LOW-VALUES                  TO WRL-KEY.
+110572     MOVE RCLI-CLI-ID                 TO WRL-CLI-ID.
+110572     
+110572     MOVE HIGH-VALUES                 TO WRL-ENDBR-KEY.
+110572     MOVE RCLI-CLI-ID                 TO WRL-ENDBR-CLI-ID.
+110572
+110572     PERFORM  RL-1000-BROWSE
+110572         THRU RL-1000-BROWSE-X.
+110572
+110572     PERFORM  RL-2000-READ-NEXT
+110572         THRU RL-2000-READ-NEXT-X.
+110572
+110572     IF  WRL-IO-OK
+110572
+110572         PERFORM  4922-MULTP-PEND-POL-CHK
+110572             THRU 4922-MULTP-PEND-POL-CHK-X
+110572             UNTIL (WS-PENDING-POL-CNT > 0
+110572             OR WRL-IO-EOF)
+110572
+110572     END-IF.
+110572
+110572     PERFORM  RL-3000-END-BROWSE
+110572         THRU RL-3000-END-BROWSE-X.
+110572
+110572 4926-PENDING-POL-CHK-X.      
+110572     EXIT.
+110572
+M310K1*-----------------------
+M310K1 4927-SPCL-ALPHA-MATCH.
+M310K1*-----------------------
+M310K1
+M310K1     MOVE RCLI-REC-INFO               TO HCLI-REC-INFO.
+M310K1     MOVE RPOL-REC-INFO               TO HPOL-REC-INFO.
+M310K1     INITIALIZE WS-PENDING-POL-CNT.
+M310K1
+M310K1     MOVE  SPACE                      TO  WCLNN-KEY.
+M310K1     SET WCLNN-CLI-INDV-GR-KATAKANA   TO TRUE.
+M310K1     SET WCLNN-CLI-INDV-NM-TYP-CRNT   TO TRUE.
+M310K1     MOVE  LAPUP-CLI-INDV-SUR-NM-KA   TO
+M310K1                          WCLNN-CLI-INDV-SUR-NM.
+M310K1     MOVE  LAPUP-CLI-INDV-GIV-NM-KA   TO  
+M310K1                                 WCLNN-CLI-INDV-GIV-NM.
+M310K1     MOVE  WCLNN-KEY                  TO  WCLNN-ENDBR-KEY.
+M310K1     MOVE  LAPUP-CLI-INDV-SUR-NM-KA   TO  
+M310K1                                  WCLNN-ENDBR-CLI-INDV-SUR-NM.
+M310K1     MOVE  LAPUP-CLI-INDV-GIV-NM-KA   TO  
+M310K1                                  WCLNN-ENDBR-CLI-INDV-GIV-NM.
+M310K1     MOVE  HIGH-VALUES                TO  WCLNN-ENDBR-CLI-ID.
+M310K1
+M310K1     PERFORM  CLNN-4000-BROWSE-INDEX
+M310K1         THRU CLNN-4000-BROWSE-INDEX-X.
+M310K1
+M310K1     IF  WCLNN-IO-EOF
+M310K1         GO TO 4927-SPCL-ALPHA-MATCH-X
+M310K1     END-IF.
+M310K1     
+M310K1     PERFORM  4928-MATCH-RECORD
+M310K1         THRU 4928-MATCH-RECORD-X
+M310K1         UNTIL WCLNN-IO-EOF
+M310K1         OR WS-PENDING-POL-CNT > 0.
+M310K1
+M310K1     PERFORM  CLNN-6000-END-BROWSE-INDEX
+M310K1         THRU CLNN-6000-END-BROWSE-INDEX-X.
+M310K1 
+M310K1*IF THE SAME INSURED IS FOUND THE 31R15 REQUIREMENT NEED TO 
+M310K1*BE CREATED FOR THE FIRST CLIENT AS WELL
+M310K1
+M310K1     IF  WS-PENDING-POL-CNT > 0
+M310K1         PERFORM  4925-WRITE-NEW-REQT
+M310K1             THRU 4925-WRITE-NEW-REQT-X
+M310K1     END-IF.        
+M310K1
+M310K1     MOVE HCLI-REC-INFO               TO RCLI-REC-INFO.
+M310K1     MOVE HPOL-REC-INFO               TO RPOL-REC-INFO.
+M310K1     MOVE RPOL-POL-ID                 TO WPOL-POL-ID.
+M310K1
+M310K1 4927-SPCL-ALPHA-MATCH-X.
+M310K1     EXIT.
+M310K1/
+M310K1*------------------
+M310K1 4928-MATCH-RECORD.
+M310K1*------------------
+M310K1
+M310K1* READ ALPHA RECORD
+M310K1*
+M310K1     PERFORM  CLNN-5000-READ-NEXT-INDEX
+M310K1         THRU CLNN-5000-READ-NEXT-INDEX-X.
+M310K1
+M310K1     IF  WCLNN-IO-EOF
+M310K1         GO TO 4928-MATCH-RECORD-X
+M310K1     END-IF.
+M310K1
+M310K1*
+M310K1* READ CLIENT WITH ALT. ACCESS
+M310K1*
+M310K1     MOVE LOW-VALUES                  TO WCLID-KEY.
+M310K1     MOVE RCLNM-CLI-ID                TO WCLID-CLI-ID.
+M310K1     MOVE WWKDT-LOW-DT                TO WCLID-CLI-BTH-DT.
+M310K1     MOVE HIGH-VALUES                 TO WCLID-ENDBR-KEY.
+M310K1     MOVE RCLNM-CLI-ID                TO WCLID-ENDBR-CLI-ID.
+M310K1     MOVE WWKDT-HIGH-DT               TO 
+M310K1                                   WCLID-ENDBR-CLI-BTH-DT.
+M310K1
+M310K1     PERFORM  CLID-4000-BROWSE-INDEX
+M310K1         THRU CLID-4000-BROWSE-INDEX-X.
+M310K1
+M310K1     IF  WCLID-IO-EOF
+M310K1         GO TO 4928-MATCH-RECORD-X
+M310K1     END-IF.
+M310K1
+M310K1     PERFORM  CLID-5000-READ-NEXT-INDEX
+M310K1         THRU CLID-5000-READ-NEXT-INDEX-X.
+M310K1
+M310K1     IF  WCLID-IO-EOF
+M310K1         GO TO 4928-MATCH-RECORD-X
+M310K1     END-IF.
+M310K1
+M310K1     PERFORM  CLID-6000-END-BROWSE-INDEX
+M310K1         THRU CLID-6000-END-BROWSE-INDEX-X.
+M310K1
+M310K1     IF  HCLI-CLI-SEX-CD  NOT =  RCLI-CLI-SEX-CD
+M310K1         GO TO 4928-MATCH-RECORD-X
+M310K1     END-IF.
+M310K1
+27624A*AS PART OF ELDERLY PROJECT DAY PORTION INCLUDED IN MULTIPLE
+27624A*INSURED VALIDATION
+27624A*M310K1     IF  HCLI-CLI-BTH-DT(1:7)  NOT = RCLI-CLI-BTH-DT(1:7)
+27624A     IF  HCLI-CLI-BTH-DT NOT = RCLI-CLI-BTH-DT
+M310K1         GO TO 4928-MATCH-RECORD-X
+M310K1     END-IF.
+M310K1
+M310K1     PERFORM  4926-PENDING-POL-CHK
+M310K1         THRU 4926-PENDING-POL-CHK-X.
+M310K1
+M310K1 4928-MATCH-RECORD-X.
+M310K1     EXIT.
+P00653*------------------------
+P00653 4930-CONVERT-PHNT-CONAM.
+P00653*------------------------
+P00653
+P00653     PERFORM  2810-1000-BUILD-PARM-INFO
+P00653         THRU 2810-1000-BUILD-PARM-INFO-X.
+P00653
+P00653     MOVE WCLNC-CLI-CO-GR-CD        TO L2810-SRCH-GR-CD.
+P00653     MOVE RCLNC-CLI-CO-NM-PHNT-TXT  TO L2810-INPUT-NAME.
+P00653
+P00653     PERFORM  2810-1000-CONAM-ENCODE
+P00653         THRU 2810-1000-CONAM-ENCODE-X.
+P00653
+P00653     IF  L2810-RETRN-OK
+P00653         MOVE L2810-PHONETIC-TXT    TO RCLNC-CLI-CO-NM-PHNT-TXT
+P00653     END-IF.
+P00653
+P00653 4930-CONVERT-PHNT-CONAM-X.
+P00653     EXIT.
+P00653
+P00653*-----------------
+P00653 4940-CONAM-MATCH.
+P00653*-----------------
+P00653
+EN7281*P00653** IT IS SAME CORP-NAME ONLY IF BOTH KANJI AND KANA NAMES ARE THE SAME
+EN7281
+EN7281* IT IS SAME CLIENT ONLY IF BOTH KANJI AND KANA NAMES AND ADDRESS CODE ARE SAME
+P00653
+P00653     MOVE LAPUP-CLI-CO-NM         TO WCLND-CLI-CO-NM.
+P00653     SET WCLND-CLI-CO-GR-KANJI    TO TRUE.
+P00653     SET WCLND-CLI-CO-NM-TYP-CLI  TO TRUE.
+P00653     MOVE SPACES                  TO WCLND-CLI-ID.
+P00653     MOVE WCLND-KEY               TO WCLND-ENDBR-KEY.
+P00653     MOVE HIGH-VALUES             TO WCLND-ENDBR-CLI-ID.
+P00653
+P00653     PERFORM  4950-CLND-FILE-SEARCH
+P00653         THRU 4950-CLND-FILE-SEARCH-X.
+P00653
+EN7281*P00653*** IF KANJI MATCHES , NEED TO MATCH THE KANA
+P00653
+EN7281*P00653     IF WS-CORP-NAME-MATCHED-YES
+EN7281*P00653         SET WS-CORP-NAME-MATCHED-NO  TO TRUE
+EN7281*P00653         MOVE LAPUP-CLI-KA-CO-NM      TO WCLND-CLI-CO-NM
+EN7281*P00653         SET WCLND-CLI-CO-GR-KATAKANA TO TRUE
+EN7281*P00653         SET WCLND-CLI-CO-NM-TYP-CLI  TO TRUE
+EN7281*P00653         MOVE SPACES                  TO WCLND-CLI-ID
+EN7281*P00653         MOVE WCLND-KEY               TO WCLND-ENDBR-KEY
+EN7281*P00653         MOVE HIGH-VALUES             TO WCLND-ENDBR-CLI-ID
+EN7281*P00653         PERFORM  4950-CLND-FILE-SEARCH
+EN7281*P00653             THRU 4950-CLND-FILE-SEARCH-X
+EN7281*P00653     END-IF.
+P00653
+P00653     IF WS-CORP-NAME-MATCHED-YES
+P00653         MOVE RCLNC-CLI-ID    TO LAPUP-CLI-ID (CLI-SUB)
+P00653*MSG: CLIENT (@1, @2) MATCHED WITH CLIENT# (@3) ON FILE
+P00653         MOVE 'AS94000005'        TO WGLOB-MSG-REF-INFO
+P00653         MOVE LAPUP-CLI-CO-NM     TO WGLOB-MSG-PARM (1)
+P00653         MOVE SPACES              TO WGLOB-MSG-PARM (2)
+P00653         MOVE RCLNC-CLI-ID        TO WGLOB-MSG-PARM (3)
+P00653         PERFORM  9000-BUILD-MESSAGE-EXTRACT
+P00653             THRU 9000-BUILD-MESSAGE-EXTRACT-X
+P00653     END-IF.
+P00653
+P00653 4940-CONAM-MATCH-X.
+P00653     EXIT.
+P00653/
+P00653*----------------------
+P00653 4950-CLND-FILE-SEARCH.
+P00653*----------------------
+P00653
+P00653     PERFORM  CLND-1000-BROWSE
+P00653         THRU CLND-1000-BROWSE-X.
+P00653
+P00653     IF  NOT WCLND-IO-OK
+P00653         GO TO 4950-CLND-FILE-SEARCH-X
+P00653     END-IF.
+P00653
+P00653     PERFORM  CLND-2000-READ-NEXT
+P00653         THRU CLND-2000-READ-NEXT-X.
+P00653
+P00653     IF  NOT WCLND-IO-OK
+P00653         PERFORM  CLND-3000-END-BROWSE
+P00653             THRU CLND-3000-END-BROWSE-X
+P00653         GO TO 4950-CLND-FILE-SEARCH-X
+P00653     END-IF.
+P00653
+EN7281* CHECK IF KANA NAME AND ADDRESS CODE MATCH
+EN7281
+EN7281     PERFORM  4955-KANA-NAME-MATCH
+EN7281         THRU 4955-KANA-NAME-MATCH-X
+EN7281         UNTIL WCLND-IO-EOF
+EN7281         OR WS-CORP-NAME-MATCHED-YES.
+EN7281
+P00653     PERFORM  CLND-3000-END-BROWSE
+P00653         THRU CLND-3000-END-BROWSE-X.
+P00653
+EN7281*P00653     MOVE RCLNC-CLI-ID        TO WCLI-CLI-ID.
+P00653
+EN7281*P00653     PERFORM  CLI-1000-READ
+EN7281*P00653         THRU CLI-1000-READ-X.
+P00653
+EN7281*P00653     IF WCLI-IO-OK
+EN7281*P00653         SET WS-CORP-NAME-MATCHED-YES TO TRUE
+EN7281*P00653     END-IF.
+P00653
+P00653 4950-CLND-FILE-SEARCH-X.
+P00653     EXIT.
+
+      /
+EN7281*---------------------
+EN7281 4955-KANA-NAME-MATCH.
+EN7281*---------------------
+EN7281
+EN7281     SET WCLNC-CLI-CO-GR-KATAKANA TO TRUE.
+EN7281     SET WCLNC-CLI-CO-NM-TYP-CLI TO TRUE.
+EN7281     MOVE RCLNC-CLI-ID           TO WCLNC-CLI-ID.
+TL0572     MOVE RUCLI-CLI-ADDR-CD           TO WS-OWNER-ADDR-CD.
+EN7281
+EN7281     PERFORM  CLNC-1000-READ
+EN7281         THRU CLNC-1000-READ-X.
+EN7281
+EN7281     IF  WCLNC-IO-OK
+EN7281     AND LAPUP-CLI-KA-CO-NM = RCLNC-CLI-CO-NM
+MP334A
+MP334A*IF THE SUCCESSOR CATEGORY FIELD HAS THE VALUE, THEN THE  
+MP334A*COMPANY NAME SHOULD NOT BE CONSIDERED FOR THE PROCESS.
+EN7281*P00653     MOVE RCLNC-CLI-ID        TO WCLI-CLI-ID.
+P00653
+MP334A         MOVE RCLI-REC-INFO           TO  HCLI-REC-INFO
+EN7281         MOVE RCLNC-CLI-ID            TO WCLI-CLI-ID
+MP334A         PERFORM  CLI-1000-READ
+MP334A             THRU CLI-1000-READ-X
+MP334A         IF RCLI-BPSS-MTCH-CD NOT = SPACES
+MP334A             MOVE HCLI-REC-INFO       TO  RCLI-REC-INFO
+MP334A             PERFORM  CLND-2000-READ-NEXT
+MP334A                 THRU CLND-2000-READ-NEXT-X
+MP334A             GO TO 4955-KANA-NAME-MATCH-X
+MP334A         END-IF
+MP334A
+MP334A         MOVE HCLI-REC-INFO           TO  RCLI-REC-INFO
+EN7281* CHECK IF ADDRESS CODE MATCH
+EN7281         MOVE RCLNC-CLI-ID    TO L2440-CLI-ID
+EN7281         IF  NOT WGLOB-COUNTRY-JAPAN
+EN7281             SET L2440-CLI-ADDR-GR-ALPHA TO TRUE
+EN7281         ELSE
+EN7281             SET L2440-CLI-ADDR-GR-KANJI TO TRUE
+EN7281         END-IF
+EN7281         PERFORM  2440-1000-PRIMARY-ADDRESS
+EN7281             THRU 2440-1000-PRIMARY-ADDRESS-X
+EN7281         IF  L2440-RETRN-OK
+EN7281         AND RUCLI-CLI-ADDR-CD =  L2440-CLI-ADDR-LOC-CD
+EN7281             SET WS-CORP-NAME-MATCHED-YES TO TRUE
+EN7281             GO TO 4955-KANA-NAME-MATCH-X
+EN7281         END-IF
+EN7281     END-IF.
+EN7281
+EN7281     PERFORM  CLND-2000-READ-NEXT
+EN7281         THRU CLND-2000-READ-NEXT-X.
+EN7281
+EN7281 4955-KANA-NAME-MATCH-X.
+EN7281     EXIT.
+EN7281/
+      *--------------------
+       5000-PROCESS-POLICY.
+      *--------------------
+
+           PERFORM  5100-INITIALIZE-POLICY-INFO
+               THRU 5100-INITIALIZE-POLICY-INFO-X.
+
+           MOVE WS-APP-ID              TO WUPOL-APP-ID.
+
+           PERFORM UPOL-1000-READ
+              THRU UPOL-1000-READ-X.
+
+           IF  WUPOL-IO-EOF
+      *MSG: UPLOAD POLICY RECORD FOR APP ID (@1) DOES NOT EXIST
+               MOVE 'AS94000027'       TO WGLOB-MSG-REF-INFO
+               MOVE RUPOL-APP-ID       TO WGLOB-MSG-PARM (1)
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+P00048         PERFORM  POL-3000-UNLOCK
+P00048             THRU POL-3000-UNLOCK-X
+               GO TO 5000-PROCESS-POLICY-X
+           END-IF.
+
+           PERFORM  5500-PROCESS-POLICY
+               THRU 5500-PROCESS-POLICY-X.
+
+           IF  WS-ERROR-FOUND
+P00048         PERFORM  POL-3000-UNLOCK
+P00048             THRU POL-3000-UNLOCK-X
+               GO TO 5000-PROCESS-POLICY-X
+           END-IF.
+
+B10019     PERFORM  5200-GET-SERV-AGT-ID
+B10019         THRU 5200-GET-SERV-AGT-ID-X.
+
+P00734*    IF LAPUP-CO-SALES-REP-NUM = '000000' OR SPACES
+P00734     IF LAPUP-CO-SALES-REP-NUM = '000000'
+P00734     OR LAPUP-CO-SALES-REP-NUM = SPACES
+C20954     OR LAPUP-CO-SALES-REP-NUM = RPOL-SERV-AGT-ID 
+              MOVE RPOL-SERV-AGT-ID TO L8240-AGT-ID (1)
+                                       LAPUP-CVGA-AGT-ID (1)
+              MOVE 100.00           TO L8240-AGT-SHR-PCT (1)
+                                       LAPUP-CVGA-CVG-AGT-SHR-PCT (1)
+              MOVE 'M'              TO L8240-AGT-TYP-CD (1)
+           ELSE
+              MOVE RPOL-SERV-AGT-ID TO L8240-AGT-ID (1)
+                                       LAPUP-CVGA-AGT-ID (1)
+              MOVE 50.00            TO L8240-AGT-SHR-PCT (1)
+                                       LAPUP-CVGA-CVG-AGT-SHR-PCT (1)
+              MOVE 'M'              TO L8240-AGT-TYP-CD (1)
+              MOVE LAPUP-CO-SALES-REP-NUM TO L8240-AGT-ID (2)
+                                             LAPUP-CVGA-AGT-ID (2)
+              MOVE 50.00             TO L8240-AGT-SHR-PCT (2)
+                                        LAPUP-CVGA-CVG-AGT-SHR-PCT (2)
+              MOVE 'S'               TO L8240-AGT-TYP-CD (2)
+           END-IF.
+
+           PERFORM 7150-SET-UCVG-KEYS
+              THRU 7150-SET-UCVG-KEYS-X.
+
+           PERFORM UCVG-1000-BROWSE
+              THRU UCVG-1000-BROWSE-X.
+
+           PERFORM UCVG-2000-READ-NEXT
+              THRU UCVG-2000-READ-NEXT-X.
+
+           IF  WUCVG-IO-EOF
+      *MSG: UPLOAD COVERAGE RECORD FOR APP ID (@1) DOES NOT EXIST
+               MOVE 'AS94000028'       TO WGLOB-MSG-REF-INFO
+               MOVE WUCVG-APP-ID       TO WGLOB-MSG-PARM (1)
+               PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                   THRU 9000-BUILD-MESSAGE-EXTRACT-X
+               PERFORM  UCVG-3000-END-BROWSE
+                   THRU UCVG-3000-END-BROWSE-X
+P00048         PERFORM  POL-3000-UNLOCK
+P00048             THRU POL-3000-UNLOCK-X
+               GO TO 5000-PROCESS-POLICY-X
+           END-IF.
+
+           PERFORM  5550-PROCESS-COVERAGES
+               THRU 5550-PROCESS-COVERAGES-X
+               UNTIL WUCVG-IO-EOF.
+
+           PERFORM UCVG-3000-END-BROWSE
+              THRU UCVG-3000-END-BROWSE-X.
+MP270A*UNDERWRITING DETAILS FROM UPOL TABLE IS MAPPED TO 
+MP270A*TCLIU TABLE FOR CLIENT LEVEL DETAILS
+MP270A     PERFORM 5950-PROCESS-CLI-UW-DETAILS
+MP270A        THRU 5950-PROCESS-CLI-UW-DETAILS-X.
+018396
+018396* AUTO REQUIREMENTS FOR SALIVA TEST RESULTS
+018396     PERFORM  5955-PROCESS-SALIVA-REQTS
+018396         THRU 5955-PROCESS-SALIVA-REQTS-X.
+018396
+18396A     PERFORM  5956-EPOS-REQT-CREAT
+18396A         THRU 5956-EPOS-REQT-CREAT-X.
+
+           PERFORM  5600-FINALIZE-POLICY-INFO
+               THRU 5600-FINALIZE-POLICY-INFO-X.
+
+       5000-PROCESS-POLICY-X.
+           EXIT.
+      /
+      *----------------------------
+       5100-INITIALIZE-POLICY-INFO.
+      *----------------------------
+
+           MOVE SPACE                  TO WCVG-POL-ID.
+
+      *     PERFORM  POL-1000-CREATE
+      *         THRU POL-1000-CREATE-X.
+
+           PERFORM  8240-1000-BUILD-PARM-INFO
+               THRU 8240-1000-BUILD-PARM-INFO-X.
+
+           PERFORM  CVG-1000-CREATE
+               THRU CVG-1000-CREATE-X.
+
+           PERFORM  5110-INIT-CVG-INFO
+               THRU 5110-INIT-CVG-INFO-X
+               VARYING RPOL-POL-CVG-REC-CTR-N
+               FROM    WCVGM-MAX-WCVGS-NUM BY -1
+               UNTIL   RPOL-POL-CVG-REC-CTR-N < 1.
+
+           PERFORM  8240-1000-BUILD-PARM-INFO
+               THRU 8240-1000-BUILD-PARM-INFO-X.
+
+           MOVE WS-POL-CTRY-CD         TO RPOL-POL-CTRY-CD.
+           MOVE WS-POL-ISS-LOC-CD      TO RPOL-POL-ISS-LOC-CD.
+UYS072     IF  WS-OWN-KJ-OVRID-ADDR-TXT NOT = SPACES
+UYS072     AND WS-OWN-KJ-OVRID-ADDR-TXT NOT = '*'
+UYS072     AND WS-OWN-KJ-OVRID-ADDR-TXT NOT = '–'
+UYS072         MOVE WS-OWN-KJ-OVRID-ADDR-TXT
+UYS072                                      TO 
+UYS072                             RPOL-OWN-KJ-OVRID-ADDR-TXT
+UYS072     END-IF.
+           
+
+           MOVE SPACE                  TO LAPUP-POL-TYP-CD.
+           MOVE SPACE                  TO LCLIB-PARM-AREA.
+           MOVE SPACES                 TO LAPUP-POL-NOTI-TABLE.
+           MOVE SPACES                 TO LAPUP-POLC-OTHR-REL-TABLE.
+           MOVE SPACES                 TO WS-BENE-HOLD-AREAS.
+           MOVE SPACES                 TO LAPUP-CO-SALES-REP-NUM.
+
+           SET LAPUP-POL-REG-FND-SRC-NOT-SET TO TRUE.
+
+           PERFORM  0953-1000-BUILD-PARM-INFO
+               THRU 0953-1000-BUILD-PARM-INFO-X.
+
+           INITIALIZE WS-PAYO-IND.
+           INITIALIZE WS-DIA-CVG.
+           INITIALIZE WS-GIA-CVG.
+MFFUPL*    INITIALIZE WS-PALC-CVG-CTR.
+
+02NB01     PERFORM POLX-1000-CREATE
+02NB01        THRU POLX-1000-CREATE-X.
+
+       5100-INITIALIZE-POLICY-INFO-X.
+           EXIT.
+
+      /
+      *-------------------
+       5110-INIT-CVG-INFO.
+      *-------------------
+
+           MOVE RPOL-POL-CVG-REC-CTR-N
+                TO WCVGS-CVG-SEQ-NUM-N (RPOL-POL-CVG-REC-CTR-N).
+           MOVE RCVG-CVG-INFO
+                TO WCVGS-CVG-INFO (RPOL-POL-CVG-REC-CTR-N).
+           MOVE SPACE
+                TO LAPUP-CVGC-CLI-INFO (RPOL-POL-CVG-REC-CTR-N).
+           MOVE ZERO
+                TO LAPUP-CVGC-LIVES-INSRD-CD (RPOL-POL-CVG-REC-CTR-N).
+
+       5110-INIT-CVG-INFO-X.
+           EXIT.
+      /
+      *---------------------
+       5200-GET-SERV-AGT-ID.
+      *---------------------
+
+           PERFORM  0083-0000-INIT-PARM-INFO
+               THRU 0083-0000-INIT-PARM-INFO-X.
+
+           MOVE RPOL-SERV-AGT-ID           TO L0083-AGENT-ID.
+
+           PERFORM  0083-1000-RETRIEVE-AGT-INFO
+               THRU 0083-1000-RETRIEVE-AGT-INFO-X.
+
+           IF  L0083-RETRN-NOT-FOUND
+      *MSG: WARNING...AGENT (@1) NOT FOUND, DEFAULTING TO 999999
+               MOVE 'AS94000031'           TO WGLOB-MSG-REF-INFO
+               MOVE RPOL-SERV-AGT-ID       TO WGLOB-MSG-PARM (1)
+               PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                   THRU 9000-BUILD-MESSAGE-EXTRACT-X
+               MOVE '999999'               TO RPOL-SERV-AGT-ID
+               MOVE '999'                  TO RPOL-SERV-BR-ID
+               GO TO 5200-GET-SERV-AGT-ID-X
+           END-IF.
+
+           IF L0083-AGT-BR-ID = RPOL-SERV-BR-ID
+              CONTINUE
+           ELSE
+      *MSG: BRANCH @1 NOT EQUAL TO BRANCH @2 ON AG TABLE, BRANCH DEFAULTED
+               MOVE 'AS94000032'           TO WGLOB-MSG-REF-INFO
+               MOVE L0083-AGT-BR-ID        TO WGLOB-MSG-PARM (1)
+               MOVE RPOL-SERV-BR-ID        TO WGLOB-MSG-PARM (2)
+               PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                   THRU 9000-BUILD-MESSAGE-EXTRACT-X
+           END-IF.
+
+      * DEFAULT AGENT'S BRANCH ID ONTO THE POLICY
+
+           MOVE L0083-AGT-BR-ID     TO RPOL-SERV-BR-ID
+
+           IF L0083-AGT-SO-ID = LAPUP-AGT-SO-ID
+              CONTINUE
+           ELSE
+      *MSG: SO ID @1 NOT EQUAL TO SO ID @2 ON AG TABLE, SO ID DEFAULTED
+               MOVE 'AS94000033'           TO WGLOB-MSG-REF-INFO
+               MOVE L0083-AGT-SO-ID        TO WGLOB-MSG-PARM (1)
+               MOVE LAPUP-AGT-SO-ID        TO WGLOB-MSG-PARM (2)
+               PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                   THRU 9000-BUILD-MESSAGE-EXTRACT-X
+           END-IF.
+
+       5200-GET-SERV-AGT-ID-X.
+           EXIT.
+      /
+      *-------------------
+       5300-ASSIGN-POL-ID.
+      *-------------------
+
+      * DEFAULT THE LINE OF BUSINESS TO 'LIFE.  THIS IS USED TO
+      * EITHER RANDOMLY GENERATE A POLICY NUMBER OR TO GENERATE A
+      * POLICY NUMBER WITHIN A RANGE FOR A PARTICULAR LINE OF BUSINESS.
+
+
+           PERFORM  0301-1000-BUILD-PARM-INFO
+               THRU 0301-1000-BUILD-PARM-INFO-X.
+
+MP176B* CHECK WHETHER BULK APP ID IS PRESENT FOR A POLICY OR NOT.
+MP176B
+MP176B     SET L0301-POL-BULK-APP-NO        TO TRUE.
+MP176B
+MP176B     IF  RUPOL-POL-BULK-APP-ID NOT = SPACES
+MP176B         SET L0301-POL-BULK-APP-YES   TO TRUE
+MP176B     END-IF.
+MP176B
+NWLSPN*           MOVE 'L'                TO L0301-LINE-OF-BUSINESS.
+NWLSPN     MOVE  RUPOL-PROD-APP-TYP-CD      TO WS-PROD-APP-TYP-CD.
+R20265     SET WS-PLAN-SAV-ACUM-NO          TO TRUE.
+R20265     SET WS-PLAN-COLI-PROD-NO         TO TRUE.
+R20265     INITIALIZE RPD-REC-INFO.     
+NWLSPN
+NWLSPN     IF  WS-PROD-APP-TYP-TRAD
+NWLSPN         INITIALIZE  WPD-KEY   
+NWLSPN         MOVE  RUPOL-PLAN-ID          TO WPD-PLAN-ID
+NWLSPN         PERFORM  PDIN-1000-PLAN-DEFAULTS-IN
+NWLSPN             THRU PDIN-1000-PLAN-DEFAULTS-IN-X
+NWLSPN         IF  WPD-IO-OK
+NWLSPN             MOVE  RPD-PLAN-BUS-CLAS-CD 
+NWLSPN                                      TO L0301-LINE-OF-BUSINESS
+TLB58A             MOVE  RPD-PLAN-COLI-PROD-IND      
+TLB58A                                      TO L0301-COLI-PROD-IND
+R20265             MOVE  RPD-PLAN-COLI-PROD-IND
+R20265                                      TO WS-PLAN-COLI-PROD-IND
+R20265             MOVE RPD-PLAN-SAV-ACUM-IND 
+R20265                                      TO WS-PLAN-SAV-ACUM-IND
+NWLSPN         ELSE
+NWLSPN* MSG: LINE OF BUSINESS CODE NOT FOUND FOR PLAN ID (@1) 
+NWLSPN              MOVE  'AS94009716'      TO WGLOB-MSG-REF-INFO
+NWLSPN              MOVE  RUPOL-PLAN-ID     TO WGLOB-MSG-PARM (1)
+NWLSPN              PERFORM  0260-1000-GENERATE-MESSAGE
+NWLSPN                  THRU 0260-1000-GENERATE-MESSAGE-X
+NWLSPN         END-IF
+NWLSPN     ELSE 
+R20265         SET  L0301-COLI-PROD-NO      TO TRUE
+NWLSPN         SET  L0301-LOB-LIFE          TO TRUE
+NWLSPN     END-IF.  
+           PERFORM  0301-1000-ASGN-POL-NUM
+               THRU 0301-1000-ASGN-POL-NUM-X.
+
+           IF  L0301-ASSIGN-INVALID
+      *MSG: POLICY NUMBER ASSIGNMENT ERROR - PROGRAM ABENDED
+               MOVE 'AS94000007'           TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+               PERFORM  0030-5000-LOGIC-ERROR
+                   THRU 0030-5000-LOGIC-ERROR-X
+           ELSE
+               MOVE L0301-POLICY-NUMBER    TO WPOL-POL-ID
+               MOVE L0301-POLICY-NUMBER    TO RPOL-POL-ID
+               IF  WS-HOLD-POLICY-NUM NOT = SPACES
+      *MSG: POLICY NUMBER (&1) ALREADY EXISTS ... NEW NUMBER
+      *     WILL BE ASSIGNED
+                   MOVE 'AS94000008'       TO WGLOB-MSG-REF-INFO
+                   MOVE WS-HOLD-POLICY-NUM TO WGLOB-MSG-PARM (1)
+                   PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                       THRU 9000-BUILD-MESSAGE-EXTRACT-X
+               END-IF
+           END-IF.
+
+       5300-ASSIGN-POL-ID-X.
+           EXIT.
+      /
+      *--------------------
+       5500-PROCESS-POLICY.
+      *--------------------
+
+PR006Q     IF  RUPOL-MY-KEMPO-TYP-CD = '1'
+PR006Q     OR  RUPOL-MY-KEMPO-TYP-CD = '2'
+PR006Q         MOVE RPOL-POL-ID   TO WPOLK-POL-ID
+PR006Q         PERFORM  POLK-1000-CREATE
+PR006Q             THRU POLK-1000-CREATE-X
+PR006Q     END-IF.
+PR006Q
+           PERFORM  UPOL-1000-PROCESS-UPOL-FIELD
+               THRU UPOL-1000-PROCESS-UPOL-FIELD-X.
+
+P00005     IF RPOL-POL-APP-RECV-DT = '0000-00-00'
+P00005*MSG: SALES OFFICE REPORT DATE IS INVALID, DEFAULTING TO
+P00005*     PROCESS DATE FOR APP ID @ 1
+P00005         MOVE 'AS94000035'       TO WGLOB-MSG-REF-INFO
+P00005         MOVE RUPOL-APP-ID       TO WGLOB-MSG-PARM (1)
+P00005         PERFORM  9000-BUILD-MESSAGE-EXTRACT
+P00005            THRU  9000-BUILD-MESSAGE-EXTRACT-X
+P00005         MOVE WGLOB-PROCESS-DATE TO RPOL-POL-APP-RECV-DT
+P00005     END-IF.
+
+       5500-PROCESS-POLICY-X.
+           EXIT.
+      /
+      *-----------------------
+       5550-PROCESS-COVERAGES.
+      *-----------------------
+
+           PERFORM  UCVG-1000-PROCESS-UCVG-FIELD
+               THRU UCVG-1000-PROCESS-UCVG-FIELD-X.
+
+           PERFORM  UCVG-2000-READ-NEXT
+               THRU UCVG-2000-READ-NEXT-X.
+
+       5550-PROCESS-COVERAGES-X.
+           EXIT.
+      /
+      *--------------------------
+       5600-FINALIZE-POLICY-INFO.
+      *--------------------------
+
+      * HERE WE MUST CREATE ONE MORE CLIC RECORD FOR STORING THE
+      * POLICY HOLDER/OWNER EMAIL ADDRESS, IF ONE EXISTS.
+
+           IF LAPUP-EMAIL-ADDRESS NOT = SPACES
+              INITIALIZE WCLIC-KEY
+              PERFORM CLIC-1000-CREATE
+                 THRU CLIC-1000-CREATE-X
+              MOVE LAPUP-EMAIL-ADDRESS       TO RCLIC-CLI-CNTCT-ID-TXT
+              MOVE 'EM'                      TO RCLIC-CLI-CNTCT-ID-CD
+              MOVE LAPUP-POLC-OWN-CLI-ID (1) TO WCLI-CLI-ID
+              PERFORM 4903-WRITE-CLIC-RECS
+                 THRU 4903-WRITE-CLIC-RECS-X
+           END-IF.
+B11195
+B11195* RESET GLOBAL JOURNAL DATE AND THEN CALL EDIT TO CHECK FOR
+B11195* BUSINESS DATE AND ACCOUNTING CLOSED INDICATOR.
+B11195
+B11195     MOVE SPACES                        TO LPGA-JRNL-DT.
+B01730
+B11195     IF RPOL-POL-APP-RECV-DT NOT = WWKDT-ZERO-DT
+B11195*B01730     IF  LAPUP-CWAR-RECPT-DT NOT = WWKDT-ZERO-DT
+B01730         PERFORM  5610-CHECK-CWA-JRNL-DT
+B01730             THRU 5610-CHECK-CWA-JRNL-DT-X
+B01730     END-IF.
+
+P01322     IF (RUPOL-MY-KEMPO-TYP-CD = '1'
+P01322     OR  RUPOL-MY-KEMPO-TYP-CD = '2')
+P01322     AND RUPOL-ILLUS-CALC-DT NOT = WWKDT-ZERO-DT
+P01322         MOVE RUPOL-ILLUS-CALC-DT      TO RPOL-POL-ISS-EFF-DT
+BU4644         MOVE RPOL-POL-ISS-EFF-DT      TO RPOL-LIAB-STRT-DT
+P01322     END-IF.
+
+UCPUPL     IF RPOL-POL-CNVR-TYP-UCP
+UCPUPL         IF RUPOL-ILLUS-CALC-DT NOT = WWKDT-ZERO-DT
+UCPUPL             MOVE RUPOL-ILLUS-CALC-DT  TO RPOL-POL-ISS-EFF-DT
+UCPUPL         END-IF
+UCPUPL     END-IF.
+
+           IF  RPOL-POL-ISS-EFF-DT = WWKDT-ZERO-DT
+B10023*        IF  RPOL-POL-APP-SIGN-DT = WWKDT-ZERO-DT
+B10023*            MOVE WGLOB-PROCESS-DATE   TO RPOL-POL-ISS-EFF-DT
+B10023*        ELSE
+B10023*            MOVE RPOL-POL-APP-SIGN-DT TO RPOL-POL-ISS-EFF-DT
+B10023*        END-IF
+B10023         IF  LAPUP-CWAR-RECPT-DT = WWKDT-ZERO-DT
+B10023             MOVE WGLOB-PROCESS-DATE  TO RPOL-POL-ISS-EFF-DT
+FEID01             MOVE  WWKDT-ZERO-DT      TO RPOL-LIAB-STRT-DT
+B10023         ELSE
+B10023             MOVE LAPUP-CWAR-RECPT-DT TO RPOL-POL-ISS-EFF-DT
+FEID01                                         RPOL-LIAB-STRT-DT
+B10023         END-IF
+BU4644         IF (RUPOL-MY-KEMPO-TYP-CD = '1'
+BU4644         OR  RUPOL-MY-KEMPO-TYP-CD = '2')
+BU4644             MOVE RPOL-POL-ISS-EFF-DT  TO RPOL-LIAB-STRT-DT
+BU4644         END-IF
+           END-IF.
+FEID01     IF  RPOL-POL-ISS-DT-TYP-LCD
+BU4644     AND NOT (RUPOL-MY-KEMPO-TYP-CD = '1'
+BU4644         OR  RUPOL-MY-KEMPO-TYP-CD = '2')
+FEID01         IF  LAPUP-CWAR-RECPT-DT = WWKDT-ZERO-DT
+FEID01             MOVE WGLOB-PROCESS-DATE  TO RPOL-POL-ISS-EFF-DT
+FEID01             MOVE WWKDT-ZERO-DT       TO RPOL-LIAB-STRT-DT
+FEID01         ELSE
+FEID01             MOVE LAPUP-CWAR-RECPT-DT TO RPOL-POL-ISS-EFF-DT
+FEID01                                         RPOL-LIAB-STRT-DT
+FEID01         END-IF
+FEID01     END-IF.
+FEID01
+B00489     IF RPOL-POL-ASIGN
+ATF013*B00489         MOVE LAPUP-CWAR-RECPT-DT  TO RPOL-POL-ASIGN-DT
+ATF013         IF  LAPUP-CWAR-RECPT-DT = WWKDT-ZERO-DT
+ATF013         OR  LAPUP-CWAR-RECPT-DT = SPACES
+ATF013             MOVE  RPOL-POL-APP-RECV-DT
+ATF013                                      TO RPOL-POL-ASIGN-DT
+ATF013         ELSE
+ATF013             MOVE  LAPUP-CWAR-RECPT-DT
+ATF013                                      TO RPOL-POL-ASIGN-DT
+ATF013         END-IF
+B10179         MOVE SPACES         TO LAPUP-POLC-OTHR-CLI-TYP-CD (3)
+UYS092*B10179         MOVE LAPUP-POLC-OWN-CLI-ID (1)
+UYS092*B10179                             TO      LAPUP-POLC-OTHR-CLI-ID (3)
+UYS092         MOVE 'A1'                    TO
+UYS092                                   LAPUP-POLC-OTHR-CLI-ID (3)
+UYS092         SET RPOL-POL-ASIGN-STAT-ASIGN
+UYS092                                      TO TRUE
+B10179         MOVE 'A'            TO LAPUP-POLC-OTHR-CLI-TYP-CD (3)
+B10179         MOVE 'A'            TO LAPUP-POLC-OTHR-INSRD-REL-CD (3)
+B10179         MOVE 'PR'           TO LAPUP-POLC-OTHR-ADDR-TYP (3)
+B00489     ELSE
+B00489         MOVE WWKDT-ZERO-DT  TO RPOL-POL-ASIGN-DT
+B00489     END-IF.
+TV2003
+TV2003     IF (LAPUP-TRG-HIT-CNVR-RT  = SPACES
+NV3N01*TV2003     OR NOT RPOL-PROD-APP-TYP-TVI2 )
+NV3N01     OR NOT (RPOL-PROD-APP-TYP-TVI2
+NVCP1A     OR RPOL-PROD-APP-TYP-TVIC
+NV3N01     OR RPOL-PROD-APP-TYP-TVI3))
+TV2003         MOVE SPACES             TO RPOL-TRG-HIT-CNVR-RT
+TV2003     ELSE
+TV2003        MOVE 'N'                 TO L0280-SIGN-IND
+TV2003        MOVE 3                   TO L0280-LENGTH
+TV2003        MOVE ZERO                TO L0280-PRECISION
+TV2003        MOVE LAPUP-TRG-HIT-CNVR-RT   
+TV2003                                 TO L0280-INPUT-DATA
+TV2003        PERFORM  0280-1000-NUMERIC-EDIT
+TV2003           THRU  0280-1000-NUMERIC-EDIT-X
+TV2003        IF  L0280-OK
+TV2003            MOVE L0280-OUTPUT    TO  RPOL-TRG-HIT-CNVR-RT-N 
+TV2003        END-IF
+TV2003     END-IF.
+
+           PERFORM  5650-CHECK-CVGS
+               THRU 5650-CHECK-CVGS-X
+               VARYING X FROM 1 BY 1
+               UNTIL   X > RPOL-POL-CVG-REC-CTR-N.
+
+      * SETUP BANKING INFO, IF TYPE IS BANK TRANSFER
+
+           IF RPOL-POL-BILL-TYP-PAC
+R20265     OR WS-PLAN-SAV-ACUM-YES    
+CR1848*29746F     OR RPOL-CPN-AUTO-PAYO-YES
+R20265*CR1848     OR RPD-PLAN-SAV-ACUM-YES    
+29746F* RENAME FOR PARA TO INCLUDE CPN PMT SETUP
+29746F*       PERFORM  5675-HANDLE-PAC-INFO
+29746F*           THRU 5675-HANDLE-PAC-INFO-X
+29746F        PERFORM  5675-HANDLE-PAC-CPN-INFO
+29746F            THRU 5675-HANDLE-PAC-CPN-INFO-X
+           END-IF.
+
+B00298* SETUP GROUP INFO, IF TYPE IS PAYROLL
+B00298
+B00298     IF RPOL-POL-BILL-TYP-LIST-BILL
+B00298         PERFORM  5900-GROUP-PAYROLL
+P00734             THRU 5900-GROUP-PAYROLL-X
+P00734     END-IF.
+P00734*B00298           THRU 5900-GROUP-PAYROLL-X.
+
+      * HERE I WILL REWRITE THE POLICY INFO THAT I PREVIOUSLY CREATED A
+      * A SKELETON RECORD FOR.
+
+           PERFORM  POL-2000-REWRITE
+               THRU POL-2000-REWRITE-X.
+
+           MOVE WPOL-POL-ID TO L8240-POL-ID.
+           PERFORM  8240-2000-UPDATE-POLW
+               THRU 8240-2000-UPDATE-POLW-X.
+
+           PERFORM  6750-WRITE-COVERAGE
+               THRU 6750-WRITE-COVERAGE-X
+               VARYING WS-CVG FROM 1 BY 1
+               UNTIL   WS-CVG > RPOL-POL-CVG-REC-CTR-N.
+
+           SET L0953-NOT-FINAL-CALL          TO TRUE.
+      *
+      * POLICY MUST BE LOCKED BEFORE CALLING EDIT MODULE CSRF0953
+      *
+           PERFORM  POL-1000-READ-FOR-UPDATE
+               THRU POL-1000-READ-FOR-UPDATE-X.
+
+           PERFORM  6600-POLICY-EDITS
+               THRU 6600-POLICY-EDITS-X.
+
+           PERFORM  6200-SET-CURRENCY
+               THRU 6200-SET-CURRENCY-X.
+
+           IF  WS-PCOM-CO-AUD-CTR-LOB-CD = 'N'
+               NEXT SENTENCE
+           ELSE
+               PERFORM  6300-AUDIT-CHECK
+                   THRU 6300-AUDIT-CHECK-X
+           END-IF.
+
+           MOVE 0                            TO WS-SUB.
+
+           PERFORM  1000-OBTAIN-PLAN
+               THRU 1000-OBTAIN-PLAN-X.
+
+           IF  WPD-IO-OK
+               PERFORM  6180-1000-CALC-MODE-FCTS
+                   THRU 6180-1000-CALC-MODE-FCTS-X
+               PERFORM  6180-2000-CALC-PFEE-FCT
+                   THRU 6180-2000-CALC-PFEE-FCT-X
+           END-IF.
+
+      * PROCESS CASH WITH APP TRANSACTIONS WHICH INCLUDES BILLING
+      * ACTIVITY.
+TLB08E     SET WS-POL-NUWRN-SUPRES-NO       TO TRUE.  
+TLB08E     INITIALIZE  WS-NUWRN-CLI-ID.
+NWLXML     IF  LAPUP-CWAR-RECPT-DT NOT = WWKDT-ZERO-DT
+NWLXML     AND LAPUP-CWAR-RECPT-DT NOT = SPACES
+NWLXML         PERFORM  5800-PROCESS-CWA
+NWLXML             THRU 5800-PROCESS-CWA-X
+NWLXML     END-IF.
+
+NWLXML*           PERFORM  5800-PROCESS-CWA
+NWLXML*               THRU 5800-PROCESS-CWA-X.
+
+MFFUPL* LOGIC RELOCATED FROM BELOW TO THIS POINT. DOING THIS GIVES US THE
+MFFUPL* POLX REQ'D FOR ALLOCATION RULES. THEN WE CAN CREATE ALLOCATION
+MFFUPL* RULES BEFORE WE CALL 0570 WHICH GOES THROUGH THE POLICY EDITS
+MFFUPL* IN CCPP6040 AND WE CAN AVOID LARGE NUMBERS OF ERROR MESSAGES.
+MFFUPL
+MFFUPL* START PROCESSING THE CONVERSION RECORDS IF THEY EXIST.
+MFFUPL* NOTE THAT WE SET THE POLICY ISSUE EFFECTIVE DATE TO THE
+MFFUPL* LAPUP FIELD THAT CONTAINS THE <TARGETDATE> FROM THE XML;
+MFFUPL* RESETTING CVG ISS DT HERE INSTEAD OF WHERE B10775 PUT IT.
+MFFUPL
+MFFUPL     IF RPOL-POL-CNVR-TYP-DHY-PHASE1
+MFFUPL         PERFORM  6810-PROCESS-CONVERSION
+MFFUPL             THRU 6810-PROCESS-CONVERSION-X
+MP168A
+MP168A         PERFORM  9030-MOVE-ISS-EFF-DT
+MP168A             THRU 9030-MOVE-ISS-EFF-DT-X
+MP168A
+MP168A*FEID01         IF  RPOL-POL-ISS-DT-TYP-LCD
+MP168A*FEID01*MFFUPL         MOVE LAPUP-CNVR-ISS-EFF-DT TO RPOL-POL-ISS-EFF-DT
+MP168A*FEID01             MOVE LAPUP-CWAR-RECPT-DT
+MP168A*FEID01                                    TO RPOL-POL-ISS-EFF-DT
+MP168A*FEID01         ELSE
+MP168A*FEID01             MOVE LAPUP-CNVR-ISS-EFF-DT
+MP168A*FEID01                                    TO RPOL-POL-ISS-EFF-DT
+MP168A*FEID01         END-IF
+MFFUPL         MOVE LAPUP-CNVR-ISS-EFF-DT TO RPOL-POL-APP-CALC-DT
+C16246*AGU013
+C16246*AGU013         MOVE  0                    TO I
+C16246*AGU013         PERFORM  PLIN-1000-PLAN-HEADER-IN
+C16246*AGU013             THRU PLIN-1000-PLAN-HEADER-IN-X
+C16246*AGU013
+C16246*AGU013         IF  LAPUP-CWAR-RECPT-DT >= RPH-LIAB-ISS-CUT-OFF-DT
+C16246*AGU013             CONTINUE
+C16246*AGU013         ELSE
+C16246*AGU013             MOVE LAPUP-CNVR-XPRY-DT    
+C16246*AGU013                                    TO RPOL-POL-FINAL-DISP-DT
+C16246*AGU013         END-IF
+C16246*AGU013*MFFUPL         MOVE LAPUP-CNVR-XPRY-DT    TO RPOL-POL-FINAL-DISP-DT
+MFFUPL         PERFORM  6800-REWRITE-COVERAGE
+MFFUPL             THRU 6800-REWRITE-COVERAGE-X
+MFFUPL             VARYING WS-CVG FROM 1 BY 1
+MFFUPL             UNTIL   WS-CVG > RPOL-POL-CVG-REC-CTR-N
+MFFUPL         PERFORM  6830-REWRITE-CLIU
+MFFUPL             THRU 6830-REWRITE-CLIU-X
+MFFUPL     END-IF.
+M271N1
+M271N1     PERFORM  6000-WRITE-EACH-BNFY
+M271N1         THRU 6000-WRITE-EACH-BNFY-X
+M271N1         VARYING X FROM 1 BY 1
+M271N1         UNTIL   X > LAPUP-BENE-SUB.
+
+MFFUPL* FOR MANUSTEP POLICIES UPDATE FC/FS RECORDS.
+MFFUPL* FOR ALL POLICIES CREATE CAIN/CDSI ALLOCATION RULES.
+MFFUPL
+SV1923*MFFUPL     PERFORM  5630-UPDT-FND-DATA
+SV1923*MFFUPL         THRU 5630-UPDT-FND-DATA-X.
+NVCP1A*SV1923     IF NOT RPOL-PROD-APP-TYP-TVI3
+NVCP1A     IF NOT (RPOL-PROD-APP-TYP-TVI3
+NVCP1A     OR  RPOL-PROD-APP-TYP-TVIC)
+SV1923        PERFORM  5630-UPDT-FND-DATA
+SV1923            THRU 5630-UPDT-FND-DATA-X
+SV1923     END-IF.
+           IF  LAPUP-INVALID-PLAN
+      *MSG: INVALID PLAN(S) ENTERED, COVERAGE EDITS BYPASSED
+               MOVE 'AS94000010'             TO WGLOB-MSG-REF-INFO
+               PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                   THRU 9000-BUILD-MESSAGE-EXTRACT-X
+           ELSE
+               PERFORM  5700-SETUP-EACH-CVGC
+                   THRU 5700-SETUP-EACH-CVGC-X
+                   VARYING WS-CVG FROM 1 BY 1
+                   UNTIL   WS-CVG > RPOL-POL-CVG-REC-CTR-N
+
+MFFUPL*        PERFORM  6340-CALC-PALC-CVGS
+MFFUPL*            THRU 6340-CALC-PALC-CVGS-X
+MFFUPL*            VARYING WS-CVG FROM 1 BY 1
+MFFUPL*            UNTIL   WS-CVG > RPOL-POL-CVG-REC-CTR-N
+
+               PERFORM  6350-CVG-EDIT-ANALYSIS-LOOP
+                   THRU 6350-CVG-EDIT-ANALYSIS-LOOP-X
+                   VARYING WS-CVG FROM 1 BY 1
+                   UNTIL   WS-CVG > RPOL-POL-CVG-REC-CTR-N
+NVCP1A*SV1923         IF RPOL-PROD-APP-TYP-TVI3
+NVCP1A         IF  (RPOL-PROD-APP-TYP-TVI3
+NVCP1A         OR  RPOL-PROD-APP-TYP-TVIC)
+SV1923            PERFORM  5630-UPDT-FND-DATA
+SV1923                THRU 5630-UPDT-FND-DATA-X
+SV1923         END-IF
+HNB014         PERFORM  6500-PROCESS-EXTRACT-REQTS
+HNB014             THRU 6500-PROCESS-EXTRACT-REQTS-X
+
+HNB203         PERFORM  6610-PROCESS-POL-REQTS
+HNB203             THRU 6610-PROCESS-POL-REQTS-X
+           END-IF.
+
+TV2003*TVITMP     IF  RPOL-POL-INS-TYP-TRAD-SEG-FND
+TV2003*TVITMP     AND RPOL-POL-APP-UPLD-DT NOT = WWKDT-ZERO-DT
+TV2003*TVITMP     AND RPOL-POL-APP-UPLD-DT NOT = SPACES
+TV2003*TVITMP         PERFORM  9040-SUPPRESS-ISSUE
+TV2003*TVITMP             THRU 9040-SUPPRESS-ISSUE-X
+TV2003*TVITMP     END-IF.
+TV2003*TVITMP
+M271N1*     PERFORM  6000-WRITE-EACH-BNFY
+M271N1*         THRU 6000-WRITE-EACH-BNFY-X
+M271N1*         VARYING X FROM 1 BY 1
+M271N1*         UNTIL   X > LAPUP-BENE-SUB.
+
+           IF  LAPUP-INVALID-PLAN
+               SET RPOL-UNMTCH-MAIL          TO TRUE
+           ELSE
+               SET L0953-FINAL-CALL          TO TRUE
+               PERFORM  6600-POLICY-EDITS
+                   THRU 6600-POLICY-EDITS-X
+               PERFORM  6650-CALCULATE-PREMIUMS
+                   THRU 6650-CALCULATE-PREMIUMS-X
+           END-IF.
+
+MFFUPL* RELOCATED THIS CODE UP FARTHER AFTER CWA PROCESS.
+02NB01* START PROCESSING THE CONVERSION RECORDS IF THEY EXIST.
+B10775*
+B10775* NOTE THAT WE SET THE POLICY ISSUE EFFECTIVE DATE TO THE
+B10775* LAPUP FIELD THAT CONTAINS THE <TargetDate> FROM THE XML;
+B10775* LATER ON IN 6800-REWRITE-COVERAGE WE MOVE THE SAME DATE
+B10775* TO ALL OF THE COVERAGE ISSUE EFFECTIVE DATES.
+MFFUPL*02NB01
+MFFUPL*02NB01     IF RPOL-POL-CNVR-TYP-DHY-PHASE1
+MFFUPL*02NB01        PERFORM  6810-PROCESS-CONVERSION
+MFFUPL*02NB01            THRU 6810-PROCESS-CONVERSION-X
+MFFUPL*02NB01        MOVE LAPUP-CNVR-ISS-EFF-DT TO RPOL-POL-ISS-EFF-DT
+MFFUPL*02NB01        MOVE LAPUP-CNVR-ISS-EFF-DT TO RPOL-POL-APP-CALC-DT
+MFFUPL*02NB01        MOVE LAPUP-CNVR-XPRY-DT    TO RPOL-POL-FINAL-DISP-DT
+MFFUPL*02NB01        PERFORM  6830-REWRITE-CLIU
+MFFUPL*02NB01            THRU 6830-REWRITE-CLIU-X
+MFFUPL*02NB01     END-IF.
+
+MFFUPL* UPDATE POLICY HOLDER CLII AND CLIU RECORDS WITH THE SAVED DATA.
+MFFUPL* NOTE THAT THIS MUST OCCUR HERE BECAUSE WE ARE CALLING 9407 WHICH
+MFFUPL* NEEDS THE POLC RECORD AND THE POLC RECORD IS NOT CREATED UNTIL
+MFFUPL* THE LOGIC FLOWS THROUGH 0953 WHICH IS CALLED IN 6600-POLICY-EDITS.
+MFFUPL
+130512     MOVE RUCLI-POL-CLI-REL-TYP-CD    TO LAPUP-INPUT-DATA.
+130512     PERFORM  TNLT-1000-TRNSLT-UPPER-CASE
+130512         THRU TNLT-1000-TRNSLT-UPPER-CASE-X.
+130512
+MFFUPL     IF RPOL-PROD-APP-TYP-MANUSTEP
+MFFUPL         PERFORM  5620-POL-HLDR-FIN-UW-DATA
+MFFUPL             THRU 5620-POL-HLDR-FIN-UW-DATA-X
+MFFUPL     END-IF.
+MFFUPL
+26878B
+26878B     IF  RPOL-COLI-PROD-YES
+26878B         MOVE LAPUP-CVGC-CLI-ID (1,1) TO WS-HOLD-CLI-ID
+26878B         PERFORM  5625-BROWSE-COLI-CLII-RCD
+26878B             THRU 5625-BROWSE-COLI-CLII-RCD-X
+26878B         MOVE SPACES                  TO WS-HOLD-CLI-ID
+26878B         MOVE LAPUP-POLC-OWN-CLI-ID (1) 
+26878B                                      TO WS-HOLD-CLI-ID
+26878B         PERFORM  5625-BROWSE-COLI-CLII-RCD
+26878B             THRU 5625-BROWSE-COLI-CLII-RCD-X
+26878B     END-IF.
+130512
+130512     IF  RPOL-PROD-APP-TYP-FFF
+130512     AND RPOL-SERV-AGT-ID = '891170'
+26878B*130512     AND LAPUP-INPUT-DATA = 'INSURED'
+26878B*FOR FFF PRODUCT AMOUNT FIELD WILL BE ZERO IN XML IT NEED TO SET
+26878B*BASED ON ASSET CODE
+26878B         MOVE SPACES                  TO WS-HOLD-CLI-ID
+26878B         MOVE LAPUP-CVGC-CLI-ID (1,1) TO WS-HOLD-CLI-ID
+26878B         PERFORM  5626-UPDT-FFF-CLII-RCD
+26878B             THRU 5626-UPDT-FFF-CLII-RCD-X
+26878B         MOVE SPACES                  TO WS-HOLD-CLI-ID
+26878B         MOVE LAPUP-POLC-OWN-CLI-ID (1) 
+26878B                                      TO WS-HOLD-CLI-ID 
+26878B         PERFORM  5626-UPDT-FFF-CLII-RCD
+26878B             THRU 5626-UPDT-FFF-CLII-RCD-X
+26878B             
+26878B*130512        MOVE SPACES                  TO WCLII-KEY
+26878B*130512        MOVE LAPUP-CVGC-CLI-ID (1,1)
+26878B*130512                                     TO WCLII-CLI-ID                                      
+26878B*130512        MOVE WGLOB-PROCESS-DATE      TO WCLII-CLI-INCM-EFF-DT
+26878B*130512
+26878B*130512        PERFORM  CLII-1000-READ-FOR-UPDATE
+26878B*130512            THRU CLII-1000-READ-FOR-UPDATE-X
+26878B*130512
+26878B*130512        IF  WCLII-IO-OK
+26878B*130512            PERFORM  5624-UPDT-CLII-RCD
+26878B*130512                THRU 5624-UPDT-CLII-RCD-X
+26878B*130512        END-IF
+130512     END-IF.
+130512
+PR006Q     IF  RPOL-MY-KEMPO-TYP-MATURITY
+PR006Q     OR  RPOL-MY-KEMPO-TYP-MID-TERM
+PR006Q         PERFORM  6840-PROCESS-MY-KEMPO
+PR006Q             THRU 6840-PROCESS-MY-KEMPO-X
+PR006Q     END-IF.
+
+UCPUPL     IF RPOL-POL-CNVR-TYP-UCP
+UCPUPL         MOVE 'Y'               TO RPOL-POL-SUPRES-ISS-IND
+UCPUPL         SET RPOL-POL-ISS-DT-TYP-EFFECTIVE TO TRUE
+UCPUPL         SET RPOL-POL-HNDL-NORM            TO TRUE
+UCPUPL     END-IF.
+M176B1
+M176B1    IF  RPOL-POL-BULK-APP-ID NOT = SPACES
+M176B1        SET RPOL-POL-SUPRES-ISS       TO TRUE
+M176B1    END-IF.
+M176B1
+           PERFORM  POL-2000-REWRITE
+               THRU POL-2000-REWRITE-X.
+
+TLB08E     IF  WS-POL-NUWRN-SUPRES-YES
+TLB08E         PERFORM  9228-0000-INIT-PARM-INFO
+TLB08E             THRU 9228-0000-INIT-PARM-INFO-X
+TLB08E
+TLB08E         MOVE WS-NUWRN-CLI-ID         TO L9228-CLI-ID
+TLB08E         SET L9228-SKIP-USCL-CHK-YES
+TLB08E                                      TO TRUE
+TLB08E         PERFORM  9228-1000-CHK-FOR-NBURN
+TLB08E             THRU 9228-1000-CHK-FOR-NBURN-X
+TLB08E         MOVE RPOL-POL-ID             TO WPOL-POL-ID
+TLB08E         PERFORM  POL-1000-READ
+TLB08E             THRU POL-1000-READ-X
+TLB08E     END-IF.
+
+           MOVE WPOL-POL-ID TO L8240-POL-ID.
+           PERFORM  8240-2000-UPDATE-POLW
+               THRU 8240-2000-UPDATE-POLW-X.
+
+           PERFORM  6800-REWRITE-COVERAGE
+               THRU 6800-REWRITE-COVERAGE-X
+               VARYING WS-CVG FROM 1 BY 1
+               UNTIL   WS-CVG > RPOL-POL-CVG-REC-CTR-N.
+
+B10319     MOVE WS-APP-ID TO WUPOL-APP-ID.
+B10319     PERFORM  UPOL-1000-READ-FOR-UPDATE
+B10319         THRU UPOL-1000-READ-FOR-UPDATE-X.
+B10319
+M00010*    MOVE 'COMPLETE'                   TO RUPOL-POL-ID.
+M00010     MOVE RPOL-POL-ID                  TO RUPOL-POL-ID.
+B10319     PERFORM  UPOL-2000-REWRITE
+B10319         THRU UPOL-2000-REWRITE-X.
+
+           MOVE 'AS9400'                     TO WGLOB-MSG-REF-ID.
+
+           PERFORM  6850-PRINT-MESSAGES
+               THRU 6850-PRINT-MESSAGES-X
+               VARYING X FROM 1 BY 1
+               UNTIL   X > WS-MESSAGE-ARRAY-MAX-SIZE.
+
+5-0584*MFFOP1  PERFORM
+5-0584*MFFOP1      VARYING WS-CVG FROM +1 BY +1
+5-0584*MFFOP1      UNTIL   WS-CVG > RPOL-POL-CVG-REC-CTR-N
+5-0584*MFFOP1      OR      WCVGS-CVG-INS-TYP-SEG-FUND (WS-CVG)
+5-0584*MFFUPL
+5-0584*MFFUPL      CONTINUE
+5-0584*MFFUPL
+5-0584*MFFOP1  END-PERFORM.
+5-0584*MFFOP1
+5-0584*MFFOP1  IF  WS-CVG > RPOL-POL-CVG-REC-CTR-N
+5-0584*MFFOP1         CONTINUE
+5-0584*MFFOP1  ELSE
+5-0584*MFFOP1      SET WS-SEG-FUND-YES           TO TRUE
+5-0584*MFFOP1  END-IF.
+
+           PERFORM  6900-WRITE-AUDIT-REPORT
+               THRU 6900-WRITE-AUDIT-REPORT-X
+               VARYING CLI-SUB FROM 1 BY 1
+               UNTIL   CLI-SUB > WS-CLIENTS-IN-APP.
+P00103*        VARYING WS-CVG FROM 1 BY 1
+P00103*        UNTIL   WS-CVG > RPOL-POL-CVG-REC-CTR-N.
+
+           MOVE 'AS94000011'                 TO WGLOB-MSG-REF-INFO.
+           MOVE WS-APP-ID                    TO WGLOB-MSG-PARM (1).
+
+           PERFORM  9000-BUILD-MESSAGE-EXTRACT
+               THRU 9000-BUILD-MESSAGE-EXTRACT-X.
+
+NV3N01     INITIALIZE  WS-CONCAT-REINS-NUM-CD
+NV3N01                 WS-REINS-TRTY-NUM
+NV3N01                 WS-REINS-UNIQ-NUM
+NV3N01                 WS-AU-UWGDECN-TYP-CD
+NV3N01                 WS-SUB1.
+NV3N01
+NV3N01     SET WS-TREATY-FND-NO TO TRUE. 
+NV3N01     SET WS-EDIT-FND-NO   TO TRUE. 
+NVCR01*NV3N01     IF  RPOL-PROD-APP-TYP-TVI3
+NVCR01*NV3N01     AND WCVGS-CVG-WP (RPOL-POL-BASE-CVG-NUM)
+NVCR01*NV3N01        PERFORM  6920-GET-WP-REINS-DTLS
+NVCR01*NV3N01            THRU 6920-GET-WP-REINS-DTLS-X
+NVCR01*NV3N01     END-IF.
+
+       5600-FINALIZE-POLICY-INFO-X.
+           EXIT.
+      /
+B01730*-----------------------
+B01730 5610-CHECK-CWA-JRNL-DT.
+B01730*-----------------------
+B01730
+B01730* THE APP RECV DATE ULTIMATELY BECOMES THE JOURNAL DATE.
+B01730* CHECK IF IT IS A BUSINESS DAY AND OPEN FOR ACCOUNTING.
+B01730* IF PROBLEMS, DEFAULT TO THE PROCESSING DATE.
+B01730
+B01730     PERFORM  9215-1000-BUILD-PARM-INFO
+B01730         THRU 9215-1000-BUILD-PARM-INFO-X.
+B01730
+B11195     MOVE RPOL-POL-APP-RECV-DT        TO L9215-INTERNAL-1.
+B11195*B01730     MOVE LAPUP-CWAR-RECPT-DT         TO L9215-INTERNAL-1.
+B01730
+B01730     PERFORM  9215-9000-GET-BSDT-DAY-DT
+B01730         THRU 9215-9000-GET-BSDT-DAY-DT-X.
+B01730
+B01730     IF  L9215-RETRN-ERROR
+B01730     OR  L9215-ACCT-CLOS
+B11195         MOVE WGLOB-PROCESS-DATE      TO LPGA-JRNL-DT
+B11195*B01730  MOVE WGLOB-PROCESS-DATE      TO LAPUP-CWAR-RECPT-DT
+B11195     ELSE
+B11195         MOVE RPOL-POL-APP-RECV-DT    TO LPGA-JRNL-DT
+B01730     END-IF.
+B01730
+B01730 5610-CHECK-CWA-JRNL-DT-X.
+B01730     EXIT.
+B01730
+B01730/
+MFFUPL*--------------------------
+MFFUPL 5620-POL-HLDR-FIN-UW-DATA.
+MFFUPL*--------------------------
+MFFUPL
+MFFUPL* GET CLII AND CLIU RECORDS FOR THE POLICYHOLDER, OR CREATE THEM
+MFFUPL* WITH A DUMMY STICKER NUMBER, FOR SA UW FIELD UPDATES.
+MFFUPL
+MFFUPL     PERFORM  9407-1000-BUILD-PARM-INFO
+MFFUPL         THRU 9407-1000-BUILD-PARM-INFO-X.
+MFFUPL
+MFFUPL     PERFORM  9407-1000-OWN-UW-INFO
+MFFUPL         THRU 9407-1000-OWN-UW-INFO-X.
+MFFUPL
+MFFUPL     IF NOT L9407-RETRN-OK
+5-0520     OR L9407-SKIP-UW-YES
+MFFUPL         GO TO 5620-POL-HLDR-FIN-UW-DATA-X
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL* UPDATE THE SA UW FIELDS ON THE CLIU RECORD FOR THE POLICYHOLDER
+MFFUPL
+MFFUPL     MOVE SPACES                   TO WCLIU-KEY.
+MFFUPL     MOVE L9407-OWN-CLI-ID         TO WCLIU-CLI-ID.
+MFFUPL     MOVE L9407-OWN-STCKR-ID       TO WCLIU-STCKR-ID.
+MFFUPL     MOVE RPOL-POL-ID              TO WCLIU-POL-ID.
+MFFUPL
+MFFUPL     PERFORM  CLIU-1000-READ-FOR-UPDATE
+MFFUPL         THRU CLIU-1000-READ-FOR-UPDATE-X.
+MFFUPL
+MFFUPL     IF WCLIU-IO-OK
+MFFUPL         PERFORM  5622-UPDT-CLIU-RCD
+MFFUPL             THRU 5622-UPDT-CLIU-RCD-X
+MFFUPL     ELSE
+MFFUPL         PERFORM  CLIU-3000-UNLOCK
+MFFUPL             THRU CLIU-3000-UNLOCK-X
+MFFUPL     END-IF.
+MFFUPL
+130512
+130512     IF LAPUP-INPUT-DATA = 'INSURED'
+130512        GO TO 5620-POL-HLDR-FIN-UW-DATA-X
+130512     END-IF.
+130512
+MFFUPL* UPDATE THE SA UW FIELDS ON THE CLII RECORD FOR THE POLICYHOLDER
+MFFUPL
+MFFUPL     MOVE SPACES                   TO WCLII-KEY.
+MFFUPL     MOVE L9407-OWN-CLI-ID         TO WCLII-CLI-ID.
+MFFUPL     MOVE L9407-EFF-DT             TO WCLII-CLI-INCM-EFF-DT.
+MFFUPL
+MFFUPL     PERFORM  CLII-1000-READ-FOR-UPDATE
+MFFUPL         THRU CLII-1000-READ-FOR-UPDATE-X.
+MFFUPL
+MFFUPL     IF WCLII-IO-OK
+MFFUPL         PERFORM  5624-UPDT-CLII-RCD
+MFFUPL             THRU 5624-UPDT-CLII-RCD-X
+MFFUPL     ELSE
+MFFUPL         PERFORM  CLII-3000-UNLOCK
+MFFUPL             THRU CLII-3000-UNLOCK-X
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL 5620-POL-HLDR-FIN-UW-DATA-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL/
+MFFUPL*-------------------
+MFFUPL 5622-UPDT-CLIU-RCD.
+MFFUPL*-------------------
+MFFUPL
+MFFUPL     IF LAPUP-CLIU-OWN-INV-XPER-IND = SPACES
+MFFUPL         SET RCLIU-OWN-INV-XPER-UNKNWN TO TRUE
+MFFUPL     ELSE
+MFFUPL         MOVE LAPUP-CLIU-OWN-INV-XPER-IND
+MFFUPL                                       TO RCLIU-OWN-INV-XPER-IND
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL     IF LAPUP-CLIU-AGT-XPER-CD = SPACES
+MFFUPL         SET  RCLIU-AGT-XPER-UNKNWN    TO TRUE
+MFFUPL     ELSE
+5-0514*MFFUPL  MOVE LAPUP-CLIU-AGT-XPER-CD   TO RCLIU-AGT-XPER-CD
+5-0514         IF LAPUP-CLIU-AGT-XPER-NEW
+5-0514             SET RCLIU-AGT-XPER-NEW      TO TRUE
+5-0514         END-IF
+5-0514         IF LAPUP-CLIU-AGT-XPER-OVR-1-YR
+5-0514             SET RCLIU-AGT-XPER-OVR-1-YR TO TRUE
+5-0514         END-IF
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL     IF LAPUP-CLIU-VERIF-MTHD-CD = SPACES
+MFFUPL         SET RCLIU-VERIF-MTHD-UNKNWN   TO TRUE
+MFFUPL     ELSE
+5-0514*MFFUPL  MOVE LAPUP-CLIU-VERIF-MTHD-CD TO RCLIU-VERIF-MTHD-CD
+5-0514         IF LAPUP-CLIU-VERIF-MTHD-AGT
+5-0514             SET RCLIU-VERIF-MTHD-AGT         TO TRUE
+5-0514         END-IF
+5-0514         IF LAPUP-CLIU-VERIF-MTHD-OWN-INTW
+5-0514             SET RCLIU-VERIF-MTHD-OWN-INTRVW  TO TRUE
+5-0514         END-IF
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL     PERFORM  CLIU-2000-REWRITE
+MFFUPL         THRU CLIU-2000-REWRITE-X.
+MFFUPL
+MFFUPL 5622-UPDT-CLIU-RCD-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL/
+MFFUPL*-------------------
+MFFUPL 5624-UPDT-CLII-RCD.
+MFFUPL*-------------------
+MFFUPL
+MFFUPL     IF LAPUP-CLII-CLI-FIN-ASSET-CD = SPACES
+MFFUPL         MOVE '0'                   TO RCLII-CLI-FIN-ASSET-CD
+MFFUPL     ELSE
+MFFUPL         MOVE LAPUP-CLII-CLI-FIN-ASSET-CD
+MFFUPL                                    TO RCLII-CLI-FIN-ASSET-CD
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL     MOVE LAPUP-CLII-CLI-EARN-INCM-AMT
+MFFUPL                                    TO RCLII-CLI-EARN-INCM-AMT.
+MFFUPL
+MFFUPL     PERFORM  CLII-2000-REWRITE
+MFFUPL         THRU CLII-2000-REWRITE-X.
+MFFUPL
+MFFUPL 5624-UPDT-CLII-RCD-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL/
+26878B
+26878B*------------------------
+26878B 5625-BROWSE-COLI-CLII-RCD.
+26878B*------------------------
+26878B
+26878B     MOVE SPACES                      TO WCLII-KEY.
+26878B     MOVE WS-HOLD-CLI-ID              TO WCLII-CLI-ID
+26878B                                         WCLII-ENDBR-CLI-ID.
+26878B     MOVE WGLOB-PROCESS-DATE          TO WCLII-CLI-INCM-EFF-DT.
+26878B     MOVE WWKDT-LOW-DT                TO 
+26878B                                  WCLII-ENDBR-CLI-INCM-EFF-DT.
+26878B
+26878B     PERFORM  CLII-1000-BROWSE-PREV
+26878B         THRU CLII-1000-BROWSE-PREV-X.
+26878B
+26878B     IF NOT WCLII-IO-OK
+26878B         GO TO 5625-BROWSE-COLI-CLII-RCD-X
+26878B     END-IF.
+26878B
+26878B*FOR COLI PRODUCT XML WILL BE CLOSED TAG SO WE NEED TO RETAIN OLD 
+26878B*TCLII VALUE
+26878B     PERFORM  CLII-2000-READ-PREV
+26878B         THRU CLII-2000-READ-PREV-X
+26878B              UNTIL RCLII-CLI-FIN-ASSET-AMT > 0
+26878B              OR NOT WCLII-IO-OK.
+26878B
+26878B     IF  WCLII-IO-OK
+26878B         MOVE RCLII-CLI-FIN-ASSET-CD  TO 
+26878B                       LAPUP-CLII-CLI-FIN-ASSET-CD
+26878B         MOVE RCLII-CLI-FIN-ASSET-AMT TO 
+26878B                       LAPUP-CLII-CLI-FIN-ASSET-AMT
+26878B     END-IF.
+26878B
+26878B     PERFORM  CLII-3000-END-BROWSE-PREV
+26878B         THRU CLII-3000-END-BROWSE-PREV-X.
+26878B
+26878B     MOVE SPACES                      TO WCLII-KEY.
+26878B     MOVE WS-HOLD-CLI-ID              TO WCLII-CLI-ID. 
+26878B     MOVE WGLOB-PROCESS-DATE          TO WCLII-CLI-INCM-EFF-DT.
+26878B
+26878B     PERFORM  CLII-1000-READ-FOR-UPDATE
+26878B         THRU CLII-1000-READ-FOR-UPDATE-X.
+26878B
+26878B     IF WCLII-IO-OK
+26878B         MOVE LAPUP-CLII-CLI-FIN-ASSET-CD
+26878B                                    TO RCLII-CLI-FIN-ASSET-CD
+26878B         MOVE LAPUP-CLII-CLI-FIN-ASSET-AMT
+26878B                                    TO RCLII-CLI-FIN-ASSET-AMT
+26878B         PERFORM  CLII-2000-REWRITE
+26878B             THRU CLII-2000-REWRITE-X
+26878B     END-IF.
+26878B
+26878B 5625-BROWSE-COLI-CLII-RCD-X.
+26878B     EXIT.
+26878B
+26878B*----------------------
+26878B 5626-UPDT-FFF-CLII-RCD.
+26878B*----------------------
+26878B
+26878B     MOVE SPACES                      TO WCLII-KEY.
+26878B     MOVE WS-HOLD-CLI-ID              TO WCLII-CLI-ID. 
+26878B     MOVE WGLOB-PROCESS-DATE          TO WCLII-CLI-INCM-EFF-DT.
+26878B
+26878B     PERFORM  CLII-1000-READ
+26878B         THRU CLII-1000-READ-X.
+26878B
+26878B     IF  WCLII-IO-OK
+26878B         MOVE 'FINCD'                 TO WTTAB-ETBL-TYP-ID
+26878B         MOVE 'AD'                    TO WTTAB-TTAB-ADMIN-APPL-ID
+26878B         MOVE RCLII-CLI-FIN-ASSET-CD
+26878B                                      TO WTTAB-ETBL-VALU-ID
+26878B         PERFORM  TTAB-1000-READ
+26878B             THRU TTAB-1000-READ-X
+26878B     
+26878B         IF  WTTAB-IO-OK
+26878B             MOVE RTTAB-TTBL-VALU-TXT TO WS-CLI-FIN-ASSET-AMT
+26878B         ELSE
+26878B             MOVE ZEROES              TO WS-CLI-FIN-ASSET-AMT-N
+26878B         END-IF
+26878B         MOVE RCLII-CLI-FIN-ASSET-CD  TO 
+26878B                                    LAPUP-CLII-CLI-FIN-ASSET-CD
+26878B         MOVE RCLII-CLI-EARN-INCM-AMT
+26878B                                TO LAPUP-CLII-CLI-EARN-INCM-AMT
+26878B     END-IF.
+26878B     
+26878B     MOVE SPACES                      TO WCLII-KEY.
+26878B     MOVE WS-HOLD-CLI-ID              TO WCLII-CLI-ID.
+26878B     MOVE WGLOB-PROCESS-DATE          TO WCLII-CLI-INCM-EFF-DT.
+26878B
+26878B     PERFORM  CLII-1000-READ-FOR-UPDATE
+26878B         THRU CLII-1000-READ-FOR-UPDATE-X.
+26878B
+26878B     MOVE WS-CLI-FIN-ASSET-AMT-N      TO RCLII-CLI-FIN-ASSET-AMT.
+26878B
+26878B     IF  WCLII-IO-OK
+26878B         PERFORM  5624-UPDT-CLII-RCD
+26878B             THRU 5624-UPDT-CLII-RCD-X
+26878B     END-IF.
+26878B
+26878B 5626-UPDT-FFF-CLII-RCD-X.
+26878B     EXIT.
+26878B     
+MFFUPL*-------------------
+MFFUPL 5630-UPDT-FND-DATA.
+MFFUPL*-------------------
+NWLXML
+TVI002* FUND UPDATION NEED TO HAPPEN FOR TVI POLICIES
+TVI002
+TVI002*NWLXML     IF  RPOL-POL-INS-TYP-TRAD
+TVI002*NWLXML         GO TO 5630-UPDT-FND-DATA-X
+TVI002*NWLXML     END-IF.
+TVI002            
+TVI002     IF  RPOL-POL-INS-TYP-TRAD-SEG-FND
+TVI002         CONTINUE
+TVI002     ELSE
+TVI002         IF  RPOL-POL-INS-TYP-TRAD
+TVI002             GO TO 5630-UPDT-FND-DATA-X
+TVI002         END-IF
+TVI002     END-IF.
+TVI002                     
+MFFUPL
+MFFUPL* LOAD UP THE TOTAL ALLOCATION AMOUNT FOR THE POLICY, BY TYPE
+MFFUPL
+MFFUPL     IF RPOL-POL-CNVR-TYP-DHY-PHASE1
+MFFUPL         PERFORM  5632-GET-CNVR-FND-AMT
+MFFUPL             THRU 5632-GET-CNVR-FND-AMT-X
+MFFUPL     END-IF.
+MFFUPL
+TVI002* TVI POLICIES WILL NOT CONTAIN SUNDARY AMOUNT
+TVI002
+TVI002*MFFUPL     MOVE RPOL-POL-SNDRY-AMT    TO LAPUP-ALLOC-INP-TOT-AMT
+TVI002*MFFUPL                                   LAPUP-ALLOC-DIP-TOT-AMT.
+TVI002
+TVI002     IF  RPOL-POL-INS-TYP-TRAD-SEG-FND
+TVI002         MOVE RUPOL-GA-INIT-PREM-AMT  TO LAPUP-ALLOC-INP-TOT-AMT
+TVI002                                         LAPUP-ALLOC-DIP-TOT-AMT
+TVI002     ELSE
+TVI002         MOVE RPOL-POL-SNDRY-AMT      TO LAPUP-ALLOC-INP-TOT-AMT
+TVI002                                         LAPUP-ALLOC-DIP-TOT-AMT
+TVI002     END-IF.
+NVCP1A*SV1923     IF  RPOL-PROD-APP-TYP-TVI3
+NVCP1A     IF  (RPOL-PROD-APP-TYP-TVI3
+NVCP1A     OR  RPOL-PROD-APP-TYP-TVIC)
+SV1923         COMPUTE WS-MTHLY-STD-PREM-AMT = RPOL-MTHLY-STD-PREM-AMT 
+SV1923                                      +  
+SV1923                  WCVGS-MTHLY-STD-PREM-AMT(RPOL-POL-BASE-CVG-NUM)
+SV1923         MOVE WS-MTHLY-STD-PREM-AMT   TO LAPUP-ALLOC-INP-TOT-AMT
+SV1923                                         LAPUP-ALLOC-DIP-TOT-AMT
+SV1923                                      LAPUP-ALLOC-INP-CVG-AMT(01)
+SV1923                                      LAPUP-ALLOC-DIP-CVG-AMT(01)
+SV1923     END-IF.
+TVI002
+MFFUPL     MOVE RPOL-POL-LUMP-SUM-AMT TO LAPUP-ALLOC-INL-TOT-AMT.
+MFFUPL
+MFFUPL* COMPUTE THE FUND-LEVEL ALLOCATION AMOUNTS. PUT RESULT IN THE
+MFFUPL* LAPUP ARRAYS.
+MFFUPL
+MFFUPL     PERFORM  6855-CALC-LAPUP-FND-AMT
+MFFUPL         THRU 6855-CALC-LAPUP-FND-AMT-X.
+MFFUPL
+MFFUPL* UPDATE THE FC/FS TABLES.
+MFFUPL* IF THE FC/FC IS NOT SUCCESSFUL, DO NOT ATTEMPT TO CREATE
+MFFUPL* THE COVERAGE ALLOCATION RULES.
+MFFUPL
+MFFUPL     IF RPOL-PROD-APP-TYP-MANUSTEP
+TVI002*    FC AND FS UPDATION FOR TVI POLICIES SHOULD HAPPEN
+TVI002     OR  RPOL-POL-INS-TYP-TRAD-SEG-FND
+MFFUPL         PERFORM  6860-UPDT-FC-FS-RECS
+MFFUPL             THRU 6860-UPDT-FC-FS-RECS-X
+MFFUPL             VARYING I FROM +1 BY +1
+MFFUPL             UNTIL   I > LAPUP-FCFS-CVG-CTR
+MFFUPL         IF NOT L0500-RETRN-OK
+MFFUPL              GO TO 5630-UPDT-FND-DATA-X
+MFFUPL         END-IF
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL* CREATE CAIN/CDSI RECORDS FOR THE ALLOCATION RULES.
+MFFUPL
+MFFUPL     PERFORM  6870-CREATE-CVG-ALLOC
+MFFUPL         THRU 6870-CREATE-CVG-ALLOC-X.
+MFFUPL
+MFFUPL 5630-UPDT-FND-DATA-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL/
+MFFUPL*----------------------
+MFFUPL 5632-GET-CNVR-FND-AMT.
+MFFUPL*----------------------
+MFFUPL
+MFFUPL* CALL THE FLEXFUND CALCULATION MODULE TO OBTAIN THE
+MFFUPL* SINGLE PREMIUM AND RESERVE AMOUNTS AND ESC
+MFFUPL
+MFFUPL     PERFORM  9806-1000-BUILD-PARM-INFO
+MFFUPL         THRU 9806-1000-BUILD-PARM-INFO-X.
+MFFUPL
+MFFUPL     MOVE RPOL-POL-BASE-CVG-NUM   TO L9806-CVG-NUM.
+MFFUPL
+MFFUPL     PERFORM  9806-1000-FLEXFUND-CALC
+MFFUPL         THRU 9806-1000-FLEXFUND-CALC-X.
+MFFUPL
+MFFUPL     IF L9806-RETRN-OK
+MFFUPL         COMPUTE LAPUP-ALLOC-CNV-TOT-AMT
+MFFUPL               = L9806-ESC-SPREM-AMT
+MFFUPL               + L9806-ESC-RSRV-AMT
+MFFUPL         MOVE L9806-ESC-TOT-AMT   TO WS-ESC-CHRG-AMT
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL 5632-GET-CNVR-FND-AMT-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL/
+      *----------------
+       5650-CHECK-CVGS.
+      *----------------
+
+           IF  WCVGS-PLAN-ID (X) = SPACE
+               SET LAPUP-INVALID-PLAN        TO TRUE
+           END-IF.
+
+       5650-CHECK-CVGS-X.
+           EXIT.
+      /
+      *-------------------------
+29746F*5675-HANDLE-PAC-INFO.
+29746F 5675-HANDLE-PAC-CPN-INFO.
+      *-------------------------
+
+29746F     IF RPOL-CPN-AUTO-PAYO-YES
+29746F         MOVE RPOL-POL-ISS-EFF-DT     TO
+29746F                                    RPOL-CPN-AUTO-PAYO-EFF-DT
+29746F     END-IF.
+
+      * THE BANKING INFO WILL BE ASSOCIATED WITH THE OWNER OF THE POLICY
+      * THE PAYOR WILL HAVE THE SAME CLIENT ID AS THE OWNER.
+P00357
+29746F*P00357     IF  LCLIB-CLI-PAC-ACCT-ID = SPACE
+29746F*P00357     OR  LCLIB-CLI-PAC-ACCT-ID = "0000000"
+29746F     IF  (LCLIB-CLI-PAC-ACCT-ID = SPACE
+29746F     OR  LCLIB-CLI-PAC-ACCT-ID = "0000000")
+CR1848*29746F     AND NOT RPOL-CPN-AUTO-PAYO-YES
+R20265     AND WS-PLAN-SAV-ACUM-NO 
+R20265*CR1848     AND RPD-PLAN-SAV-ACUM-NO
+P00357*MSG: BANK ACCOUNT NUMBER IS ZERO OR BLANK FOR APP ID @1, POLICY @2
+P00357         MOVE 'AS94000039'           TO WGLOB-MSG-REF-INFO
+P00357         MOVE WS-APP-ID              TO WGLOB-MSG-PARM (1)
+P00357         MOVE RPOL-POL-ID            TO WGLOB-MSG-PARM (2)
+P00357         PERFORM  9000-BUILD-MESSAGE-EXTRACT
+P00357             THRU 9000-BUILD-MESSAGE-EXTRACT-X
+P00357     END-IF.
+29746F*           MOVE LAPUP-POLC-OWN-CLI-ID (1) TO L2437-CLI-ID.
+29746F*128574     MOVE RCLI-REC-INFO              TO HCLI-REC-INFO.
+29746F*128574     MOVE L2437-CLI-ID               TO WCLI-CLI-ID.
+29746F*128574     PERFORM  CLI-1000-READ
+29746F*128574         THRU CLI-1000-READ-X.
+29746F*
+29746F*           MOVE LCLIB-CLI-PAC-BNK-ID       TO WCLIB-BNK-ID.
+29746F*           MOVE LCLIB-PAC-BNK-BR-ID        TO WCLIB-BNK-BR-ID.
+29746F*           MOVE LCLIB-CLI-PAC-ACCT-ID      TO WCLIB-BNK-ACCT-ID.
+29746F*           MOVE L2437-CLI-ID               TO WCLIB-CLI-ID.
+
+CR1848*29746F     IF RPOL-CPN-AUTO-PAYO-YES
+R20265*CR1848     IF  RPD-PLAN-SAV-ACUM-YES
+R20265     IF  WS-PLAN-SAV-ACUM-YES
+29746F        MOVE LCLIB-PAYO-BNK-ID        TO WCLIB-BNK-ID
+29746F        MOVE LCLIB-PAYO-BNK-BR-ID     TO WCLIB-BNK-BR-ID
+29746F        MOVE LCLIB-PAYO-BNK-ACCT-ID   TO WCLIB-BNK-ACCT-ID
+29746F        MOVE LAPUP-POLC-OWN-CLI-ID (1)
+29746F                                      TO WCLIB-CLI-ID
+29746F        MOVE 'C'                      TO LCLIB-BNK-INFO-TYP-CD
+29746F                                         WCLIB-BNK-INFO-TYP-CD
+29746F     ELSE
+29746F        MOVE LAPUP-POLC-OWN-CLI-ID (1)
+29746F                                      TO L2437-CLI-ID
+29746F        MOVE RCLI-REC-INFO            TO HCLI-REC-INFO
+29746F        MOVE L2437-CLI-ID             TO WCLI-CLI-ID
+29746F        PERFORM  CLI-1000-READ
+29746F            THRU CLI-1000-READ-X
+29746F        
+29746F        MOVE LCLIB-CLI-PAC-BNK-ID     TO WCLIB-BNK-ID
+29746F        MOVE LCLIB-PAC-BNK-BR-ID      TO WCLIB-BNK-BR-ID
+29746F        MOVE LCLIB-CLI-PAC-ACCT-ID    TO WCLIB-BNK-ACCT-ID
+29746F        MOVE L2437-CLI-ID             TO WCLIB-CLI-ID
+29746F        MOVE 'P'                      TO WCLIB-BNK-INFO-TYP-CD
+CRB168                                         LCLIB-BNK-INFO-TYP-CD
+29746F     END-IF.
+
+           PERFORM  CLIB-1000-READ
+               THRU CLIB-1000-READ-X.
+
+           IF  NOT WCLIB-IO-OK
+               PERFORM  5680-BANK-RECORD-CREATE
+                   THRU 5680-BANK-RECORD-CREATE-X
+           ELSE
+29746F*        MOVE RCLIB-CLI-BNK-ACCT-NUM TO WS-BNK-ACCT-NUM
+29746F*        MOVE WS-BNK-ACCT-NUM  TO LAPUP-POLC-OTHR-CLI-TYP-CD (2)
+CR1848*29746F         IF  RPOL-CPN-AUTO-PAYO-YES
+R20265*CR1848         IF  RPD-PLAN-SAV-ACUM-YES
+R20265         IF  WS-PLAN-SAV-ACUM-YES
+29746F             MOVE RCLIB-CLI-BNK-ACCT-NUM
+29746F                                      TO WS-PAYO-BNK-ACCT-NUM
+29746F             MOVE WS-PAYO-BNK-ACCT-NUM
+29746F                                      TO 
+29746F                         LAPUP-POLC-OTHR-CLI-TYP-CD (4)
+29746F         ELSE                 
+29746F             MOVE RCLIB-CLI-BNK-ACCT-NUM 
+29746F                                   TO WS-BNK-ACCT-NUM
+29746F             MOVE WS-BNK-ACCT-NUM  TO 
+29746F                             LAPUP-POLC-OTHR-CLI-TYP-CD (2)
+29746F         END-IF
+UYS110         PERFORM  5676-UPDT-BNKA-CHCK
+UYS110             THRU 5676-UPDT-BNKA-CHCK-X          
+           END-IF.
+
+           IF  LAPUP-POL-TYP-IMM-ANNUITY
+               MOVE SPACE            TO LAPUP-POLC-OTHR-CLI-TYP-CD (2)
+               MOVE SPACE            TO LAPUP-POLC-OTHR-CLI-TYP-CD (4)
+           ELSE
+29746F*        MOVE L2437-CLI-ID TO LAPUP-POLC-OTHR-CLI-ID (2)
+29746F*        MOVE 'P'          TO LAPUP-POLC-OTHR-INSRD-REL-CD (2)
+29746F*        MOVE 'PR'         TO LAPUP-POLC-OTHR-ADDR-TYP (2)
+CR1848*29746F         IF  RPOL-CPN-AUTO-PAYO-YES
+R20265*CR1848         IF  RPD-PLAN-SAV-ACUM-YES
+R20265         IF  WS-PLAN-SAV-ACUM-YES
+29746F             MOVE RCLIB-CLI-ID        TO
+29746F                             LAPUP-POLC-OTHR-CLI-ID (4)
+29746F             MOVE 'C'                 TO 
+29746F                             LAPUP-POLC-OTHR-INSRD-REL-CD (4)
+29746F             MOVE 'PR'                TO 
+29746F                             LAPUP-POLC-OTHR-ADDR-TYP (4)
+29746F         ELSE
+29746F             MOVE L2437-CLI-ID        TO 
+29746F                             LAPUP-POLC-OTHR-CLI-ID (2)
+29746F             MOVE 'P'                 TO 
+29746F                             LAPUP-POLC-OTHR-INSRD-REL-CD (2)
+29746F             MOVE 'PR'                TO 
+29746F                             LAPUP-POLC-OTHR-ADDR-TYP (2)
+29746F         END-IF
+           END-IF.
+128574           
+128574     MOVE HCLI-REC-INFO               TO RCLI-REC-INFO.
+128574
+29746F* 5675-HANDLE-PAC-INFO-X.
+29746F 5675-HANDLE-PAC-CPN-INFO-X.
+            EXIT.
+      /
+UYS110*---------------------
+UYS110 5676-UPDT-BNKA-CHCK.
+UYS110*----------------------      
+29746F*UYS110     MOVE LCLIB-CLI-PAC-BNK-ID       TO WBNKA-BNK-ID.
+29746F*UYS110     MOVE LCLIB-PAC-BNK-BR-ID        TO WBNKA-BNK-BR-ID.
+29746F*UYS110     MOVE LCLIB-CLI-PAC-ACCT-ID      TO WBNKA-BNK-ACCT-ID.
+29756F
+CR1848*29746F     IF  RPOL-CPN-AUTO-PAYO-YES
+R20265*CR1848     IF  RPD-PLAN-SAV-ACUM-YES
+R20265     IF  WS-PLAN-SAV-ACUM-YES
+29746F         MOVE LCLIB-PAYO-BNK-ID       TO WBNKA-BNK-ID
+29746F         MOVE LCLIB-PAYO-BNK-BR-ID    TO WBNKA-BNK-BR-ID
+29746F         MOVE LCLIB-PAYO-BNK-ACCT-ID  TO WBNKA-BNK-ACCT-ID
+29746F         MOVE 'C'                     TO WBNKA-BNK-INFO-TYP-CD 
+29746F     ELSE
+29746F         MOVE LCLIB-CLI-PAC-BNK-ID    TO WBNKA-BNK-ID
+29746F         MOVE LCLIB-PAC-BNK-BR-ID     TO WBNKA-BNK-BR-ID
+29746F         MOVE LCLIB-CLI-PAC-ACCT-ID   TO WBNKA-BNK-ACCT-ID
+29746F         MOVE 'P'                     TO WBNKA-BNK-INFO-TYP-CD    
+29746F     END-IF.     
+UYS110
+UYS110     PERFORM  BNKA-1000-READ
+UYS110         THRU BNKA-1000-READ-X.
+UYS110
+29746G*UYS110     IF WBNKA-IO-OK
+29746F*UYS110  IF  RPOL-POL-INS-TYP-TRAD 
+29746F*UYS110  OR  RPOL-POL-INS-TYP-UL 
+29746F*UYS110      IF  RCLI-CLI-SEX-CD <> 'C'
+29746F*UYS110          IF LCLIB-PAC-ACCT-TYP-CD  = 
+29746F*UYS110                            RBNKA-BNK-ACCT-TYP-CD 
+29746F*UYS110              PERFORM  5677-UPDT-BNKA-DTLS
+29746F*UYS110                  THRU 5677-UPDT-BNKA-DTLS-X
+29746F*UYS110          END-IF
+29746F*UYS110      END-IF
+29746F*UYS110  END-IF               
+29746G*29746F         IF RPOL-CPN-AUTO-PAYO-YES
+29746G*29746F            CONTINUE
+29746G*29746F         ELSE
+29746G*29746F            IF  RPOL-POL-INS-TYP-TRAD 
+29746G*29746F            OR  RPOL-POL-INS-TYP-UL 
+29746G*29746F                IF  RCLI-CLI-SEX-CD <>'C'
+29746G*29746F                    IF LCLIB-PAC-ACCT-TYP-CD  = 
+29746G*29746F                                      RBNKA-BNK-ACCT-TYP-CD 
+29746G*29746F                        PERFORM  5677-UPDT-BNKA-DTLS
+29746G*29746F                            THRU 5677-UPDT-BNKA-DTLS-X
+29746G*29746F                    END-IF
+29746G*29746F                END-IF
+29746G*29746F            END-IF
+29746G*29746F         END-IF
+29746G*UYS110      END-IF.
+29746G     IF NOT WBNKA-IO-OK
+29746G         GO TO 5676-UPDT-BNKA-CHCK-X
+29746G     END-IF.
+29746G
+CR1848*29746G     IF RPOL-CPN-AUTO-PAYO-YES
+R20265*CR1848     IF  RPD-PLAN-SAV-ACUM-YES
+R20265     IF  WS-PLAN-SAV-ACUM-YES
+29746G         PERFORM  5667-UPDT-CPN-DTLS
+29746G             THRU 5667-UPDT-CPN-DTLS-X
+29746G     ELSE
+29746G         IF (RPOL-POL-INS-TYP-TRAD 
+29746G         OR RPOL-POL-INS-TYP-UL)
+29746G         AND (NOT RCLI-CLI-SEX-COMPANY)
+29746G         AND LCLIB-PAC-ACCT-TYP-CD = RBNKA-BNK-ACCT-TYP-CD 
+29746G             PERFORM  5677-UPDT-BNKA-DTLS
+29746G                 THRU 5677-UPDT-BNKA-DTLS-X
+29746G         END-IF
+29746G     END-IF. 
+29746G
+UYS110 5676-UPDT-BNKA-CHCK-X.
+UYS110     EXIT.
+UYS110/
+29746G*---------------------
+29746G 5667-UPDT-CPN-DTLS.
+29746G*----------------------
+29746G
+29746G     MOVE SPACES                      TO WS-NEW-ACCT-HLDR-NAME.
+29746G     MOVE SPACES                      TO WS-PREV-ACCT-HLDR-NAME.
+29746G     MOVE SPACES                      TO 
+29746G                                      WS-PREV-PAYO-ACCT-TYP-CD.
+29746G     MOVE SPACES                      TO WS-NEW-PAYO-ACCT-TYP-CD.
+29746G
+29746G
+29746G     MOVE RUPOL-PAYO-BNK-ACC-HLDR-NM
+29746G                                      TO WS-NEW-ACCT-HLDR-NAME.
+29746G
+29746G
+29746G     MOVE  RBNKA-BNK-ACCT-HLDR-NM     TO  
+29746G                                    WS-PREV-ACCT-HLDR-NAME. 
+29746G     MOVE  RBNKA-BNK-ACCT-TYP-CD      TO  
+29746G                                    WS-PREV-PAYO-ACCT-TYP-CD. 
+29746G     MOVE  LCLIB-PAYO-ACCT-TYP-CD     TO 
+29746G                                     WS-NEW-PAYO-ACCT-TYP-CD.
+29746G
+29746G     IF  WS-NEW-ACCT-HLDR-NAME  =  WS-PREV-ACCT-HLDR-NAME
+29746G     AND  WS-NEW-PAYO-ACCT-TYP-CD  =  WS-PREV-PAYO-ACCT-TYP-CD
+29746G         GO TO 5667-UPDT-CPN-DTLS-X
+29746G     END-IF.
+29746G
+29746G     MOVE   '0'                       TO R9565-ACCT-RPT-CD.
+29746G     MOVE  WS-NEW-ACCT-HLDR-NAME      TO
+29746G                                R9565-NEW-ACCT-HLDR-NM.
+29746G     MOVE  WS-PREV-ACCT-HLDR-NAME     TO
+29746G                                R9565-PREV-ACCT-HLDR-NM.
+29746G     MOVE  WS-NEW-PAYO-ACCT-TYP-CD    TO 
+29746G                                R9565-NEW-BNK-ACCT-TYP-CD.                              
+29746G     MOVE LAPUP-POLC-OWN-CLI-ID (1)   TO R9565-CLI-ID.
+29746G     MOVE LCLIB-PAYO-BNK-ID           TO R9565-BNK-ID.
+29746G     MOVE LCLIB-PAYO-BNK-ACCT-ID      TO R9565-BNK-ACCT-ID.
+29746G     MOVE LCLIB-PAYO-BNK-BR-ID        TO R9565-BR-ID.
+29746G     MOVE RPOL-POL-ID                 TO R9565-POL-ID.
+29746G     MOVE 'C'                         TO R9565-BNK-INFO-TYP-CD.
+29746G     
+29746G     PERFORM  9565-1000-WRITE
+29746G         THRU 9565-1000-WRITE-X.
+29746G
+29746G 5667-UPDT-CPN-DTLS-X.
+29746G     EXIT.
+29746G/
+UYS110*---------------------
+UYS110 5677-UPDT-BNKA-DTLS.
+UYS110*----------------------
+UYS110     MOVE SPACES                      TO WS-NEW-ACCT-HLDR-NAME.
+UYS110     MOVE SPACES                      TO WS-PREV-ACCT-HLDR-NAME.
+UYS110
+29746F*UYS110     MOVE LCLIB-CLI-PAC-BNK-ID        TO WBNKA-BNK-ID.
+29746F*UYS110     MOVE LCLIB-PAC-BNK-BR-ID         TO WBNKA-BNK-BR-ID.
+29746F*UYS110     MOVE LCLIB-CLI-PAC-ACCT-ID       TO WBNKA-BNK-ACCT-ID.
+29746F*UYS110     MOVE RUPOL-BNK-ACCT-HLDR-NM      TO WS-NEW-ACCT-HLDR-NAME.
+UYS110
+CR1848*29746F     IF RPOL-CPN-AUTO-PAYO-YES
+R20265*CR1848     IF  RPD-PLAN-SAV-ACUM-YES
+R20265     IF  WS-PLAN-SAV-ACUM-YES
+29746F        MOVE LCLIB-PAYO-BNK-ID        TO WBNKA-BNK-ID
+29746F        MOVE LCLIB-PAYO-BNK-BR-ID     TO WBNKA-BNK-BR-ID
+29746F        MOVE LCLIB-PAYO-BNK-ACCT-ID   TO WBNKA-BNK-ACCT-ID
+29746F        MOVE 'C'                      TO WBNKA-BNK-INFO-TYP-CD
+29746F        MOVE RUPOL-PAYO-BNK-ACC-HLDR-NM
+29746F                                      TO WS-NEW-ACCT-HLDR-NAME
+29746F     ELSE
+29746F        MOVE LCLIB-CLI-PAC-BNK-ID     TO WBNKA-BNK-ID
+29746F        MOVE LCLIB-PAC-BNK-BR-ID      TO WBNKA-BNK-BR-ID
+29746F        MOVE LCLIB-CLI-PAC-ACCT-ID    TO WBNKA-BNK-ACCT-ID
+29746F        MOVE 'P'                      TO WBNKA-BNK-INFO-TYP-CD
+29746F        MOVE RUPOL-BNK-ACCT-HLDR-NM   TO WS-NEW-ACCT-HLDR-NAME
+29746F     END-IF.
+29746F
+UYS110     PERFORM  BNKA-1000-READ-FOR-UPDATE
+UYS110         THRU BNKA-1000-READ-FOR-UPDATE-X.
+UYS110
+UYS110     IF  WBNKA-IO-OK
+UYS110         MOVE  RBNKA-BNK-ACCT-HLDR-NM TO  
+UYS110                                    WS-PREV-ACCT-HLDR-NAME   
+UYS110     ELSE 
+UYS110         GO TO 5677-UPDT-BNKA-DTLS-X
+UYS110     END-IF.
+UYS110
+UYS110     IF  WS-NEW-ACCT-HLDR-NAME  =  WS-PREV-ACCT-HLDR-NAME
+UYS110         PERFORM  BNKA-3000-UNLOCK
+UYS110             THRU BNKA-3000-UNLOCK-X
+UYS110         GO TO 5677-UPDT-BNKA-DTLS-X
+UYS110     ELSE
+UYS110         PERFORM  5678-ACCT-HLDR-NAME-CNVRT
+UYS110             THRU 5678-ACCT-HLDR-NAME-CNVRT-X
+UYS110     END-IF.
+UYS110
+UYS110     PERFORM  BNKA-2000-REWRITE
+UYS110         THRU BNKA-2000-REWRITE-X. 
+29746F
+29746F     IF  NOT WBNKA-IO-OK
+29746F*MSG: ERROR REWRITING BNKA RECORD (@1) - CONTACT SYSTEMS
+29746F         MOVE 'AS94009721'       TO WGLOB-MSG-REF-INFO
+29746F         MOVE WBNKA-KEY          TO WGLOB-MSG-PARM (1)
+29746F         PERFORM  9000-BUILD-MESSAGE-EXTRACT
+29746F             THRU 9000-BUILD-MESSAGE-EXTRACT-X
+29746F         PERFORM  BNKA-3000-UNLOCK
+29746F             THRU BNKA-3000-UNLOCK-X
+29746F         GO TO 5677-UPDT-BNKA-DTLS-X
+29746F     END-IF.
+29746G     MOVE  SPACES                     TO
+29746G                                R9565-NEW-BNK-ACCT-TYP-CD.
+29746G     MOVE 'P'                         TO
+29746G                                R9565-BNK-INFO-TYP-CD.
+UYS110     
+UYS110     PERFORM  9565-1000-WRITE
+UYS110         THRU 9565-1000-WRITE-X.
+UYS110
+UYS110 5677-UPDT-BNKA-DTLS-X.
+UYS110     EXIT.
+UYS110/
+UYS110*------------------------
+UYS110 5678-ACCT-HLDR-NAME-CNVRT.
+UYS110*------------------------
+UYS110
+UYS110* DELETE VOICED SOUND MARK / P-SOUND MARK IN ACCOUNT HOLDER NAME
+UYS110    
+UYS110     PERFORM  0005-1000-BUILD-PARM-INFO
+UYS110         THRU 0005-1000-BUILD-PARM-INFO-X.
+UYS110 
+UYS110     MOVE WS-NEW-ACCT-HLDR-NAME       TO L0005-INPUT-STRING.
+UYS110 
+UYS110     PERFORM  0005-4000-CONVERT-SNDMK-KANA
+UYS110         THRU 0005-4000-CONVERT-SNDMK-KANA-X.
+UYS110 
+UYS110     IF  L0005-RETRN-OK
+UYS110         MOVE L0005-OUTPUT-STRING    TO WS-NEW-ACCT-HLDR-NAME
+UYS110     END-IF.
+UYS110 
+UYS110     MOVE WS-PREV-ACCT-HLDR-NAME       TO L0005-INPUT-STRING.
+UYS110 
+UYS110     PERFORM  0005-4000-CONVERT-SNDMK-KANA
+UYS110         THRU 0005-4000-CONVERT-SNDMK-KANA-X.
+UYS110 
+UYS110     IF  L0005-RETRN-OK
+UYS110         MOVE L0005-OUTPUT-STRING    TO WS-PREV-ACCT-HLDR-NAME
+UYS110     END-IF.
+UYS110
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL 'ÄÞ' BY 'Ä '.
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL '¶Þ' BY '¶ '.
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL 'Ìß' BY 'Ì '.
+UYS110*128584     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL 'Íß' BY 'Í '.
+UYS110*128584     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL 'Ëß' BY 'Ë '.
+UYS110*128584     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL 'Êß' BY 'Ê '.
+UYS110*128584     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL 'Îß' BY 'Î '.
+UYS110*128584     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL '·Þ' BY '· '.
+UYS110*128584     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL '¸Þ' BY '¸ '.
+UYS110*128584     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL '¹Þ' BY '¹ '.
+UYS110*128584     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL 'ºÞ' BY 'º '.
+UYS110*128584     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL '»Þ' BY '» '.
+UYS110*128584     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL '½Þ' BY '½ '.
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL '¿Þ' BY '¿ '.
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL 'ÀÞ' BY 'À '.
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL 'ÁÞ' BY 'Á '.
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL 'ÂÞ' BY 'Â '.
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL 'ÃÞ' BY 'Ã '.
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL 'ÊÞ' BY 'Ê '.
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL 'ËÞ' BY 'Ë '.
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL 'ÌÞ' BY 'Ì '.
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL 'ÎÞ' BY 'Î '.
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL 'ÍÞ' BY 'Í '.
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL '¿Þ' BY '¿ '.
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL '³Þ' BY '³ '.
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL '¼Þ' BY '¼ '.
+UYS110*UYS110     INSPECT WS-NEW-ACCT-HLDR-NAME  REPLACING ALL '¾Þ' BY '¾ '.
+UYS110*UYS110
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL 'ÄÞ' BY 'Ä '.
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL '¶Þ' BY '¶ '.
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL 'Ìß' BY 'Ì '.
+UYS110*128584     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL 'Íß' BY 'Í '.
+UYS110*128584     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL 'Ëß' BY 'Ë '.
+UYS110*128584     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL 'Êß' BY 'Ê '.
+UYS110*128584     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL 'Îß' BY 'Î '.
+UYS110*128584     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL '·Þ' BY '· '.
+UYS110*128584     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL '¸Þ' BY '¸ '.
+UYS110*128584     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL '¹Þ' BY '¹ '.
+UYS110*128584     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL 'ºÞ' BY 'º '.
+UYS110*128584     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL '»Þ' BY '» '.
+UYS110*128584     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL '½Þ' BY '½ '.
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL '¿Þ' BY '¿ '.
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL 'ÀÞ' BY 'À '.
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL 'ÁÞ' BY 'Á '.
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL 'ÂÞ' BY 'Â '.
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL 'ÃÞ' BY 'Ã '.
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL 'ÊÞ' BY 'Ê '.
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL 'ËÞ' BY 'Ë '.
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL 'ÌÞ' BY 'Ì '.
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL 'ÎÞ' BY 'Î '.
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL 'ÍÞ' BY 'Í '.
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL '¿Þ' BY '¿ '.
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL '³Þ' BY '³ '.
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL '¼Þ' BY '¼ '.
+UYS110*UYS110     INSPECT WS-PREV-ACCT-HLDR-NAME  REPLACING ALL '¾Þ' BY '¾ '.
+UYS110
+UYS110* DELETE BLANK SPACE
+UYS110
+UYS110     MOVE WS-NEW-ACCT-HLDR-NAME       TO L0015-COMP-AREA-IN.
+UYS110
+UYS110     PERFORM  0015-2000-COMPRESS-NO-BLANKS
+UYS110         THRU 0015-2000-COMPRESS-NO-BLANKS-X.
+UYS110
+UYS110     MOVE L0015-COMP-AREA-OUT         TO WS-NEW-ACCT-HLDR-NAME.
+UYS110
+UYS110     MOVE WS-PREV-ACCT-HLDR-NAME       TO L0015-COMP-AREA-IN.
+UYS110
+UYS110     PERFORM  0015-2000-COMPRESS-NO-BLANKS
+UYS110         THRU 0015-2000-COMPRESS-NO-BLANKS-X.
+UYS110
+UYS110     MOVE L0015-COMP-AREA-OUT         TO WS-PREV-ACCT-HLDR-NAME.
+UYS110
+UYS110* KANA LOWERCASE TO KANA UPPERCASE
+UYS110    
+UYS110     PERFORM  0005-1000-BUILD-PARM-INFO
+UYS110         THRU 0005-1000-BUILD-PARM-INFO-X.
+UYS110 
+UYS110     MOVE WS-NEW-ACCT-HLDR-NAME       TO L0005-INPUT-STRING.
+UYS110 
+UYS110     PERFORM  0005-3000-CONVERT-UPPER-KANA
+UYS110         THRU 0005-3000-CONVERT-UPPER-KANA-X.
+UYS110 
+UYS110     IF  L0005-RETRN-OK
+UYS110         MOVE L0005-OUTPUT-STRING    TO WS-NEW-ACCT-HLDR-NAME
+UYS110     END-IF.
+UYS110 
+UYS110     MOVE WS-PREV-ACCT-HLDR-NAME       TO L0005-INPUT-STRING.
+UYS110 
+UYS110     PERFORM  0005-3000-CONVERT-UPPER-KANA
+UYS110         THRU 0005-3000-CONVERT-UPPER-KANA-X.
+UYS110 
+UYS110     IF  L0005-RETRN-OK
+UYS110         MOVE L0005-OUTPUT-STRING    TO WS-PREV-ACCT-HLDR-NAME
+UYS110     END-IF.
+UYS110
+UYS110     PERFORM  5679-ACCT-HLDR-NAME-CMPR
+UYS110         THRU 5679-ACCT-HLDR-NAME-CMPR-X.
+UYS110
+UYS110 5678-ACCT-HLDR-NAME-CNVRT-X.
+UYS110     EXIT.
+UYS110/
+UYS110*------------------------
+UYS110 5679-ACCT-HLDR-NAME-CMPR.
+UYS110*------------------------
+UYS110
+UYS110     IF  WS-PREV-ACCT-HLDR-NAME  = WS-NEW-ACCT-HLDR-NAME
+UYS110         MOVE  '1'                    TO R9565-ACCT-RPT-CD
+UYS110         MOVE  RBNKA-BNK-ACCT-HLDR-NM TO
+UYS110                                      R9565-PREV-ACCT-HLDR-NM
+UYS110         MOVE  LCLIB-BNK-ACCT-HLDR-NM TO
+UYS110                                      R9565-NEW-ACCT-HLDR-NM
+UYS110         MOVE LCLIB-BNK-ACCT-HLDR-NM  
+UYS110                                      TO RBNKA-BNK-ACCT-HLDR-NM
+UYS110     ELSE
+UYS110         MOVE   '0'                   TO R9565-ACCT-RPT-CD
+UYS110         MOVE  LCLIB-BNK-ACCT-HLDR-NM TO
+UYS110                                      R9565-NEW-ACCT-HLDR-NM
+UYS110         MOVE  RBNKA-BNK-ACCT-HLDR-NM TO
+UYS110                                      R9565-PREV-ACCT-HLDR-NM
+UYS110     END-IF.
+UYS110         
+UYS110     MOVE L2437-CLI-ID                TO R9565-CLI-ID.
+UYS110     MOVE LCLIB-CLI-PAC-BNK-ID        TO R9565-BNK-ID.
+UYS110     MOVE LCLIB-CLI-PAC-ACCT-ID       TO R9565-BNK-ACCT-ID.
+UYS110     MOVE LCLIB-PAC-BNK-BR-ID         TO R9565-BR-ID.
+UYS110     MOVE RPOL-POL-ID                 TO R9565-POL-ID.
+29746G     MOVE 'P'                         TO R9565-BNK-INFO-TYP-CD.
+UYS110
+UYS110 5679-ACCT-HLDR-NAME-CMPR-X.
+UYS110     EXIT.
+UYS110/
+      *------------------------
+       5680-BANK-RECORD-CREATE.
+      *------------------------
+
+29746F*     MOVE LCLIB-CLI-PAC-BNK-ID       TO WBNKA-BNK-ID.
+29746F*     MOVE LCLIB-PAC-BNK-BR-ID        TO WBNKA-BNK-BR-ID.
+29746F*     MOVE LCLIB-CLI-PAC-ACCT-ID      TO WBNKA-BNK-ACCT-ID.
+29746F
+CR1848*29746F     IF  RPOL-CPN-AUTO-PAYO-YES
+R20265*CR1848     IF  RPD-PLAN-SAV-ACUM-YES
+R20265     IF  WS-PLAN-SAV-ACUM-YES
+29746F         MOVE LCLIB-PAYO-BNK-ID       TO WBNKA-BNK-ID
+29746F         MOVE LCLIB-PAYO-BNK-BR-ID    TO WBNKA-BNK-BR-ID
+29746F         MOVE LCLIB-PAYO-BNK-ACCT-ID  TO WBNKA-BNK-ACCT-ID
+29746F         MOVE 'C'                     TO WBNKA-BNK-INFO-TYP-CD
+29746F     ELSE
+29746F         MOVE LCLIB-CLI-PAC-BNK-ID    TO WBNKA-BNK-ID
+29746F         MOVE LCLIB-PAC-BNK-BR-ID     TO WBNKA-BNK-BR-ID
+29746F         MOVE LCLIB-CLI-PAC-ACCT-ID   TO WBNKA-BNK-ACCT-ID
+29746F         MOVE 'P'                     TO WBNKA-BNK-INFO-TYP-CD
+29746F     END-IF.
+
+           PERFORM  BNKA-1000-READ
+               THRU BNKA-1000-READ-X.
+
+           IF  WBNKA-IO-OK
+29746F*UYS110  IF  RPOL-POL-INS-TYP-TRAD 
+29746F*UYS110  OR  RPOL-POL-INS-TYP-UL 
+29746F*UYS110      IF  RCLI-CLI-SEX-CD NOT =  'C'
+29746F*UYS110          IF LCLIB-PAC-ACCT-TYP-CD  = 
+29746F*UYS110                            RBNKA-BNK-ACCT-TYP-CD 
+29746F*UYS110              PERFORM  5677-UPDT-BNKA-DTLS
+29746F*UYS110                  THRU 5677-UPDT-BNKA-DTLS-X
+29746F*UYS110          END-IF
+29746F*UYS110      END-IF
+29746F*UYS110  END-IF               
+CR1848*29746F         IF RPOL-CPN-AUTO-PAYO-YES
+R20265*CR1848         IF  RPD-PLAN-SAV-ACUM-YES
+R20265         IF  WS-PLAN-SAV-ACUM-YES
+CR2323           PERFORM  5676-UPDT-BNKA-CHCK
+CR2323               THRU 5676-UPDT-BNKA-CHCK-X
+29746F            CONTINUE
+29746F         ELSE
+29746F            IF  RPOL-POL-INS-TYP-TRAD 
+29746F            OR  RPOL-POL-INS-TYP-UL 
+29746F                IF  RCLI-CLI-SEX-CD NOT = 'C'
+29746F                    IF LCLIB-PAC-ACCT-TYP-CD  = 
+29746F                                      RBNKA-BNK-ACCT-TYP-CD 
+29746F                        PERFORM  5677-UPDT-BNKA-DTLS
+29746F                            THRU 5677-UPDT-BNKA-DTLS-X
+29746F                    END-IF
+29746F                END-IF
+29746F            END-IF
+29746F         END-IF
+               PERFORM  5685-CLIB-RECORD-CREATE
+                   THRU 5685-CLIB-RECORD-CREATE-X
+               GO TO 5680-BANK-RECORD-CREATE-X
+           END-IF.
+
+           IF  RPCOM-CO-BNK-EDIT-TBL
+29746F*        MOVE LCLIB-CLI-PAC-BNK-ID TO WBNKB-BNK-ID
+CR1848*29746F         IF RPOL-CPN-AUTO-PAYO-YES
+R20265*CR1848         IF  RPD-PLAN-SAV-ACUM-YES
+R20265         IF  WS-PLAN-SAV-ACUM-YES
+29746F            MOVE LCLIB-PAYO-BNK-ID    TO WBNKB-BNK-ID 
+29746F         ELSE           
+29746F            MOVE LCLIB-CLI-PAC-BNK-ID TO WBNKB-BNK-ID
+29746F         END-IF
+
+P00026         IF  WBNKB-BNK-ID = '9900'
+CR2061         AND NOT LCLIB-BNK-INFO-TYP-CD = 'C'
+P00026             MOVE '000  '             TO WBNKB-BNK-BR-ID
+P00026         ELSE
+29746F*            MOVE LCLIB-PAC-BNK-BR-ID TO WBNKB-BNK-BR-ID
+CR1848*29746F             IF RPOL-CPN-AUTO-PAYO-YES
+R20265*CR1848             IF  RPD-PLAN-SAV-ACUM-YES
+R20265             IF  WS-PLAN-SAV-ACUM-YES
+29746F                MOVE LCLIB-PAYO-BNK-BR-ID
+29746F                                      TO WBNKB-BNK-BR-ID
+29746F             ELSE
+29746F                MOVE LCLIB-PAC-BNK-BR-ID 
+29746F                                      TO WBNKB-BNK-BR-ID
+29746F             END-IF
+P00026         END-IF
+
+               PERFORM  BNKB-1000-READ
+                   THRU BNKB-1000-READ-X
+
+               IF  NOT WBNKB-IO-OK
+      *MSG: NO BNKB RECORD EXISTS FOR BANK @1 AND BRANCH @ 2
+                   MOVE 'AS94000012'         TO WGLOB-MSG-REF-INFO
+29746F*B10268                MOVE LCLIB-CLI-PAC-BNK-ID TO WGLOB-MSG-PARM (1)
+29746F*B10268                MOVE LCLIB-PAC-BNK-BR-ID  TO WGLOB-MSG-PARM (2)				   
+CR1848*29746F             IF RPOL-CPN-AUTO-PAYO-YES
+R20265*CR1848             IF  RPD-PLAN-SAV-ACUM-YES
+R20265             IF  WS-PLAN-SAV-ACUM-YES
+29746F                MOVE LCLIB-PAYO-BNK-ID TO WGLOB-MSG-PARM (1)
+29746F                MOVE LCLIB-PAYO-BNK-BR-ID
+29746F                                       TO WGLOB-MSG-PARM (2)
+29746F             ELSE
+29746F                MOVE LCLIB-CLI-PAC-BNK-ID TO WGLOB-MSG-PARM (1)
+29746F                MOVE LCLIB-PAC-BNK-BR-ID  TO WGLOB-MSG-PARM (2)
+29746F             END-IF
+                   PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                       THRU 9000-BUILD-MESSAGE-EXTRACT-X
+CR1848*29746F             IF  RPOL-CPN-AUTO-PAYO-YES
+R20265*CR1848             IF  RPD-PLAN-SAV-ACUM-YES
+R20265             IF  WS-PLAN-SAV-ACUM-YES
+29746F             AND LCLIB-CLI-PAC-BNK-ID NOT = SPACES
+29746F             AND LCLIB-PAYO-BNK-ID NOT = SPACES
+29746F                 CONTINUE
+29746F             ELSE
+                       GO TO 5680-BANK-RECORD-CREATE-X
+29746F             END-IF
+               END-IF
+
+               IF  RBNKB-BNK-BR-STAT-CLOSED
+      *MSG: UNABLE TO CREATE CLIB RECORD, BANK RECORD CLOSED
+                   MOVE 'AS94000013'       TO WGLOB-MSG-REF-INFO
+                   PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                       THRU 9000-BUILD-MESSAGE-EXTRACT-X
+                   GO TO 5680-BANK-RECORD-CREATE-X
+               END-IF
+           END-IF.
+
+           PERFORM  BNKA-1000-CREATE
+               THRU BNKA-1000-CREATE-X.
+
+29746F*    MOVE LCLIB-CLI-PAC-BNK-ID       TO WBNKA-BNK-ID.
+29746F*    MOVE LCLIB-PAC-BNK-BR-ID        TO WBNKA-BNK-BR-ID.
+29746F*    MOVE LCLIB-CLI-PAC-ACCT-ID      TO WBNKA-BNK-ACCT-ID.
+29746F*
+29746F*     IF  LCLIB-PAC-ACCT-TYP-CD > SPACES
+29746F*         MOVE LCLIB-PAC-ACCT-TYP-CD  TO RBNKA-BNK-ACCT-TYP-CD
+29746F*     END-IF.
+29746F*
+29746F*     IF  LCLIB-CLI-PAC-MICR-IND > SPACES
+29746F*         MOVE LCLIB-CLI-PAC-MICR-IND TO RBNKA-BNK-ACCT-MICR-IND
+29746F*     END-IF.
+29746F*
+29746F*     IF  LCLIB-BNK-ACCT-HLDR-NM > SPACES
+29746F*         MOVE LCLIB-BNK-ACCT-HLDR-NM  TO RBNKA-BNK-ACCT-HLDR-NM
+29746F*     END-IF.
+
+CR1848*29746F     IF  RPOL-CPN-AUTO-PAYO-YES
+R20265*CR1848     IF  RPD-PLAN-SAV-ACUM-YES
+R20265     IF  WS-PLAN-SAV-ACUM-YES
+29746F         MOVE LCLIB-PAYO-BNK-ID       TO WBNKA-BNK-ID
+29746F         MOVE LCLIB-PAYO-BNK-BR-ID    TO WBNKA-BNK-BR-ID
+29746F         MOVE LCLIB-PAYO-BNK-ACCT-ID  TO WBNKA-BNK-ACCT-ID
+29746F         MOVE 'C'                     TO WBNKA-BNK-INFO-TYP-CD
+29746F 
+29746F         IF  LCLIB-PAYO-ACCT-TYP-CD > SPACES
+29746F             MOVE LCLIB-PAYO-ACCT-TYP-CD
+29746F                                      TO RBNKA-BNK-ACCT-TYP-CD
+29746F         END-IF
+29746F 
+29746F         IF  LCLIB-PAYO-BNK-ACCT-HLDR-NM > SPACES
+29746F             MOVE LCLIB-PAYO-BNK-ACCT-HLDR-NM
+29746F                                      TO RBNKA-BNK-ACCT-HLDR-NM
+29746F         END-IF
+29746F         MOVE 'N'                     TO RBNKA-BNK-ACCT-MICR-IND
+29746F     ELSE
+29746F         MOVE LCLIB-CLI-PAC-BNK-ID    TO WBNKA-BNK-ID
+29746F         MOVE LCLIB-PAC-BNK-BR-ID     TO WBNKA-BNK-BR-ID
+29746F         MOVE LCLIB-CLI-PAC-ACCT-ID   TO WBNKA-BNK-ACCT-ID
+29746F         MOVE 'P'                     TO WBNKA-BNK-INFO-TYP-CD
+29746F        
+29746F         IF  LCLIB-PAC-ACCT-TYP-CD > SPACES
+29746F             MOVE LCLIB-PAC-ACCT-TYP-CD
+29746F                                      TO RBNKA-BNK-ACCT-TYP-CD
+29746F         END-IF
+29746F        
+29746F         IF  LCLIB-CLI-PAC-MICR-IND > SPACES
+29746F             MOVE LCLIB-CLI-PAC-MICR-IND 
+29746F                                      TO RBNKA-BNK-ACCT-MICR-IND
+29746F         END-IF
+29746F        
+29746F         IF  LCLIB-BNK-ACCT-HLDR-NM > SPACES
+29746F             MOVE LCLIB-BNK-ACCT-HLDR-NM
+29746F                                      TO RBNKA-BNK-ACCT-HLDR-NM
+29746F         END-IF
+29746F     END-IF.
+
+           PERFORM  BNKA-1000-WRITE
+               THRU BNKA-1000-WRITE-X.
+
+29746F     IF  NOT WBNKA-IO-OK
+29746F*MSG: ERROR WRITING BNKA RECORD (@1) - CONTACT SYSTEMS
+29746F         MOVE 'AS94009722'       TO WGLOB-MSG-REF-INFO
+29746F         MOVE WBNKA-KEY          TO WGLOB-MSG-PARM (1)
+29746F         PERFORM  9000-BUILD-MESSAGE-EXTRACT
+29746F             THRU 9000-BUILD-MESSAGE-EXTRACT-X
+29746F         GO TO 5680-BANK-RECORD-CREATE-X
+29746F     END-IF.
+
+           PERFORM  5685-CLIB-RECORD-CREATE
+               THRU 5685-CLIB-RECORD-CREATE-X.
+
+           IF  WS-SUB > 9
+               GO TO 5680-BANK-RECORD-CREATE-X
+           END-IF.
+
+       5680-BANK-RECORD-CREATE-X.
+           EXIT.
+      /
+      *------------------------
+       5685-CLIB-RECORD-CREATE.
+      *------------------------
+
+           MOVE 0                          TO WCLIN-IO-STATUS.
+           MOVE 1                          TO WS-SUB.
+
+           PERFORM  5690-CLIB-BNK-NUM-FIND
+               THRU 5690-CLIB-BNK-NUM-FIND-X
+               UNTIL NOT WCLIN-IO-OK
+               OR    WS-SUB > 9.
+
+           IF  WS-SUB > 9
+      *MSG: UNABLE TO CREATE CLIB RECORD, ALREADY 9 OCCURANCES
+               MOVE 'AS94000014'           TO WGLOB-MSG-REF-INFO
+               PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                   THRU 9000-BUILD-MESSAGE-EXTRACT-X
+               GO TO 5685-CLIB-RECORD-CREATE-X
+           END-IF.
+
+           PERFORM  CLIB-1000-CREATE
+               THRU CLIB-1000-CREATE-X.
+
+29746F*     MOVE LCLIB-CLI-PAC-BNK-ID       TO WCLIB-BNK-ID.
+29746F*     MOVE LCLIB-PAC-BNK-BR-ID        TO WCLIB-BNK-BR-ID.
+29746F*     MOVE LCLIB-CLI-PAC-ACCT-ID      TO WCLIB-BNK-ACCT-ID.
+CR1848*29746F     IF  RPOL-CPN-AUTO-PAYO-YES
+R20265*CR1848     IF  RPD-PLAN-SAV-ACUM-YES
+R20265     IF  WS-PLAN-SAV-ACUM-YES
+29746F         MOVE LCLIB-PAYO-BNK-ID       TO WCLIB-BNK-ID
+29746F         MOVE LCLIB-PAYO-BNK-BR-ID    TO WCLIB-BNK-BR-ID
+29746F         MOVE LCLIB-PAYO-BNK-ACCT-ID  TO WCLIB-BNK-ACCT-ID
+29746F     ELSE
+29746F         MOVE LCLIB-CLI-PAC-BNK-ID    TO WCLIB-BNK-ID
+29746F         MOVE LCLIB-PAC-BNK-BR-ID     TO WCLIB-BNK-BR-ID
+29746F         MOVE LCLIB-CLI-PAC-ACCT-ID   TO WCLIB-BNK-ACCT-ID
+29746F     END-IF.
+29746F
+29746F     MOVE LCLIB-BNK-INFO-TYP-CD       TO WCLIB-BNK-INFO-TYP-CD.
+           MOVE LAPUP-POLC-OWN-CLI-ID (1)   TO WCLIB-CLI-ID.
+
+           MOVE WS-SUB                     TO RCLIB-CLI-BNK-ACCT-NUM.
+
+           PERFORM  CLIB-1000-WRITE
+               THRU CLIB-1000-WRITE-X.
+
+29746F*     MOVE RCLIB-CLI-BNK-ACCT-NUM     TO WS-BNK-ACCT-NUM.
+29746F*     MOVE WS-BNK-ACCT-NUM      TO LAPUP-POLC-OTHR-CLI-TYP-CD (2).
+29746F
+CR1848*29746F     IF  RPOL-CPN-AUTO-PAYO-YES
+R20265*CR1848     IF  RPD-PLAN-SAV-ACUM-YES
+R20265     IF  WS-PLAN-SAV-ACUM-YES
+29746F         MOVE RCLIB-CLI-BNK-ACCT-NUM  TO WS-PAYO-BNK-ACCT-NUM
+29746F         MOVE WS-PAYO-BNK-ACCT-NUM    TO 
+29746F                                LAPUP-POLC-OTHR-CLI-TYP-CD (4)
+29746F     ELSE
+29746F         MOVE RCLIB-CLI-BNK-ACCT-NUM  TO WS-BNK-ACCT-NUM
+29746F         MOVE WS-BNK-ACCT-NUM         TO 
+29746F                                LAPUP-POLC-OTHR-CLI-TYP-CD (2)
+29746F     END-IF.
+
+       5685-CLIB-RECORD-CREATE-X.
+           EXIT.
+      /
+      *-----------------------
+       5690-CLIB-BNK-NUM-FIND.
+      *-----------------------
+
+           MOVE LAPUP-POLC-OWN-CLI-ID (1)  TO WCLIN-CLI-ID.
+           MOVE WS-SUB                     TO WCLIN-CLI-BNK-ACCT-NUM.
+29746F     MOVE LCLIB-BNK-INFO-TYP-CD      TO WCLIN-BNK-INFO-TYP-CD.
+
+           PERFORM  CLIN-1000-READ
+               THRU CLIN-1000-READ-X.
+
+           IF  WCLIN-IO-OK
+               ADD 1                       TO WS-SUB
+           END-IF.
+
+       5690-CLIB-BNK-NUM-FIND-X.
+           EXIT.
+      /
+      *---------------------
+       5700-SETUP-EACH-CVGC.
+      *---------------------
+
+           PERFORM 5750-GET-CVGC-CLIENT
+              THRU 5750-GET-CVGC-CLIENT-X
+              VARYING WS-CVGC-SUB FROM 1 BY 1
+MFPFU2*       UNTIL   WS-CVGC-SUB > LAPUP-CLI-SUB.
+MFPFU2        UNTIL   WS-CVGC-SUB > LAPUP-CLI-SUB
+MFPFU2        OR      WS-CVGC-SUB > +50.
+
+       5700-SETUP-EACH-CVGC-X.
+           EXIT.
+      /
+      *---------------------
+       5750-GET-CVGC-CLIENT.
+      *---------------------
+
+      * THE BASE COVERAGE WILL HAVE SPECIAL LOGIC APPLIED TO IT. IF THE
+      * POLICY IS SINGLE LIFE, THEN THE BASE COVERAGE IS SETUP WITH THE
+      * 1ST BASE INSURED AS THE PRIMARY.  IF THE POLICY IS JOINT, THEN THE
+      * BASE COVERAGE WILL HAVE THE 1ST BASE INSURED AS THE 'PRIMARY'
+      * AND THE 2ND BASE INSURED AS 'OTHER'.
+MFPFU2* REMOVE OBSOLETE CODE...
+
+           IF WS-CVG = 1
+MFPFU2*       MOVE LAPUP-CLI-ID (1)        TO WS-CVG-CLI-ID (WS-CVG)
+MFPFU2*       MOVE WCVGS-PLAN-ID (WS-CVG)  TO WS-CVG-PLAN-ID (WS-CVG)
+MFPFU2*       MOVE SPACES                  TO WS-CVG-STICKER-ID (WS-CVG)
+              PERFORM  5775-SETUP-BASE-CVG
+                  THRU 5775-SETUP-BASE-CVG-X
+           END-IF.
+
+      * SETUP THE REST OF THE RIDERS WITH THE APPROPRIATE INSURED
+      * ATTACHED TO THE COVERAGE.
+
+           IF LAPUP-CVGC-STCKR-ID (WS-CVG) =
+                                          LAPUP-STCKR-ID (WS-CVGC-SUB)
+              MOVE LAPUP-CLI-ID (WS-CVGC-SUB) TO
+                                          LAPUP-CVGC-CLI-ID (WS-CVG, 1)
+MFPFU2*       MOVE LAPUP-CLI-ID (WS-CVGC-SUB) TO WS-CVG-CLI-ID (WS-CVG)
+MFPFU2*       MOVE WCVGS-PLAN-ID (WS-CVG)     TO WS-CVG-PLAN-ID (WS-CVG)
+MFPFU2*       MOVE LAPUP-STCKR-ID (WS-CVGC-SUB) TO
+MFPFU2*                         WS-CVG-STICKER-ID (WS-CVG)
+           END-IF.
+
+       5750-GET-CVGC-CLIENT-X.
+           EXIT.
+      /
+      *--------------------
+       5775-SETUP-BASE-CVG.
+      *--------------------
+
+           IF LAPUP-BASE-CVG-SINGLE
+B10737*        IF LAPUP-BASE-INSURED-IND (WS-CVGC-SUB) = '1'
+B10737         IF LAPUP-BASE-INSURED-CLIENT (WS-CVGC-SUB)
+                   MOVE LAPUP-CLI-ID (WS-CVGC-SUB) TO
+                        LAPUP-CVGC-CLI-ID (WS-CVG, 1)
+                   MOVE 1 TO LAPUP-CVGC-LIVES-INSRD-CD (WS-CVG)
+               END-IF
+           END-IF.
+
+           IF LAPUP-BASE-CVG-JOINT
+               MOVE 2 TO LAPUP-CVGC-LIVES-INSRD-CD (WS-CVG)
+               MOVE 'J'            TO WCVGS-CVG-SEX-CD (WS-CVG)
+B10737*        IF LAPUP-BASE-INSURED-IND (WS-CVGC-SUB) = '1'
+B10737         IF LAPUP-BASE-INSURED-CLIENT (WS-CVGC-SUB)
+                   MOVE LAPUP-CLI-ID (WS-CVGC-SUB) TO
+                        LAPUP-CVGC-CLI-ID (WS-CVG, 1)
+               END-IF
+B10737*        IF LAPUP-BASE-INSURED-IND (WS-CVGC-SUB) = '2'
+B10737         IF LAPUP-JOINT-SECOND-CLIENT (WS-CVGC-SUB)
+                   MOVE LAPUP-CLI-ID (WS-CVGC-SUB) TO
+                        LAPUP-CVGC-CLI-ID (WS-CVG, 2)
+               END-IF
+           END-IF.
+
+       5775-SETUP-BASE-CVG-X.
+           EXIT.
+      /
+      *-----------------
+       5800-PROCESS-CWA.
+      *-----------------
+
+      * INITIALIZE MODULE 9140
+
+           PERFORM  9140-0000-INIT-PARM-INFO
+               THRU 9140-0000-INIT-PARM-INFO-X.
+
+           PERFORM  9140-1000-BUILD-PARM-INFO
+               THRU 9140-1000-BUILD-PARM-INFO-X.
+
+           MOVE LAPUP-CWAR-RECPT-NUM        TO L9140-RECPT-NBR.
+           MOVE LAPUP-CWAR-RECPT-DT         TO L9140-RECPT-DT.
+           MOVE LAPUP-CWAR-RECPT-AMT        TO L9140-CASH-AMT
+                                               L9140-SUSP-AMT.
+      *
+      * CALL NSLF9140 TO EDIT THE REQUEST
+      *
+           SET L9140-PRCES-TYP-EDIT-ONLY TO TRUE.
+B11184*    SET LPGA-EVNT-CD-CWA          TO TRUE.
+
+           PERFORM  9140-1000-POL-PAYMENT
+               THRU 9140-1000-POL-PAYMENT-X.
+               
+TLB08E     IF  L9140-POL-NUWRN-SUPRES-YES
+TLB08E         SET WS-POL-NUWRN-SUPRES-YES  TO TRUE 
+TLB08E         MOVE L9140-CLI-ID            TO WS-NUWRN-CLI-ID
+TLB08E     END-IF.
+
+      * IF ERROR IN REQUEST EXIT
+
+           IF  NOT L9140-RETRN-OK
+      *MSG: ERRORS ENCOUNTERED - CORRECT AND RESUBMIT INPUTS
+               MOVE 'AS94000022'         TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+               GO TO 5800-PROCESS-CWA-X
+           END-IF.
+      *
+      * CALL NSLF9140 TO EDIT & PROCESS THE REQUEST
+      *
+           SET L9140-PRCES-TYP-ALL       TO TRUE.
+B11184
+B11184* CWA EVENT CODE IS NOT IN TTAB/OCAT.  THIS CAUSES THE OPERATION
+B11184* CATEGORY CODE ON THE ACCOUNTING TRANSACTION TO BE BLANK. THIS
+B11184* IS DELIBERATE.  THE VALUE OF THIS CODE IS 014. ITS REVERSAL
+B11184* VALUE, 114, IS NOT USED ANYWHERE (IE. IN NSOM9041 CASH REFUND).
+B11184
+           SET LPGA-EVNT-CD-CWA          TO TRUE.
+B11195*B01730     MOVE LAPUP-CWAR-RECPT-DT      TO LPGA-JRNL-DT.
+
+           PERFORM  9140-1000-POL-PAYMENT
+               THRU 9140-1000-POL-PAYMENT-X.
+
+      * IF ERROR IN REQUEST EXIT
+
+           IF  L9140-RETRN-OK
+      *MSG: PAYMENT PROCESS SUCCESSFUL
+               MOVE 'AS94000023'   TO WGLOB-MSG-REF-INFO
+ATF013*
+ATF013* POPULATE CWA PROCESS DATE WITH APP RECV DT FOR SUCCESSFUL
+ATF013* PAYMENT
+ATF013*
+ATF013         MOVE RPOL-POL-APP-RECV-DT    TO RPOL-CWA-PRCES-DT
+           ELSE
+      *MSG: PAYMENT PROCESS FAILED
+               MOVE 'AS94000024'   TO WGLOB-MSG-REF-INFO
+           END-IF.
+
+           PERFORM  0260-1000-GENERATE-MESSAGE
+               THRU 0260-1000-GENERATE-MESSAGE-X.
+      *
+      * CALL MODULE 9285 TO GENERATE A BILLING ACTIVITY RECORD FOR
+      * CWA PAYMENT.
+      *
+           PERFORM  9285-1000-BUILD-PARM-INFO
+               THRU 9285-1000-BUILD-PARM-INFO-X.
+
+           MOVE RPOL-POL-ID           TO L9285-POL-ID.
+           MOVE RPOL-POL-BILL-TYP-CD  TO L9285-BILL-TYP-CD.
+           MOVE L9140-RECPT-DT        TO L9285-RECV-DT.
+           MOVE ZERO                  TO L9285-PREM-RQST-QTY.
+           MOVE ZERO                  TO L9285-PREM-COLCT-QTY.
+           MOVE L9140-CASH-AMT        TO L9285-RECV-AMT.
+           SET  L9285-FND-SRC-CWA     TO TRUE.
+
+           PERFORM  9285-2000-CREATE-BAC
+               THRU 9285-2000-CREATE-BAC-X.
+
+       5800-PROCESS-CWA-X.
+           EXIT.
+B00298/
+B00298*-------------------
+B00298 5900-GROUP-PAYROLL.
+B00298*-------------------
+B00298
+B00298* THE PAYROLL INFO WILL BE ASSOCIATED WITH THE OWNER OF THE POLICY
+B00298* THE LIST BILL WILL HAVE THE SAME CLIENT ID AS THE OWNER.
+B00298
+B00298* GROUP PAYROLL (LIST BILL) CLIENTS WILL BE PREFIXED WITH A 'G'
+B00298
+B00298     MOVE 'G'                       TO LAPUP-LBILL-CLI-PREFIX.
+B00298     MOVE LAPUP-LBILL-CLI-ID        TO WCLI-CLI-ID.
+B00298
+B00298     PERFORM  CLI-1000-READ
+B00298         THRU CLI-1000-READ-X.
+B00298
+B00298     IF  NOT WCLI-IO-OK
+B00298*MSG: GROUP PAYROLL CLIENT @1 DOES NOT EXIST
+B00298         MOVE 'AS94000030'           TO WGLOB-MSG-REF-INFO
+B00298         MOVE WCLI-CLI-ID            TO WGLOB-MSG-PARM (1)
+B00298         PERFORM  9000-BUILD-MESSAGE-EXTRACT
+B00298             THRU 9000-BUILD-MESSAGE-EXTRACT-X
+B00298         GO TO 5900-GROUP-PAYROLL-X
+B00298     END-IF.
+B00298
+B00298     MOVE SPACES           TO LAPUP-POLC-OTHR-CLI-TYP-CD (2).
+B00298     MOVE WCLI-CLI-ID      TO LAPUP-POLC-OTHR-CLI-ID (2).
+B00298     MOVE 'L'              TO LAPUP-POLC-OTHR-INSRD-REL-CD (2).
+B00298     MOVE 'PR'             TO LAPUP-POLC-OTHR-ADDR-TYP (2).
+B00298
+B00298 5900-GROUP-PAYROLL-X.
+B00298      EXIT.
+      /
+MP270A*---------------------------
+MP270A 5950-PROCESS-CLI-UW-DETAILS.
+MP270A*---------------------------
+MP270A
+MP270A     MOVE WS-BASE-INSRD-CLI-ID     TO WCLIU-CLI-ID.
+MP270A     MOVE WS-BASE-INSRD-STCKR-ID   TO WCLIU-STCKR-ID.
+MP270A     MOVE WPOL-POL-ID              TO WCLIU-POL-ID.
+MP270A
+MP270A     PERFORM  CLIU-1000-READ-FOR-UPDATE
+MP270A         THRU CLIU-1000-READ-FOR-UPDATE-X.
+MP270A
+MP270A     IF NOT WCLIU-IO-OK
+MP270A        GO TO 5950-PROCESS-CLI-UW-DETAILS-X
+MP270A     END-IF.
+MP270A
+MP270A    IF RUPOL-ADDR-CNFRM-IND EQUAL SPACES 
+MP270A       SET RCLIU-ADDR-CNFRM-NO        TO TRUE
+MP270A    ELSE 
+MP270A       MOVE RUPOL-ADDR-CNFRM-IND      TO RCLIU-ADDR-CNFRM-IND
+MP270A    END-IF.
+MP270A      
+MP270A    IF RUPOL-OVRSEAS-TRAV-IND EQUAL SPACES 
+MP270A       SET RCLIU-OVRSEAS-TRAV-NO      TO TRUE
+MP270A    ELSE 
+MP270A       MOVE RUPOL-OVRSEAS-TRAV-IND    TO RCLIU-OVRSEAS-TRAV-IND
+MP270A    END-IF.
+MP270A
+MP270A    IF RUPOL-FRGN-OWN-IND EQUAL SPACES 
+MP270A       SET RCLIU-FRGN-OWN-NO          TO TRUE
+MP270A    ELSE 
+MP270A       MOVE RUPOL-FRGN-OWN-IND        TO RCLIU-FRGN-OWN-IND
+MP270A    END-IF.
+MP270A      
+MP270A    IF RUPOL-WORK-INS-CO-IND EQUAL SPACES 
+MP270A       SET RCLIU-WORK-INS-CO-NO       TO TRUE
+MP270A    ELSE 
+MP270A       MOVE RUPOL-WORK-INS-CO-IND     TO RCLIU-WORK-INS-CO-IND
+MP270A    END-IF.
+MP270A
+MP270A    IF RUPOL-THRD-PARTY-BNFY-IND EQUAL SPACES 
+MP270A       SET RCLIU-THRD-PARTY-BNFY-NO   TO TRUE
+MP270A    ELSE 
+MP270A       MOVE RUPOL-THRD-PARTY-BNFY-IND      
+MP270A                                   TO RCLIU-THRD-PARTY-BNFY-IND
+MP270A    END-IF.
+MP270A      
+MP270A    IF RUPOL-FRGN-CLI-ATCH-IND EQUAL SPACES 
+MP270A       SET RCLIU-FRGN-CLI-ATCH-NO     TO TRUE
+MP270A    ELSE 
+MP270A       MOVE RUPOL-FRGN-CLI-ATCH-IND   TO RCLIU-FRGN-CLI-ATCH-IND
+MP270A    END-IF.
+MP270A
+MP270A    IF RUPOL-DOCS-TO-BE-SENT-IND EQUAL SPACES 
+MP270A       SET RCLIU-DOCS-TO-BE-SENT-NO   TO TRUE
+MP270A    ELSE 
+MP270A       MOVE RUPOL-DOCS-TO-BE-SENT-IND      
+MP270A                                    TO RCLIU-DOCS-TO-BE-SENT-IND
+MP270A    END-IF.
+MP270A      
+MP270A    IF RUPOL-SPCL-NOTES-IND EQUAL SPACES 
+MP270A       SET RCLIU-SPCL-NOTES-NO        TO TRUE
+MP270A    ELSE 
+MP270A       MOVE RUPOL-SPCL-NOTES-IND      TO RCLIU-SPCL-NOTES-IND
+MP270A    END-IF.
+MP270A
+MP270A    IF RUPOL-PRELIM-UW-IND EQUAL SPACES 
+MP270A       SET RCLIU-PRELIM-UW-NO         TO TRUE
+MP270A    ELSE 
+MP270A       MOVE RUPOL-PRELIM-UW-IND       TO RCLIU-PRELIM-UW-IND
+MP270A    END-IF.
+MP270A      
+MP270A    IF RUPOL-VOLNTR-APPL-IND EQUAL SPACES 
+MP270A       SET RCLIU-VOLNTR-APPL-NO       TO TRUE
+MP270A    ELSE 
+MP270A       MOVE RUPOL-VOLNTR-APPL-IND     TO RCLIU-VOLNTR-APPL-IND
+MP270A    END-IF.
+MP270A      
+MP270A    IF RUPOL-MNGR-SPCL-NOTES-IND EQUAL SPACES 
+MP270A       SET RCLIU-MNGR-SPCL-NOTES-NO   TO TRUE
+MP270A    ELSE 
+MP270A       MOVE RUPOL-MNGR-SPCL-NOTES-IND 
+MP270A                                    TO RCLIU-MNGR-SPCL-NOTES-IND
+MP270A    END-IF.
+MP270A
+MP270A    IF RUPOL-PHYS-SPCL-NOTES-IND  EQUAL SPACES 
+MP270A       SET RCLIU-PHYS-SPCL-NOTES-NO   TO TRUE
+MP270A    ELSE 
+MP270A       MOVE RUPOL-PHYS-SPCL-NOTES-IND 
+MP270A                                    TO RCLIU-PHYS-SPCL-NOTES-IND
+MP270A    END-IF.
+MP270A      
+MP270A    IF RUPOL-DONATE-FORM-IND EQUAL SPACES 
+MP270A       SET RCLIU-DONATE-FORM-NO      TO TRUE
+MP270A    ELSE 
+MP270A       MOVE RUPOL-DONATE-FORM-IND    TO RCLIU-DONATE-FORM-IND
+MP270A    END-IF.
+MP270A      
+MP270A    IF RUPOL-MULT-APPL-IND EQUAL SPACES 
+MP270A       SET RCLIU-MULT-APPL-NO         TO TRUE
+MP270A    ELSE 
+MP270A       MOVE RUPOL-MULT-APPL-IND       TO RCLIU-MULT-APPL-IND
+MP270A    END-IF.
+MP270A
+MP270A    IF RUPOL-APPROV-NUM-IND EQUAL SPACES 
+MP270A       SET RCLIU-APPROV-NUM-NO        TO TRUE
+MP270A    ELSE 
+MP270A       MOVE RUPOL-APPROV-NUM-IND      TO RCLIU-APPROV-NUM-IND
+MP270A    END-IF.
+MP270A   
+018396    IF RUPOL-SAL-TST-RSLT-CD NOT EQUAL SPACES
+018396       MOVE RUPOL-SAL-TST-RSLT-CD     TO RCLIU-SAL-TST-RSLT-CD
+018396       IF  RCLIU-SAL-TST-RSLT-POS
+018396           SET RCLIU-NON-MED-YES      TO TRUE
+018396       ELSE
+018396           SET RCLIU-NON-MED-NO       TO TRUE
+018396       END-IF
+018396    ELSE
+018396       SET RCLIU-SAL-TST-RSLT-INVALID TO TRUE 
+018396    END-IF.
+018396
+018396    IF RUPOL-SPCL-NOTE-INTNT-IND EQUAL SPACES 
+018396       SET RCLIU-SPCL-NOTE-INTNT-NO   TO TRUE
+018396    ELSE 
+018396       MOVE RUPOL-SPCL-NOTE-INTNT-IND TO 
+018396                                   RCLIU-SPCL-NOTE-INTNT-IND
+018396    END-IF.
+018396
+018396    IF RUPOL-ANTY-DONAT-FORM-IND EQUAL SPACES 
+018396       SET RCLIU-ANTY-DONAT-FORM-NO   TO TRUE
+018396    ELSE 
+018396       MOVE RUPOL-ANTY-DONAT-FORM-IND TO
+018396                                   RCLIU-ANTY-DONAT-FORM-IND
+018396    END-IF.
+018396
+MP270A     PERFORM  CLIU-2000-REWRITE
+MP270A         THRU CLIU-2000-REWRITE-X.
+MP270A
+MP270A 5950-PROCESS-CLI-UW-DETAILS-X.
+MP270A     EXIT.
+MP270A/
+018396*--------------------------
+018396 5955-PROCESS-SALIVA-REQTS.
+018396*--------------------------
+018396
+018396     IF  RUPOL-SAL-TST-RSLT-POS
+018396         PERFORM  0080-1000-BUILD-PARM-INFO
+018396             THRU 0080-1000-BUILD-PARM-INFO-X
+018396
+018396         SET L0080-RQST-WRITE         TO TRUE
+018396         SET L0080-CLIENT-LEVEL       TO TRUE
+018396         MOVE WS-BASE-INSRD-CLI-ID    TO L0080-CLI-ID
+018396         MOVE 'SAL'                   TO L0080-REQIR-CODE
+018396         SET L0080-REQIR-STAT-REVW-REJ   
+018396                                      TO TRUE
+018396         PERFORM  0080-9000-WRITE-NEW-REQT
+018396             THRU 0080-9000-WRITE-NEW-REQT-X
+018396
+018396         IF NOT L0080-RETRN-OK
+018396*MSG: REQUIREMENT TYPE (@1) NOT GENERATED FOR POLICY (@2).
+018396             MOVE L0080-REQIR-CODE    TO WGLOB-MSG-PARM (1)
+018396             MOVE RPOL-POL-ID         TO WGLOB-MSG-PARM (2)
+018396             MOVE 'AS94009712'        TO WGLOB-MSG-REF-INFO
+018396             PERFORM  0260-1000-GENERATE-MESSAGE
+018396                THRU 0260-1000-GENERATE-MESSAGE-X
+018396             SET WS-ERROR-YES         TO TRUE
+018396             GO TO 5955-PROCESS-SALIVA-REQTS-X
+018396         END-IF
+018396
+018396         PERFORM  0080-1000-BUILD-PARM-INFO
+018396             THRU 0080-1000-BUILD-PARM-INFO-X
+018396
+018396         SET  L0080-RQST-WRITE        TO TRUE
+018396         SET  L0080-CLIENT-LEVEL      TO TRUE
+018396         MOVE WS-BASE-INSRD-CLI-ID    TO L0080-CLI-ID                                      
+018396         MOVE '31R11'                 TO L0080-REQIR-CODE
+018396         SET  L0080-REQIR-STAT-ORDERED    
+018396                                      TO TRUE
+018396         PERFORM  0080-4000-WRITE
+018396             THRU 0080-4000-WRITE-X
+018396         
+018396         IF NOT L0080-RETRN-OK
+018396*MSG: REQUIREMENT TYPE (@1) NOT GENERATED FOR POLICY (@2).
+018396            MOVE L0080-REQIR-CODE TO WGLOB-MSG-PARM (1)
+018396            MOVE RPOL-POL-ID      TO WGLOB-MSG-PARM (2)
+018396            MOVE 'AS94009712'     TO WGLOB-MSG-REF-INFO
+018396            PERFORM  0260-1000-GENERATE-MESSAGE
+018396                THRU 0260-1000-GENERATE-MESSAGE-X
+018396            SET WS-ERROR-YES         TO TRUE
+018396            GO TO 5955-PROCESS-SALIVA-REQTS-X
+018396         END-IF
+018396     ELSE
+018396         IF  RUPOL-SAL-TST-RSLT-NEG
+018396         OR  RUPOL-SAL-TST-RSLT-INVALID
+018396             PERFORM  0080-1000-BUILD-PARM-INFO
+018396                 THRU 0080-1000-BUILD-PARM-INFO-X
+018396
+018396             SET L0080-RQST-WRITE     TO TRUE
+018396             SET L0080-CLIENT-LEVEL   TO TRUE
+018396             MOVE WS-BASE-INSRD-CLI-ID 
+018396                                      TO L0080-CLI-ID
+018396             MOVE 'SAL'               TO L0080-REQIR-CODE
+018396             SET L0080-REQIR-STAT-REVW-ACPT   
+018396                                      TO TRUE
+018396             PERFORM  0080-9000-WRITE-NEW-REQT
+018396                 THRU 0080-9000-WRITE-NEW-REQT-X
+018396
+018396             IF NOT L0080-RETRN-OK
+018396*MSG: REQUIREMENT TYPE (@1) NOT GENERATED FOR POLICY (@2).
+018396               MOVE L0080-REQIR-CODE    TO WGLOB-MSG-PARM (1)
+018396               MOVE RPOL-POL-ID         TO WGLOB-MSG-PARM (2)
+018396               MOVE 'AS94009712'        TO WGLOB-MSG-REF-INFO
+018396               PERFORM  0260-1000-GENERATE-MESSAGE
+018396                   THRU 0260-1000-GENERATE-MESSAGE-X
+018396               SET WS-ERROR-YES         TO TRUE
+018396               GO TO 5955-PROCESS-SALIVA-REQTS-X
+018396             END-IF
+018396         END-IF
+018396     END-IF.
+018396
+018396 5955-PROCESS-SALIVA-REQTS-X.
+018396     EXIT.
+018396/
+18396A*---------------------
+18396A 5956-EPOS-REQT-CREAT.
+18396A*---------------------
+18396A         IF  RUPOL-CNFRM-CALL-YES		   
+18396A             PERFORM  0080-1000-BUILD-PARM-INFO
+18396A                 THRU 0080-1000-BUILD-PARM-INFO-X
+18396A
+18396A             SET L0080-RQST-WRITE     TO TRUE
+18396A             SET L0080-CLIENT-LEVEL   TO TRUE
+18396A             MOVE WS-BASE-INSRD-CLI-ID 
+18396A                                      TO L0080-CLI-ID
+18396A             MOVE 'CCSCA'             TO L0080-REQIR-CODE
+18396A             SET L0080-REQIR-STAT-ORDERED   
+18396A                                      TO TRUE
+18396A             PERFORM  0080-9000-WRITE-NEW-REQT
+18396A                 THRU 0080-9000-WRITE-NEW-REQT-X
+18396A
+18396A             IF NOT L0080-RETRN-OK
+18396A*MSG: REQUIREMENT TYPE (@1) NOT GENERATED FOR POLICY (@2).
+18396A               MOVE L0080-REQIR-CODE    TO WGLOB-MSG-PARM (1)
+18396A               MOVE RPOL-POL-ID         TO WGLOB-MSG-PARM (2)
+18396A               MOVE 'AS94009712'        TO WGLOB-MSG-REF-INFO
+18396A               PERFORM  0260-1000-GENERATE-MESSAGE
+18396A                   THRU 0260-1000-GENERATE-MESSAGE-X
+18396A               SET WS-ERROR-YES         TO TRUE
+18396A             END-IF
+18396A         END-IF.
+18396A
+18396A 5956-EPOS-REQT-CREAT-X.
+18396A     EXIT.
+R16171*MP310E ------------------------
+R16171*MP310E 5980-PRCES-LMT-CHK-RQST.
+R16171*MP310E ------------------------
+R16171*MP310E     PERFORM  5981-GET-XTRNL-EVNT-EXIT-PGM
+R16171*MP310E         THRU 5981-GET-XTRNL-EVNT-EXIT-PGM-X.
+R16171*MP310E 
+R16171*MP310E     XML FIELDS BUILD
+R16171*MP310E 
+R16171*MP310E     PERFORM  5982-START-BRANCH
+R16171*MP310E         THRU 5982-START-BRANCH-X.
+R16171*MP310E         
+R16171*MP310E     PERFORM  5983-PROCESS-DEVT
+R16171*MP310E         THRU 5983-PROCESS-DEVT-X.
+R16171*MP310E 
+R16171*MP310E *   PERFORM  5984-END-BRANCH
+R16171*MP310E *       THRU 5984-END-BRANCH-X.
+R16171*MP310E 
+R16171*MP310E 5980-PRCES-LMT-CHK-RQST-X.
+R16171*MP310E     EXIT.
+R16171*MP310E /
+R16171*MP310E ------------------------
+R16171*MP310E 5985-PRCES-LMT-CHK-RESP.
+R16171*MP310E ------------------------
+R16171*MP310E 
+R16171*MP310E     IF  LSCVS-FETCH-OK
+R16171*               SET RCLIU-USYS-SEL-INSRD     TO TRUE
+R16171*MP310E     ELSE
+R16171*MP310E         SET RCLIU-USYS-HIST-CHK-NO    TO  TRUE
+R16171*MP310E     END-IF.
+R16171*MP310E 
+R16171*MP310E 5985-PRCES-LMT-CHK-RESP-X.
+R16171*MP310E     EXIT.
+R16171*MP310E /
+R16171*MP310E -----------------------------
+R16171*MP310E 5981-GET-XTRNL-EVNT-EXIT-PGM.
+R16171*MP310E -----------------------------
+R16171*MP310E     PERFORM  0319-1000-BUILD-PARM-INFO
+R16171*MP310E         THRU 0319-1000-BUILD-PARM-INFO-X.
+R16171*MP310E 	   SET WS-SYS-ID-CTL-DEFAULT        TO TRUE.
+R16171*MP310E     MOVE WS-SYS-CTL-ID               TO WGLOB-SYS-CTL-ID.
+R16171*MP310E     MOVE WGLOB-SYS-CTL-ID            TO L0319-SYS-CTL-ID.
+R16171*MP310E     SET  L0319-XTRNL-EVNT-SELFILE-CHK
+R16171*MP310E                                      TO TRUE.
+R16171*MP310E 
+R16171*MP310E     PERFORM  0319-1000-GET-EVNT-EXIT-PGM
+R16171*MP310E         THRU 0319-1000-GET-EVNT-EXIT-PGM-X.
+R16171*MP310E 
+R16171*MP310E     IF  NOT L0319-RETRN-OK
+R16171*MP310E         SET WS-ERROR-YES             TO TRUE
+R16171*MP310E     END-IF.
+R16171*MP310E 
+R16171*MP310E 5981-GET-XTRNL-EVNT-EXIT-PGM-X.
+R16171*MP310E     EXIT.
+R16171*MP310E /
+R16171*MP310E 
+R16171*MP310E ------------------
+R16171*MP310E 5982-START-BRANCH.
+R16171*MP310E ------------------
+R16171*MP310E 
+R16171*MP310E     PERFORM
+R16171*MP310E         VARYING WS-EVNT-SUB FROM +1 BY +1
+R16171*MP310E         UNTIL   WS-EVNT-SUB > L0319-XTRNL-EVNT-CNT
+R16171*MP310E         OR      L0319-XTRNL-INVOK-CD (WS-EVNT-SUB) = SPACES
+R16171*MP310E 
+R16171*MP310E         MOVE L0319-XTRNL-DOC-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO LSCVS-DOC-ID
+R16171*MP310E         MOVE L0319-XTRNL-EVNT-PGM-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO LSCVS-CALL-PGM-ID
+R16171*MP310E         MOVE L0319-XTRNL-SYS-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO LSCVS-XTRNL-SYS-ID
+R16171*MP310E         MOVE WS-BCF-BRANCH-ID (WS-EVNT-SUB)   TO LSCVS-BR-ID
+R16171*        
+R16171*        PERFORM  5990-AUTHENTICATE
+R16171*            THRU 5990-AUTHENTICATE-X
+R16171*         MOVE 0                 TO WGLOB-PFC-SEQUENCE-NUM
+R16171*MP310E          SET WGLOB-PFC-COMUN-STAT-NOT-STRT TO TRUE            
+R16171*MP310E 
+R16171*MP310E         PERFORM  SCVS-2000-STRT-BRANCH
+R16171*MP310E             THRU SCVS-2000-STRT-BRANCH-X
+R16171*MP310E 
+R16171*MP310E         IF  NOT LSCVS-RETRN-OK
+R16171*MP310E MSG:'UNSUCCESSFUL TRANSMISSION TO EXTERNAL SYSTEM @1 FOR
+R16171*MP310E      BRANCH @2'
+R16171*MP310E             MOVE 'CS04550002'       TO WGLOB-MSG-REF-INFO
+R16171*MP310E             MOVE LSCVS-XTRNL-SYS-ID TO WGLOB-MSG-PARM (1)
+R16171*MP310E             MOVE WS-BCF-BRANCH-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO WGLOB-MSG-PARM (2)
+R16171*MP310E             PERFORM  0260-1000-GENERATE-MESSAGE
+R16171*MP310E                 THRU 0260-1000-GENERATE-MESSAGE-X
+R16171*MP310E         END-IF
+R16171*MP310E     END-PERFORM.
+R16171*MP310E 
+R16171*MP310E 5982-START-BRANCH-X.
+R16171*MP310E     EXIT.
+R16171*MP310E 
+R16171*MP310E -------------------
+R16171*MP310E 5983-PROCESS-DEVT.
+R16171*MP310E -------------------
+R16171*MP310E 
+R16171*MP310E     PERFORM  5970-BUILD-SCVS-INPUT
+R16171*MP310E         THRU 5970-BUILD-SCVS-INPUT-X.
+R16171*MP310E 
+R16171*MP310E     PERFORM  5975-XEVT-SEND-SCVS-EVNT
+R16171*MP310E         THRU 5975-XEVT-SEND-SCVS-EVNT-X
+R16171*MP310E         VARYING WS-EVNT-SUB FROM +1 BY +1
+R16171*MP310E         UNTIL   WS-EVNT-SUB > L0319-XTRNL-EVNT-CNT
+R16171*MP310E         OR      L0319-XTRNL-INVOK-CD (WS-EVNT-SUB)
+R16171*MP310E                   =  SPACES.
+R16171*MP310E 
+R16171*MP310E 5983-PROCESS-DEVT-X.
+R16171*MP310E     EXIT.
+R16171*MP310E 
+R16171*MP310E ----------------------
+R16171*MP310E 5970-BUILD-SCVS-INPUT.
+R16171*MP310E ----------------------
+R16171*MP310E 
+R16171*MP310E     PERFORM  SCVS-1000-BUILD-PARM-INFO
+R16171*MP310E         THRU SCVS-1000-BUILD-PARM-INFO-X.
+R16171*MP310E 
+R16171*MP310E     MOVE WPOL-POL-ID                 TO LSCVS-POL-ID.
+R16171*MP310E     MOVE WS-BCF-BRANCH-ID (WS-EVNT-SUB)   TO LSCVS-BR-ID.
+R16171*MP310E 
+R16171*MP310E     MOVE RPOL-SBSDRY-CO-ID           TO LSCVS-SBSDRY-CO-ID.
+R16171*MP310E 
+R16171*MP310E 5970-BUILD-SCVS-INPUT-X.
+R16171*MP310E     EXIT.
+R16171*MP310E 
+R16171*MP310E 
+R16171*MP310E -------------------------
+R16171*MP310E 5975-XEVT-SEND-SCVS-EVNT.
+R16171*MP310E -------------------------
+R16171*MP310E 
+R16171*MP310E  PASS SCVS LINKAGE TO EXTERNAL EXIT PROGRAM FOR XML TRANSLATION.
+R16171*MP310E  THIS CALLED PROGRAM THEN TRANSMITS THE XML TO THE EXTERNAL
+R16171*MP310E  SYSTEM FOR (SCVSI) SCV SELECTION FILE CHECK.
+R16171*MP310E 
+R16171*MP310E     MOVE L0319-XTRNL-DOC-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO LSCVS-DOC-ID.
+R16171*MP310E     MOVE L0319-XTRNL-EVNT-PGM-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO LSCVS-CALL-PGM-ID.
+R16171*MP310E     MOVE L0319-XTRNL-SYS-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO LSCVS-XTRNL-SYS-ID.
+R16171*MP310E 
+R16171*MP310E     PERFORM  SCVS-1000-SELFILE-CHK-STATS
+R16171*MP310E         THRU SCVS-1000-SELFILE-CHK-STATS-X.
+R16171*MP310E 
+R16171*MP310E 
+R16171*MP310E 5975-XEVT-SEND-SCVS-EVNT-X.
+R16171*MP310E     EXIT.
+R16171*MP310E 
+R16171*MP310E 
+R16171*MP310E ------------------
+R16171*MP310E 5984-END-BRANCH.
+R16171*MP310E ------------------
+R16171*MP310E 
+R16171*MP310E     PERFORM
+R16171*MP310E         VARYING WS-EVNT-SUB FROM +1 BY +1
+R16171*MP310E         UNTIL   WS-EVNT-SUB > L0319-XTRNL-EVNT-CNT
+R16171*MP310E         OR      L0319-XTRNL-INVOK-CD (WS-EVNT-SUB) = SPACES
+R16171*MP310E 
+R16171*MP310E         MOVE L0319-XTRNL-DOC-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO LSCVS-DOC-ID
+R16171*MP310E         MOVE L0319-XTRNL-EVNT-PGM-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO LSCVS-CALL-PGM-ID
+R16171*MP310E         MOVE L0319-XTRNL-SYS-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO LSCVS-XTRNL-SYS-ID
+R16171*MP310E         MOVE WS-BCF-BRANCH-ID (WS-EVNT-SUB)   TO LSCVS-BR-ID
+R16171*MP310E 
+R16171*MP310E         PERFORM  SCVS-3000-END-BRANCH
+R16171*MP310E             THRU SCVS-3000-END-BRANCH-X
+R16171*MP310E 
+R16171*MP310E     END-PERFORM.
+R16171*MP310E 
+R16171*MP310E 5984-END-BRANCH-X.
+R16171*MP310E     EXIT.
+R16171*MP310E 
+R16171*MP310E 
+
+R16171*------------------
+R16171*5990-AUTHENTICATE.
+R16171*------------------
+R16171*    
+R16171*    PERFORM 0010-0000-INIT-PARM-INFO
+R16171*       THRU 0010-0000-INIT-PARM-INFO-X.
+R16171*    
+R16171*    PERFORM 0010-1000-INIT-DEFAULT
+R16171*       THRU 0010-1000-INIT-DEFAULT-X.
+R16171*       
+R16171*    MOVE 224                 TO LBUFR-BUFFER-LEN.
+R16171*    MOVE WS-AUTHENTICATE-XML TO LBUFR-BUFFER-TXT.
+R16171*    
+R16171* CALL XSDU0013 TO SEND BUFFER
+R16171*
+R16171*    PERFORM  0013-1000-BUILD-PARM-INFO
+R16171*        THRU 0013-1000-BUILD-PARM-INFO-X.
+R16171*
+R16171*     
+R16171*	   PERFORM  0013-1000-SEND-PFC-SRVR
+R16171*	       THRU 0013-1000-SEND-PFC-SRVR-X.
+R16171*	   
+R16171*	   IF  NOT L0013-RETRN-OK                      
+R16171*        MOVE 'ERROR RETURNED FROM XSDU0013'
+R16171*           TO L0040-INPUT-LINE                       
+R16171*        PERFORM  0040-3000-WRITE-OTHER
+R16171*            THRU 0040-3000-WRITE-OTHER-X
+R16171*	       GO TO 5990-AUTHENTICATE-X
+R16171*	   END-IF.
+R16171*
+R16171*  CALL XSDU0013 TO RETRIEVE PATHFINDER RESPONSE
+R16171*
+R16171*    PERFORM  0013-1000-BUILD-PARM-INFO
+R16171*        THRU 0013-1000-BUILD-PARM-INFO-X.
+R16171*    MOVE LOW-VALUES               TO L0013-TERM-PATTERN-TXT.
+R16171*    MOVE 11                       TO L0013-TERM-PATTERN-LEN.
+R16171*    MOVE '</Response>'
+R16171*      TO L0013-TERM-PATTERN-TXT(1:L0013-TERM-PATTERN-LEN).
+R16171*    PERFORM  0013-1500-RECV-PFC-SRVR
+R16171*        THRU 0013-1500-RECV-PFC-SRVR-x.
+R16171*
+R16171* MOVE RESPONSE TO OUTPUT FILE AND WRITE OUTPUT
+R16171*
+R16171*    MOVE SPACES            TO WS-PFC-RESPONSE.
+R16171*    MOVE LBUFR-BUFFER-TXT  
+R16171*                   TO WS-PFC-RESPONSE(1:LBUFR-BUFFER-LEN).
+R16171*
+R16171*
+R16171*5990-AUTHENTICATE-X.
+R16171*    EXIT.      
+R16171*/
+      *---------------------
+       6000-WRITE-EACH-BNFY.
+      *---------------------
+
+           IF  LAPUP-BENE-BNFY-GIV-NM (X)  = SPACES
+           AND LAPUP-BENE-BNFY-SUR-NM (X)  = SPACES
+           AND LAPUP-BENE-REL-INSRD-CD (X) = SPACES
+02PR63     AND LAPUP-BENE-BNFY-CO-NM (X) = SPACES
+               GO TO 6000-WRITE-EACH-BNFY-X
+           END-IF.
+
+           MOVE ZEROES                     TO WS-BEN-SUB.
+           MOVE WPOL-POL-ID                TO WBENE-POL-ID.
+           MOVE LAPUP-BENE-INSRD-CLI-ID (X) TO WBENE-INSRD-CLI-ID.
+           MOVE 001                        TO WBENE-BNFY-SEQ-NUM.
+           MOVE WBENE-KEY                  TO WBENE-ENDBR-KEY.
+           MOVE 999                        TO WBENE-ENDBR-BNFY-SEQ-NUM.
+      *
+      * DETERMINE NEXT AVAILABLE BNFY-SEQ-NUM
+      *
+           PERFORM  BENE-2000-READ-MAX
+               THRU BENE-2000-READ-MAX-X.
+
+           IF  WBENE-IO-OK
+               MOVE WBENE-MAX-BNFY-SEQ-NUM TO WS-BEN-SUB
+           END-IF.
+
+           IF  WS-BEN-SUB  = 999
+      *MSG: MAXIMUM NUMBER OF BENEFICIARY RELATIONSHIPS CREATED (999)
+               MOVE 'AS94000015'           TO WGLOB-MSG-REF-INFO
+               PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                   THRU 9000-BUILD-MESSAGE-EXTRACT-X
+               GO TO 6000-WRITE-EACH-BNFY-X
+           END-IF.
+
+           ADD 1                           TO WS-BEN-SUB.
+           MOVE WS-BEN-SUB                 TO WBENE-BNFY-SEQ-NUM.
+
+           PERFORM  BENE-1000-CREATE
+               THRU BENE-1000-CREATE-X.
+
+           MOVE LAPUP-BENE-TYP-CD (X)      TO RBENE-BNFY-TYP-CD.
+           MOVE LAPUP-BENE-REL-INSRD-CD (X) TO RBENE-BNFY-REL-INSRD-CD.
+           MOVE LAPUP-BENE-DESGNT-CD (X)   TO RBENE-BNFY-DESGNT-CD.
+MP270F     MOVE LAPUP-BNFY-MORAL-RISK-IND(X) 
+MP270F                                   TO RBENE-BNFY-MORAL-RISK-IND.           
+NWLXML     
+NWLXML     IF NOT LAPUP-BENE-ANTY-PERI-VALID (X)
+NWLXML*MSG: ANNUITY PERIOD UPLOADED VALUE INVALID. DEFAULTS LOADED 
+NWLXML         MOVE 'AS94009719'            TO WGLOB-MSG-REF-INFO
+NWLXML         PERFORM  0260-1000-GENERATE-MESSAGE
+NWLXML             THRU 0260-1000-GENERATE-MESSAGE-X
+NWLXML     END-IF.
+NWLXML
+NWLXML     IF  RPOL-POL-INS-TYP-TRAD
+TVI002*NWLXML     AND RBENE-BNFY-DESGNT-PRIMARY
+TVI002     AND  (RBENE-BNFY-DESGNT-PRIMARY
+M271N1*TVI002     OR  RBENE-BNFY-DESGNT-MAT-BNFT)
+M271N1     OR  RBENE-BNFY-DESGNT-MAT-BNFT
+M271N1     OR  RBENE-BNFY-DESGNT-ANUTNT
+UYS002     OR  RBENE-BNFY-DESGNT-CANCER
+M271N1     OR  RBENE-BNFY-DESGNT-SUCSD-ANUTNT)
+NWLXML     AND LAPUP-BENE-ANTY-PERI-VALID (X)
+NWLXML         MOVE  LAPUP-BENE-ANTY-PERI-CD (X) 
+NWLXML                                      TO RBENE-BNFY-ANTY-PERI-CD
+NWLXML     END-IF.
+NWLXML     
+NWLXML     IF (NOT RPOL-POL-INS-TYP-TRAD
+NWLXML     AND LAPUP-BENE-ANTY-PERI-CD (X) > SPACES)
+NWLXML     OR (NOT RBENE-BNFY-DESGNT-PRIMARY
+TVI002     AND  NOT RBENE-BNFY-DESGNT-MAT-BNFT
+NWLXML     AND LAPUP-BENE-ANTY-PERI-CD (X) > SPACES)
+TVI002*NWLXML*MSG: ANNUITY PERIOD APPLICABLE ONLY FOR DEATH BENE OF NWL 
+TVI002*      *MSG: ANNUITY PERIOD APPLICABLE ONLY FOR DEATH BENE OF NWL
+TVI002*            AND MATURITY BENEFICIARY OF TVI 
+NWLXML         MOVE 'AS94009718'            TO WGLOB-MSG-REF-INFO
+NWLXML         PERFORM  0260-1000-GENERATE-MESSAGE
+NWLXML             THRU 0260-1000-GENERATE-MESSAGE-X
+NWLXML     END-IF.
+
+           IF LAPUP-BENE-PRCDS-PCT (X) NOT = SPACE
+               MOVE 'N'                    TO L0280-SIGN-IND
+               SET L0280-SPACES-PERMITTED  TO TRUE
+               MOVE 3                      TO L0280-LENGTH
+               MOVE ZERO                   TO L0280-PRECISION
+               MOVE LAPUP-BENE-PRCDS-PCT (X) TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   MOVE L0280-OUTPUT       TO RBENE-BNFY-PRCDS-PCT
+               END-IF
+           ELSE
+               MOVE 100.00                 TO RBENE-BNFY-PRCDS-PCT
+           END-IF.
+
+MP332A     MOVE LAPUP-BENE-BNFY-SEX-CD (X)       TO RBENE-BNFY-SEX-CD.
+MP332A     MOVE LAPUP-BENE-BNFY-BTH-DT (X)       TO RBENE-BNFY-BTH-DT.
+R16098
+R16098     IF  (LAPUP-BENE-REL-INSRD-CD (X) = 'CORP '
+R16098     OR  LAPUP-BENE-REL-INSRD-CD (X) = 'NONE '
+R16098     OR  LAPUP-BENE-REL-INSRD-CD (X) = 'PHLDR')
+R16098     AND LAPUP-BENE-BNFY-CO-KA-NM (X) NOT = SPACES
+R16098         MOVE LAPUP-BENE-BNFY-CO-KA-NM (X) 
+R16098                                      TO RBENE-BNFY-KA-NM
+R16098     ELSE
+TL0291*R16098         MOVE LAPUP-BENE-BNFY-KA-GIV-NM (X) 
+TL0291*R16098                                      TO L0015-COMP-AREA-IN-LAST
+TL0291*R16098         MOVE LAPUP-BENE-BNFY-KA-SUR-NM (X) 
+TL0291*R16098                                      TO L0015-COMP-AREA-IN-FIRST
+TL0291         MOVE SPACES                  TO WS-BENY-NAME-COMBINED
+TL0291         MOVE LAPUP-BENE-BNFY-KA-GIV-NM (X)
+TL0291                                      TO WS-BENY-NM-LAST
+TL0291         MOVE LAPUP-BENE-BNFY-KA-SUR-NM (X)
+TL0291                                      TO WS-BENY-NM-FIRST
+TL0291         MOVE WS-BENY-NAME-COMBINED   TO L0015-COMP-AREA-IN
+R16098
+R16098         PERFORM  0015-1000-COMPRESS-BLANKS
+R16098             THRU 0015-1000-COMPRESS-BLANKS-X
+R16098
+R16098         MOVE L0015-COMP-AREA-OUT     TO RBENE-BNFY-KA-NM
+R16098     END-IF.
+R16098
+R16098*MP332A     MOVE LAPUP-BENE-BNFY-KA-GIV-NM (X) TO   
+R16098*MP332A                                  L0015-COMP-AREA-IN-LAST.
+R16098*MP332A     MOVE LAPUP-BENE-BNFY-KA-SUR-NM (X) TO    
+R16098*MP332A                                  L0015-COMP-AREA-IN-FIRST.
+R16098*MP332A
+R16098*MP332A     PERFORM  0015-1000-COMPRESS-BLANKS
+R16098*MP332A         THRU 0015-1000-COMPRESS-BLANKS-X.
+R16098*MP332A
+R16098*MP332A     MOVE L0015-COMP-AREA-OUT         TO RBENE-BNFY-KA-NM.
+C19775*
+C19775* THE BENEFICIARY RELATION SHIP CODE WILL BE SET AS 'NONE' FOR
+C19775* MATURITY BENEFICIARIES TYPES 'SELF' AND 'POLICY HOLDER' ONLY.  
+C19775* THIS CHANGE IS DONE AS PART OF TVI XML CHANGES
+C19775*
+B10791*    IF RCLI-CLI-SEX-COMPANY
+R11602* BENEFICIARY RELATION CODE AS 'PHLDR' WILL BE POPULATED ONLY  
+R11602* FOR FRA POLICIES 
+R11602*B10791     IF LAPUP-BENE-REL-INSRD-CD (X) = 'CORP '
+R11602*C19775     OR (LAPUP-BENE-REL-INSRD-CD (X) = 'NONE '
+R11602*C19775     AND LAPUP-BENE-BNFY-CO-NM (X) NOT = SPACES)
+R11602     IF (LAPUP-BENE-REL-INSRD-CD (X) = 'CORP '
+R11602     OR LAPUP-BENE-REL-INSRD-CD (X) = 'NONE '
+R11602     OR LAPUP-BENE-REL-INSRD-CD (X) = 'PHLDR')
+R11602     AND LAPUP-BENE-BNFY-CO-NM (X) NOT = SPACES
+02PR63         MOVE LAPUP-BENE-BNFY-CO-NM (X) TO RBENE-BNFY-NM
+02PR63         MOVE SPACES                    TO RBENE-CLI-ADDR-TYP-CD
+02PR63         PERFORM  BENE-1000-WRITE
+02PR63             THRU BENE-1000-WRITE-X
+02PR63         GO TO 6000-WRITE-EACH-BNFY-X
+02PR63     END-IF.
+
+B10137*    MOVE LAPUP-BENE-BNFY-SUR-NM (X)  TO L0015-COMP-AREA-IN-LAST.
+B10137*    MOVE LAPUP-BENE-BNFY-GIV-NM (X)  TO L0015-COMP-AREA-IN-FIRST.
+TL0291*B10137     MOVE LAPUP-BENE-BNFY-GIV-NM (X)  TO L0015-COMP-AREA-IN-LAST.
+TL0291*B10137     MOVE LAPUP-BENE-BNFY-SUR-NM (X)  TO L0015-COMP-AREA-IN-FIRST.
+TL0291     MOVE SPACES                      TO WS-BENY-NAME-COMBINED.
+TL0291     MOVE LAPUP-BENE-BNFY-GIV-NM (X)  TO WS-BENY-NM-LAST.
+TL0291     MOVE LAPUP-BENE-BNFY-SUR-NM (X)  TO WS-BENY-NM-FIRST.
+TL0291     MOVE WS-BENY-NAME-COMBINED       TO L0015-COMP-AREA-IN.
+
+           PERFORM  0015-1000-COMPRESS-BLANKS
+               THRU 0015-1000-COMPRESS-BLANKS-X.
+
+           MOVE L0015-COMP-AREA-OUT TO RBENE-BNFY-NM.
+B10300*    MOVE 'PR'                TO RBENE-CLI-ADDR-TYP-CD.
+B10300     MOVE SPACES              TO RBENE-CLI-ADDR-TYP-CD.
+
+           PERFORM  BENE-1000-WRITE
+               THRU BENE-1000-WRITE-X.
+
+       6000-WRITE-EACH-BNFY-X.
+           EXIT.
+      /
+R16171*MP310E ---------------------------
+R16171*MP310E 6100-PRCES-ALPHA-SRCH-RQST. 
+R16171*MP310E ---------------------------
+R16171*MP310E     PERFORM  6120-GET-XTRNL-EVNT-EXIT-PGM
+R16171*MP310E         THRU 6120-GET-XTRNL-EVNT-EXIT-PGM-X.
+R16171*MP310E     XML FIELDS BUILD
+R16171*MP310E 
+R16171*MP310E     PERFORM  5982-START-BRANCH
+R16171*MP310E         THRU 5982-START-BRANCH-X.
+R16171*MP310E 
+R16171*MP310E     PERFORM  6130-PROCESS-DEVT
+R16171*MP310E         THRU 6130-PROCESS-DEVT-X.
+R16171*MP310E         
+R16171*MP310E 	   PERFORM  6140-END-BRANCH
+R16171*MP310E 	       THRU 6140-END-BRANCH-X.
+R16171*MP310E 
+R16171*MP310E 6100-PRCES-ALPHA-SRCH-RQST-X.
+R16171*MP310E     EXIT.
+R16171*MP310E /
+R16171*109938 ----------------------
+R16171*109938 6110-START-CLEAR-CASE. 
+R16171*109938 ----------------------
+R16171*109938     INITIALIZE L9316-INPUT-PARM-INFO.
+R16171*109938 
+R16171*109938     MOVE  RPOL-POL-ID                TO L9316-POL-ID.
+R16171*109938     MOVE  WS-BASE-INSRD-CLI-ID       TO L9316-CLI-ID.
+R16171*109938     MOVE  RMAST-APPL-STAT-CD         TO L9316-APPL-STAT-CD.
+R16171*109938     
+R16171*109938     PERFORM  9316-1000-EDIT-REQT
+R16171*109938         THRU 9316-1000-EDIT-REQT-X.
+R16171*109938     
+R16171*109938     IF  L9316-CLEAR-CASE-NO
+R16171*109938         GO TO 6110-START-CLEAR-CASE-X
+R16171*109938     END-IF.
+R16171*109938     
+R16171*109938     PERFORM  TASK-1000-INCR-TASK-ID
+R16171*109938         THRU TASK-1000-INCR-TASK-ID-X.
+R16171*109938     
+R16171*109938     PERFORM  9316-2000-STRT-CLI-CLR-CASE
+R16171*109938         THRU 9316-2000-STRT-CLI-CLR-CASE-X.
+R16171*109938 
+R16171*109938 6110-START-CLEAR-CASE-X.
+R16171*109938     EXIT.
+R16171*109938 /
+R16171*MP310E ------------------------------
+R16171*MP310E 6120-GET-XTRNL-EVNT-EXIT-PGM. 
+R16171*MP310E ------------------------------
+R16171*MP310E      MOVE ZEROES                    TO LBUFR-BUFFER-LEN.
+R16171*MP310E      MOVE SPACES                    TO LBUFR-BUFFER-TXT.
+R16171*MP310E 
+R16171*MP310E     PERFORM  0319-1000-BUILD-PARM-INFO
+R16171*MP310E         THRU 0319-1000-BUILD-PARM-INFO-X.
+R16171*MP310E     MOVE WS-SYS-CTL-ID              TO WGLOB-SYS-CTL-ID.
+R16171*MP310E     MOVE WGLOB-SYS-CTL-ID           TO L0319-SYS-CTL-ID.
+R16171*MP310E     SET  L0319-XTRNL-EVNT-ALPHA-SRCH
+R16171*MP310E                                     TO TRUE.
+R16171*MP310E 
+R16171*MP310E     PERFORM  0319-1000-GET-EVNT-EXIT-PGM
+R16171*MP310E         THRU 0319-1000-GET-EVNT-EXIT-PGM-X.
+R16171*MP310E 
+R16171*MP310E     IF  NOT L0319-RETRN-OK
+R16171*MP310E         SET  WS-ERROR-YES           TO TRUE
+R16171*MP310E     END-IF.
+R16171*MP310E 
+R16171*MP310E 6120-GET-XTRNL-EVNT-EXIT-PGM-X.
+R16171*MP310E     EXIT.
+R16171*MP310E /
+R16171*MP310E ----------------------------
+R16171*MP310E 6125-PRCES-LC-RESULT-RESP.
+R16171*MP310E ---------------------------- 
+R16171*MP310E 
+      *
+R16171*MP310E 
+R16171*MP310E     IF  LALPS-CUST-TYP-CD(I)= '1'
+R16171*MP310E         IF  LALPS-CHK-TYP-CD(I)= '3'
+R16171*MP310E             SET RCLIU-SCV-SELCT-INFO-YES  TO TRUE
+R16171*MP310E         END-IF
+R16171*MP310E         IF  LALPS-CHK-TYP-CD(I)= '1'
+R16171*MP310I             IF  LALPS-LC-TYP-CD(I) NOT = '902'
+R16171*MP310I             AND LALPS-LC-TYP-CD(I) NOT = '903'
+R16171*MP310I             AND LALPS-LC-TYP-CD(I) NOT = '904'
+R16171*MP310I             AND LALPS-LC-TYP-CD(I) NOT = '907'
+R16171*MP310I             AND LALPS-LC-TYP-CD(I) NOT = '905'
+R16171*MP310I             AND LALPS-LC-TYP-CD(I) NOT = '906'
+R16171*MP310I             AND LALPS-LC-TYP-CD(I) NOT = '907'
+R16171*MP310I             AND LALPS-LC-TYP-CD(I) NOT = '501'
+R16171*MP310I             AND LALPS-LC-TYP-CD(I) NOT = '503'
+R16171*MP310I             AND LALPS-LC-TYP-CD(I) NOT = '504'
+R16171*MP310I             AND LALPS-LC-TYP-CD(I) NOT = '505'
+R16171*MP310I             AND LALPS-LC-TYP-CD(I) NOT = '079'
+R16171*MP310I             AND LALPS-LC-TYP-CD(I) NOT = '080'
+R16171*MP310I             AND LALPS-LC-TYP-CD(I) NOT = '081'
+R16171*MP310I                 SET RCLIU-USYS-HIST-CHK-YES TO TRUE
+MP310I*MP310E             SET RCLIU-USYS-HIST-CHK-YES TO TRUE
+R16171*MP310I             END-IF
+R16171*MP310E             IF  LALPS-LC-TYP-CD(I)= '13'
+R16171*MP310E             OR  LALPS-LC-TYP-CD(I)= '57'
+R16171*MP310E             OR  LALPS-LC-TYP-CD(I)= '86'
+R16171*MP310E             OR  LALPS-LC-TYP-CD(I)= '87'
+R16171*MP310E                SET   RCLIU-SD-LMT-ERR-YES TO TRUE
+R16171*MP310E             END-IF
+R16171*MP310E         END-IF
+R16171*MP310E     END-IF
+R16171*MP310E 
+R16171*MP310E     IF  LALPS-CUST-TYP-CD(I)= '2'
+R16171*MP310E         IF  LALPS-CHK-TYP-CD(I)= '3'
+R16171*MP310E             SET RPOL-MORAL-RISK-YES TO TRUE
+R16171*MP310E         END-IF
+R16171*MP310E     END-IF
+R16171*MP310E 
+R16171*110437     IF  LALPS-CUST-TYP-CD(I)= '3'
+R16171*110437        IF  LALPS-CHK-TYP-CD(I)= '3'
+R16171*110437 
+R16171*110437            MOVE ZEROES        TO WS-BNFY-SEQ-NUM
+R16171*110437            PERFORM  6170-FIND-BNFY-SEQ-NO
+R16171*110437                THRU 6170-FIND-BNFY-SEQ-NO-X
+R16171*110437 
+R16171*110437            IF  WS-BNFY-SEQ-NUM = ZEROES
+R16171*110437                GO TO 6125-PRCES-LC-RESULT-RESP-X
+R16171*110437            END-IF
+R16171*110437 
+R16171*110437            MOVE WPOL-POL-ID        TO WBENE-POL-ID
+R16171*110437            MOVE WS-BASE-INSRD-CLI-ID TO WBENE-INSRD-CLI-ID
+R16171*110437            MOVE WS-BNFY-SEQ-NUM    TO WBENE-BNFY-SEQ-NUM
+R16171*110437         
+R16171*110437            PERFORM  BENE-1000-READ-FOR-UPDATE
+R16171*110437                THRU BENE-1000-READ-FOR-UPDATE-X
+R16171*110437            SET RBENE-BNFY-MORAL-RISK-YES TO TRUE
+R16171*110437            PERFORM  BENE-2000-REWRITE
+R16171*110437                THRU BENE-2000-REWRITE-X
+R16171*110437        END-IF
+R16171*110437     END-IF.
+R16171*MP310E 
+R16171*MP310E         IF  LALPS-CHK-TYP-CD(I)= '4'
+R16171*MP310E             SET RCLIU-MULT-APPL-YES TO TRUE
+R16171*MP310E         END-IF.
+R16171*MP310E 
+R16171*MP310E 
+R16171*MP310E 6125-PRCES-LC-RESULT-RESP-X.
+R16171*MP310E     EXIT.
+R16171*MP310E /
+R16171*MP310E 
+R16171*MP310E -------------------
+R16171*MP310E 6130-PROCESS-DEVT.
+R16171*MP310E -------------------
+R16171*MP310E         PERFORM  6135-BUILD-ALPS-INPUT
+R16171*MP310E             THRU 6135-BUILD-ALPS-INPUT-X.
+R16171*MP310E 
+R16171*MP310E         PERFORM  6145-XEVT-SEND-ALPS-EVNT
+R16171*MP310E             THRU 6145-XEVT-SEND-ALPS-EVNT-X
+R16171*MP310E             VARYING WS-EVNT-SUB FROM +1 BY +1
+R16171*MP310E             UNTIL   WS-EVNT-SUB > L0319-XTRNL-EVNT-CNT
+R16171*MP310E             OR      L0319-XTRNL-INVOK-CD (WS-EVNT-SUB)
+R16171*MP310E                             =  SPACES.
+R16171*MP310E 
+R16171*MP310E 6130-PROCESS-DEVT-X.
+R16171*MP310E     EXIT.
+R16171*MP310E / 
+R16171*MP310E ----------------------
+R16171*MP310E 6135-BUILD-ALPS-INPUT.
+R16171*MP310E ----------------------
+R16171*MP310E 
+R16171*MP310E     PERFORM  ALPS-1000-BUILD-PARM-INFO
+R16171*MP310E         THRU ALPS-1000-BUILD-PARM-INFO-X.
+R16171*MP310E 
+R16171*MP310E     MOVE WPOL-POL-ID                 TO LALPS-POL-ID.
+R16171*MP310E     MOVE WS-BCF-BRANCH-ID (WS-EVNT-SUB)   TO LALPS-BR-ID.
+R16171*MP310E 
+R16171*MP310E     MOVE RPOL-SBSDRY-CO-ID           TO LALPS-SBSDRY-CO-ID.
+R16171*MP310E 
+R16171*MP310E 6135-BUILD-ALPS-INPUT-X.
+R16171*MP310E     EXIT.
+R16171*MP310E /
+R16171*MP310E ------------------
+R16171*MP310E 6140-END-BRANCH.
+R16171*MP310E ------------------
+R16171*MP310E 
+R16171*MP310E     PERFORM
+R16171*MP310E         VARYING WS-EVNT-SUB FROM +1 BY +1
+R16171*MP310E         UNTIL   WS-EVNT-SUB > L0319-XTRNL-EVNT-CNT
+R16171*MP310E         OR      L0319-XTRNL-INVOK-CD (WS-EVNT-SUB) = SPACES
+R16171*MP310E 
+R16171*MP310E         MOVE L0319-XTRNL-DOC-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO LALPS-DOC-ID
+R16171*MP310E         MOVE L0319-XTRNL-EVNT-PGM-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO LALPS-CALL-PGM-ID
+R16171*MP310E         MOVE L0319-XTRNL-SYS-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO LALPS-XTRNL-SYS-ID
+R16171*MP310E         MOVE WS-BCF-BRANCH-ID (WS-EVNT-SUB)   TO LALPS-BR-ID
+R16171*MP310E 
+R16171*MP310E         PERFORM  ALPS-3000-END-BRANCH
+R16171*MP310E             THRU ALPS-3000-END-BRANCH-X
+R16171*MP310E 
+R16171*MP310E         IF  NOT LALPS-RETRN-OK
+R16171*MP310E MSG:'UNSUCCESSFUL TRANSMISSION TO EXTERNAL SYSTEM @1 FOR
+R16171*MP310E      BRANCH @2'
+R16171*MP310E             MOVE 'CS04550002'       TO WGLOB-MSG-REF-INFO
+R16171*MP310E             MOVE LALPS-XTRNL-SYS-ID TO WGLOB-MSG-PARM (1)
+R16171*MP310E             MOVE WS-BCF-BRANCH-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO WGLOB-MSG-PARM (2)
+R16171*MP310E             PERFORM  0260-1000-GENERATE-MESSAGE
+R16171*MP310E                 THRU 0260-1000-GENERATE-MESSAGE-X
+R16171*MP310E         END-IF
+R16171*MP310E     END-PERFORM.
+R16171*MP310E 
+R16171*MP310E 6140-END-BRANCH-X.
+R16171*MP310E     EXIT.
+R16171*MP310E /
+R16171*MP310E -------------------------
+R16171*MP310E 6145-XEVT-SEND-ALPS-EVNT.
+R16171*MP310E -------------------------
+R16171*MP310E 
+R16171*MP310E  PASS ALPS LINKAGE TO EXTERNAL EXIT PROGRAM FOR XML TRANSLATION.
+R16171*MP310E  THIS CALLED PROGRAM THEN TRANSMITS THE XML TO THE EXTERNAL
+R16171*MP310E  SYSTEM FOR (ALPHS) SCV SELECTION FILE CHECK.
+R16171*MP310E 
+R16171*MP310E     MOVE L0319-XTRNL-DOC-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO LALPS-DOC-ID.
+R16171*MP310E     MOVE L0319-XTRNL-EVNT-PGM-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO LALPS-CALL-PGM-ID.
+R16171*MP310E     MOVE L0319-XTRNL-SYS-ID (WS-EVNT-SUB)
+R16171*MP310E                                     TO LALPS-XTRNL-SYS-ID.
+R16171*MP310E 
+R16171*MP310E     PERFORM  ALPS-1000-SELFILE-CHK-STATS
+R16171*MP310E         THRU ALPS-1000-SELFILE-CHK-STATS-X.
+R16171*MP310E 
+R16171*MP310E     IF  NOT LALPS-RETRN-OK
+R16171*MP310E MSG:'UNSUCCESSFUL TRANSMISSION TO EXTERNAL SYSTEM @1 FOR
+R16171*MP310E      POLICY @2'
+R16171*MP310E         MOVE 'CS04550003'           TO WGLOB-MSG-REF-INFO
+R16171*MP310E         MOVE LALPS-XTRNL-SYS-ID     TO WGLOB-MSG-PARM (1)
+R16171*MP310E         MOVE WPOL-POL-ID            TO WGLOB-MSG-PARM (2)
+R16171*MP310E         PERFORM  0260-1000-GENERATE-MESSAGE
+R16171*MP310E             THRU 0260-1000-GENERATE-MESSAGE-X
+R16171*MP310E     END-IF.
+R16171*MP310E 
+R16171*MP310E 6145-XEVT-SEND-ALPS-EVNT-X.
+R16171*MP310E     EXIT.
+R16171*MP310E /     
+R16171*MP310E ----------------------------
+R16171*MP310E 6150-PRCES-AUTH-RESULT-RESP.
+R16171*MP310E ---------------------------- 
+R16171*MP310E 
+R16171*MP310E 
+R16171*MP310E     IF  LALPS-CHK-CD(I) = SPACES
+R16171*MP310E         GO TO 6150-PRCES-AUTH-RESULT-RESP-X
+R16171*MP310E     END-IF.
+R16171*MP310E 
+R16171*    MOVE 'N'                    TO L0280-SIGN-IND
+R16171*    SET L0280-SPACES-PERMITTED  TO TRUE
+R16171*    MOVE 15                     TO L0280-LENGTH
+R16171*    MOVE ZERO                   TO L0280-PRECISION
+R16171*    MOVE LALPS-SUM-TOT-AMT(I)   TO L0280-INPUT-DATA
+R16171*    PERFORM  0280-1000-NUMERIC-EDIT
+R16171*        THRU 0280-1000-NUMERIC-EDIT-X
+R16171*    IF  L0280-OK
+R16171*        MOVE L0280-OUTPUT       TO WS-SUM-TOT-AMT
+R16171*    END-IF.
+R16171*    
+R16171*MP310E     EVALUATE TRUE
+R16171*MP310E     WHEN  LALPS-CHK-CD(I)= '1'
+R16171*MP310E         MOVE WS-SUM-TOT-AMT    TO RCLIU-DTH-LMT-CHK-AMT
+R16171*MP310E 
+R16171*MP310E     WHEN  LALPS-CHK-CD(I)= '101'
+R16171*MP310E         MOVE WS-SUM-TOT-AMT    TO RCLIU-ACUM-YR-UW-DB-AMT
+R16171*MP310E 
+R16171*MP310E     WHEN  LALPS-CHK-CD(I)= '102'
+R16171*MP310E         MOVE WS-SUM-TOT-AMT    TO RCLIU-ACUM-ADB-AMT
+R16171*MP310E 
+R16171*MP310E     WHEN  LALPS-CHK-CD(I)= '103'
+R16171*MP310E         MOVE WS-SUM-TOT-AMT    TO RCLIU-ACUM-YR-DB-AMT
+R16171*MP310E 
+R16171*MP310E     WHEN  LALPS-CHK-CD(I)= '104'
+R16171*MP310E         MOVE WS-SUM-TOT-AMT    TO RCLIU-ACUM-DB-AMT
+R16171*MP310E 
+R16171*MP310E     WHEN  LALPS-CHK-CD(I)= '105'
+R16171*MP310E         MOVE WS-SUM-TOT-AMT    TO RCLIU-ACUM-YR-HOSP-AMT
+R16171*MP310E 
+R16171*MP310E     WHEN  LALPS-CHK-CD(I)= '106'
+R16171*MP310E         MOVE WS-SUM-TOT-AMT    TO RCLIU-ACUM-DIS-HOSP-AMT
+R16171*MP310E 
+R16171*MP310E     WHEN  LALPS-CHK-CD(I)= '107'
+R16171*MP310E         MOVE WS-SUM-TOT-AMT   TO RCLIU-ACUM-FEMALE-DIS-AMT
+R16171*MP310E 
+R16171*MP310E     WHEN  LALPS-CHK-CD(I)= '108'
+R16171*MP310E         MOVE WS-SUM-TOT-AMT    TO RCLIU-ACUM-ADULT-DIS-AMT
+R16171*MP310E 
+R16171*MP310E     WHEN  LALPS-CHK-CD(I)= '109'
+R16171*MP310E         MOVE WS-SUM-TOT-AMT    TO RCLIU-HOSP-DLY-BNFT-AMT
+R16171*MP310E 
+R16171*MP310E     WHEN  LALPS-CHK-CD(I)= '2'
+R16171*MP310E         MOVE WS-SUM-TOT-AMT    TO RCLIU-MED-LMT-CHK-AMT 
+R16171*MP310E 
+R16171*MP310E     WHEN  LALPS-CHK-CD(I) = '3'
+R16171*MP310E         MOVE WS-SUM-TOT-AMT    TO RCLIU-DRD-DIS-LMT-CHK-AMT
+R16171*MP310E 
+R16171*MP310E     WHEN  LALPS-CHK-CD(I)= '4'
+R16171*MP310E         MOVE WS-SUM-TOT-AMT    TO RCLIU-LTC-LMT-CHK-AMT
+R16171*MP310E 
+R16171*MP310E     WHEN  LALPS-CHK-CD(I) = '5'
+R16171*MP310E         MOVE WS-SUM-TOT-AMT    TO RCLIU-ADB-LMT-CHK-AMT  
+R16171*MP310E 
+R16171*MP310E     WHEN  LALPS-CHK-CD(I) = '6'
+R16171*MP310E         MOVE WS-SUM-TOT-AMT    TO RCLIU-CANCER-LMT-CHK-AMT
+R16171*MP310E     END-EVALUATE.
+R16171*MP310E 
+R16171*MP310E 6150-PRCES-AUTH-RESULT-RESP-X.
+R16171*MP310E     EXIT.
+R16171*MP310E /
+R16171*MP310E 
+R16171*MP310E ---------------------
+R16171*MP310E 6155-UPDATE-REQT-REC.
+R16171*MP310E ---------------------
+R16171*MP310E 
+R16171*MP310E     PERFORM  0080-1000-BUILD-PARM-INFO
+R16171*MP310E         THRU 0080-1000-BUILD-PARM-INFO-X.
+R16171*MP310E 
+R16171*MP310E  WHEN AN INSURED HAS A VALID 'HISTORY AND SELECTION
+R16171*MP310E  RESPONSE' RECORD, ALL THE OTHER 'HFRI' RECORDS OF THIS
+R16171*MP310E  INSURED WILL BE UPDATED AS 'REVIEWED AND ACCEPTED'.
+R16171*MP310E 
+R16171*MP310E     SET WS-SEARCH-END-NO         TO TRUE.
+R16171*MP310E     SET L0080-CLIENT-LEVEL       TO TRUE.
+R16171*MP310E     MOVE 'HFR'                   TO L0080-REQIR-CODE.
+R16171*MP310E     MOVE WCCLI-INSRD-CLI-ID      TO L0080-CLI-ID.
+R16171*MP310E 
+R16171*MP310E     PERFORM  0080-1000-SEARCH-ONE
+R16171*MP310E         THRU 0080-1000-SEARCH-ONE-X.
+R16171*MP310E 
+R16171*MP310E     IF  L0080-RSLT-OUTSTNDG-FOUND
+R16171*MP310E         CONTINUE
+R16171*MP310E     ELSE
+R16171*MP310E  FORCE TO CREATE ONE
+R16171*MP310E         PERFORM  6160-SEARCH-OS-REQTS
+R16171*MP310E             THRU 6160-SEARCH-OS-REQTS-X
+R16171*MP310E         GO TO 6155-UPDATE-REQT-REC
+R16171*MP310E     END-IF.
+R16171*MP310E 
+R16171*MP310E     PERFORM  6160-SEARCH-OS-REQTS
+R16171*MP310E         THRU 6160-SEARCH-OS-REQTS-X
+R16171*MP310E         UNTIL NOT L0080-RSLT-OUTSTNDG-FOUND
+R16171*MP310E         OR    NOT L0080-RETRN-OK
+R16171*MP310E         OR        WS-SEARCH-END-YES
+R16171*MP310E         OR        WS-ERROR-YES.
+R16171*MP310E 
+R16171*MP310E 6155-UPDATE-REQT-REC-X.
+R16171*MP310E     EXIT.
+R16171*MP310E /
+R16171*MP310E ---------------------
+R16171*MP310E 6160-SEARCH-OS-REQTS.
+R16171*MP310E ---------------------
+R16171*MP310E 
+R16171*MP310E     SET  L0080-REQIR-STAT-REVW-ACPT  TO TRUE.
+R16171*MP310E 
+R16171*MP310E     PERFORM  0080-9100-UPDATE-OS-REQT
+R16171*MP310E        THRU  0080-9100-UPDATE-OS-REQT-X.
+R16171*MP310E 
+R16171*MP310E     EVALUATE TRUE
+R16171*MP310E 
+R16171*MP310E         WHEN L0080-RETRN-OK
+R16171*MP310E         AND L0080-RSLT-OUTSTNDG-FOUND
+R16171*MP310E  WARNING: HISTORY FILE REQUIREMENT STATUS AUTOMATICALLY UPDATED
+R16171*MP310E  TO 'REVIEW AND ACCEPTED'
+R16171*MP310E             CONTINUE
+R16171*MP310E 
+R16171*MP310E         WHEN L0080-RETRN-OK
+R16171*MP310E         AND L0080-RSLT-WRITTEN
+R16171*MP310E  WARNING: SELECTION AND HISTORY REQUIREMENT CREATED
+R16171*MP310E  FOR CLIENT (@1)
+R16171*MP310E              SET WS-SEARCH-END-YES     TO TRUE
+R16171*MP310E              GO TO 6160-SEARCH-OS-REQTS-X
+R16171*MP310E         WHEN OTHER
+R16171*MP310E MSG: PROCESSING ERROR DURING SELECTION AND HISTORY
+R16171*MP310E  REQUIREMENT FOR CLIENT (@1).
+R16171*MP310E              SET WS-ERROR-YES     TO TRUE
+R16171*MP310E              GO TO 6160-SEARCH-OS-REQTS-X
+R16171*MP310E 
+R16171*MP310E     END-EVALUATE.
+R16171*MP310E 
+R16171*MP310E     PERFORM  0080-1000-SEARCH-ONE
+R16171*MP310E         THRU 0080-1000-SEARCH-ONE-X.
+R16171*MP310E 
+R16171*MP310E 6160-SEARCH-OS-REQTS-X.
+R16171*MP310E     EXIT.
+R16171*MP310E /
+R16171*MP310E 
+R16171*MP310E 
+R16171*110437 ---------------------
+R16171*110437 6170-FIND-BNFY-SEQ-NO.
+R16171*110437 ---------------------
+R16171*110437 
+R16171*110437     MOVE LOW-VALUES             TO WBENE-KEY.
+R16171*110437     MOVE WPOL-POL-ID            TO WBENE-POL-ID.
+R16171*110437     MOVE WS-BASE-INSRD-CLI-ID   TO WBENE-INSRD-CLI-ID.      
+R16171*110437     MOVE 0                      TO WBENE-BNFY-SEQ-NUM.
+R16171*110437     MOVE WBENE-KEY              TO WBENE-ENDBR-KEY.
+R16171*110437     MOVE 999                    TO WBENE-ENDBR-BNFY-SEQ-NUM.
+R16171*110437 
+R16171*110437     PERFORM  BENE-1000-BROWSE
+R16171*110437         THRU BENE-1000-BROWSE-X.
+R16171*110437 
+R16171*110437     IF NOT WBENE-IO-OK
+R16171*110437         GO TO 6170-FIND-BNFY-SEQ-NO-X
+R16171*110437     END-IF.
+R16171*110437 
+R16171*110437     PERFORM  BENE-2000-READ-NEXT
+R16171*110437         THRU BENE-2000-READ-NEXT-X.
+R16171*110437 
+R16171*110437     IF NOT WBENE-IO-OK
+R16171*110437         PERFORM  BENE-3000-END-BROWSE
+R16171*110437             THRU BENE-3000-END-BROWSE-X
+R16171*110437         GO TO 6170-FIND-BNFY-SEQ-NO-X
+R16171*110437     END-IF.
+R16171*110437     
+R16171*110437     PERFORM 
+R16171*110437        UNTIL WBENE-IO-EOF
+R16171*110437        OR RBENE-BNFY-DESGNT-PRIMARY
+R16171*110437 
+R16171*110437             PERFORM  BENE-2000-READ-NEXT
+R16171*110437                 THRU BENE-2000-READ-NEXT-X
+R16171*110437 
+R16171*110437     END-PERFORM.
+R16171*110437     MOVE  RBENE-BNFY-SEQ-NUM  TO WS-BNFY-SEQ-NUM.
+R16171*110437     
+R16171*110437     PERFORM  BENE-3000-END-BROWSE
+R16171*110437         THRU BENE-3000-END-BROWSE-X.
+R16171*110437 
+R16171*110437 6170-FIND-BNFY-SEQ-NO-X.
+R16171*110437     EXIT.
+R16171*110437 /
+R16171*110437 
+R16171*110437 
+      *------------------
+       6200-SET-CURRENCY.
+      *------------------
+
+           PERFORM  0083-0000-INIT-PARM-INFO
+               THRU 0083-0000-INIT-PARM-INFO-X.
+
+           MOVE RPOL-SERV-AGT-ID           TO L0083-AGENT-ID.
+
+           PERFORM  0083-1000-RETRIEVE-AGT-INFO
+               THRU 0083-1000-RETRIEVE-AGT-INFO-X.
+
+           IF  L0083-RETRN-NOT-FOUND
+      *MSG: WARNING...AGENT (@1) NOT FOUND, CURRENCY NOT SET
+               MOVE 'AS94000025'           TO WGLOB-MSG-REF-INFO
+               MOVE RPOL-SERV-AGT-ID       TO WGLOB-MSG-PARM (1)
+               PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                   THRU 9000-BUILD-MESSAGE-EXTRACT-X
+               GO TO 6200-SET-CURRENCY-X
+           END-IF.
+      *
+      * DEFAULT AGENT'S CURRENCY ONTO THE POLICY
+      *
+           MOVE L0083-AGT-CMPNST-CRCY-CD   TO RPOL-POL-CRCY-CD.
+
+       6200-SET-CURRENCY-X.
+           EXIT.
+      /
+      *-----------------
+       6300-AUDIT-CHECK.
+      *-----------------
+
+           PERFORM  0302-1000-BUILD-PARM-INFO
+               THRU 0302-1000-BUILD-PARM-INFO-X.
+
+           MOVE RPOL-POL-ID            TO L0302-POL-ID.
+           MOVE RPOL-POL-INS-TYP-CD    TO L0302-POL-INS-TYP-CD.
+
+           PERFORM  0302-1000-AUDIT-UPDT
+               THRU 0302-1000-AUDIT-UPDT-X.
+
+       6300-AUDIT-CHECK-X.
+           EXIT.
+      /
+MFFUPL*
+MFFUPL*--------------------
+MFFUPL*6340-CALC-PALC-CVGS.
+MFFUPL*--------------------
+MFFUPL*
+MFFUPL* CALCULATE NUMBER OF CVGS TO BE INCLUDED FOR POLICY ALLOCATIONS
+MFFUPL*
+MFFUPL*    IF  WCVGS-CVG-INS-TYP-UL-INS-ANTY (WS-CVG)
+MFFUPL*    OR  WCVGS-CVG-INS-TYP-FPA (WS-CVG)
+MFPFU2*    OR  WCVGS-CVG-INS-TYP-SEG-FUND (WS-CVG)
+MFFUPL*        ADD 1                   TO WS-PALC-CVG-CTR
+MFFUPL*    END-IF.
+MFFUPL*
+MFFUPL*6340-CALC-PALC-CVGS-X.
+MFFUPL*    EXIT.
+      /
+      *----------------------------
+       6350-CVG-EDIT-ANALYSIS-LOOP.
+      *----------------------------
+      *
+MFFUPL*    IF  WCVGS-CVG-INS-TYP-UL-INS-ANTY (WS-CVG)
+MFFUPL*    OR  WCVGS-CVG-INS-TYP-FPA (WS-CVG)
+MFFUPL*MFPFU2     OR  WCVGS-CVG-INS-TYP-SEG-FUND (WS-CVG)
+MFFUPL*        PERFORM  6460-CREATE-PALC-INFO
+MFFUPL*            THRU 6460-CREATE-PALC-INFO-X
+MFFUPL*    END-IF.
+
+           PERFORM  0570-1000-BUILD-PARM-INFO
+               THRU 0570-1000-BUILD-PARM-INFO-X.
+
+           PERFORM  I570-1000-INIT-L0570-VALUES
+               THRU I570-1000-INIT-L0570-VALUES-X.
+
+B10272     SET L0570-NOT-LAST-TO-EDIT TO TRUE.
+
+B10272     IF WS-CVG = RPOL-POL-CVG-REC-CTR-N
+B10272        SET L0570-LAST-TO-EDIT TO TRUE
+B10272     END-IF.
+
+           PERFORM  0570-1000-MAINTAIN-COVERAGE
+               THRU 0570-1000-MAINTAIN-COVERAGE-X.
+
+       6350-CVG-EDIT-ANALYSIS-LOOP-X.
+           EXIT.
+      /
+MFFUPL*--------------------
+MFFUPL*6425-BUILD-CAIN-KEY.
+MFFUPL*--------------------
+MFFUPL*
+MFFUPL*    MOVE LOW-VALUES             TO WCAIN-KEY.
+MFFUPL*    MOVE HIGH-VALUES            TO WCAIN-ENDBR-KEY.
+MFFUPL*    MOVE RPOL-POL-ID            TO WCAIN-POL-ID.
+MFFUPL*    MOVE RPOL-POL-ID            TO WCAIN-ENDBR-POL-ID.
+MFFUPL*    MOVE RPOL-POL-ISS-EFF-DT    TO L1660-INTERNAL-DATE.
+MFFUPL*    PERFORM  1660-2000-CONVERT-INT-TO-INV
+MFFUPL*        THRU 1660-2000-CONVERT-INT-TO-INV-X.
+MFFUPL*    MOVE L1660-INVERTED-DATE    TO WCAIN-CDI-EFF-IDT-NUM-N.
+MFFUPL*    MOVE +00000                 TO WCAIN-POL-PAYO-NUM.
+MFFUPL*    MOVE +99999                 TO WCAIN-ENDBR-POL-PAYO-NUM.
+MFFUPL*
+MFFUPL*6425-BUILD-CAIN-KEY-X.
+MFFUPL*    EXIT.
+      /
+MFFUPL*-----------------
+MFFUPL*6430-CREATE-CAIN.
+MFFUPL*-----------------
+MFFUPL*
+MFFUPL*    PERFORM  CAIN-1000-CREATE
+MFFUPL*        THRU CAIN-1000-CREATE-X.
+MFFUPL*
+MFFUPL*    SET RCAIN-CDI-STAT-INCOMPLETE TO TRUE.
+MFFUPL*
+MFFUPL*    PERFORM  CAIN-1000-WRITE
+MFFUPL*        THRU CAIN-1000-WRITE-X.
+MFFUPL*
+MFFUPL*6430-CREATE-CAIN-X.
+MFFUPL*    EXIT.
+      /
+MFFUPL*
+MFFUPL*----------------------
+MFFUPL*6460-CREATE-PALC-INFO.
+MFFUPL*----------------------
+MFFUPL*
+MFFUPL* FOR DA AND UL, DEFAULT POLICY ALLOCATION INSTRUCTIONS
+MFFUPL*
+MFFUPL*    PERFORM  6425-BUILD-CAIN-KEY
+MFFUPL*        THRU 6425-BUILD-CAIN-KEY-X.
+MFFUPL*
+MFFUPL* IF CAIN RECORD ALREADY EXISTS, DON'T CREATE ONE
+MFFUPL*
+MFFUPL*    PERFORM  CAIN-1000-BROWSE
+MFFUPL*        THRU CAIN-1000-BROWSE-X.
+MFFUPL*
+MFFUPL*    PERFORM  CAIN-2000-READ-NEXT
+MFFUPL*        THRU CAIN-2000-READ-NEXT-X.
+MFFUPL*
+MFFUPL*    IF  WCAIN-IO-OK
+MFFUPL*        PERFORM  CAIN-3000-END-BROWSE
+MFFUPL*            THRU CAIN-3000-END-BROWSE-X
+MFFUPL*B00547         GO TO 6460-CREATE-PALC-INFO-X
+MFFUPL*    ELSE
+MFFUPL*        PERFORM  CAIN-3000-END-BROWSE
+MFFUPL*            THRU CAIN-3000-END-BROWSE-X
+MFFUPL*        MOVE 'I'                TO WCAIN-CDI-TYP-CD
+MFFUPL*        PERFORM  6430-CREATE-CAIN
+MFFUPL*            THRU 6430-CREATE-CAIN-X
+MFFUPL*        MOVE 'S'                TO WCAIN-CDI-TYP-CD
+MFFUPL*        PERFORM  6430-CREATE-CAIN
+MFFUPL*            THRU 6430-CREATE-CAIN-X
+MFFUPL*    END-IF.
+MFFUPL*
+MFFUPL*    MOVE 'I'                    TO WCDSI-CDI-TYP-CD.
+MFFUPL*
+MFFUPL*    PERFORM  6465-CREATE-CDSI
+MFFUPL*        THRU 6465-CREATE-CDSI-X.
+MFFUPL*
+MFFUPL*    MOVE 'S'                    TO WCDSI-CDI-TYP-CD.
+MFFUPL*
+MFFUPL*    PERFORM  6465-CREATE-CDSI
+MFFUPL*        THRU 6465-CREATE-CDSI-X.
+MFFUPL*
+MFFUPL*6460-CREATE-PALC-INFO-X.
+MFFUPL*    EXIT.
+      /
+MFFUPL*-----------------
+MFFUPL*6465-CREATE-CDSI.
+MFFUPL*-----------------
+MFFUPL*
+MFFUPL* BUILD CDSI KEY
+MFFUPL*
+MFFUPL*    MOVE RPOL-POL-ID            TO WCDSI-POL-ID.
+MFFUPL*    MOVE +000                   TO WCDSI-POL-PAYO-NUM.
+MFFUPL*    MOVE RPOL-POL-ISS-EFF-DT    TO L1660-INTERNAL-DATE.
+MFFUPL*    PERFORM  1660-2000-CONVERT-INT-TO-INV
+MFFUPL*        THRU 1660-2000-CONVERT-INT-TO-INV-X.
+MFFUPL*    MOVE L1660-INVERTED-DATE    TO WCDSI-CDI-EFF-IDT-NUM.
+MFFUPL*
+MFFUPL* DETERMINE NEXT AVAILABLE ALLOCATION NUMBER
+MFFUPL*
+MFFUPL*    MOVE +001                   TO WCDSI-CDI-ALLOC-NUM.
+MFFUPL*    MOVE WCDSI-KEY              TO WCDSI-ENDBR-KEY.
+MFFUPL*    MOVE +999                   TO WCDSI-ENDBR-CDI-ALLOC-NUM.
+MFFUPL*
+MFFUPL*    PERFORM  CDSI-2000-READ-MAX
+MFFUPL*        THRU CDSI-2000-READ-MAX-X.
+MFFUPL*
+MFFUPL*    IF  WCDSI-IO-OK
+MFFUPL*        COMPUTE WCDSI-CDI-ALLOC-NUM
+MFFUPL*                      = WCDSI-MAX-CDI-ALLOC-NUM + 1
+MFFUPL*    END-IF.
+MFFUPL*
+MFFUPL* CREATE CDSI RECORD
+MFFUPL*
+MFFUPL*    PERFORM  CDSI-1000-CREATE
+MFFUPL*        THRU CDSI-1000-CREATE-X.
+MFFUPL*
+MFFUPL* BUILD CDSI DETAIL
+MFFUPL*
+MFFUPL*    MOVE WS-CVG                 TO RCDSI-CVG-NUM.
+MFFUPL*    MOVE RPOL-POL-ISS-EFF-DT    TO RCDSI-CDI-EFF-DT.
+MFFUPL*    MOVE 'P'                    TO RCDSI-CDI-ALLOC-CD.
+MFFUPL*    MOVE RPOL-POL-ID            TO RCDSI-DEST-POL-ID.
+MFFUPL*    MOVE WS-CVG                 TO RCDSI-DEST-CVG-NUM.
+MFFUPL*
+MFFUPL*    PERFORM  6470-CALC-ALLOCATION
+MFFUPL*        THRU 6470-CALC-ALLOCATION-X.
+MFFUPL*
+MFFUPL* WRITE CDSI RECORD
+MFFUPL*
+MFFUPL*    PERFORM  CDSI-1000-WRITE
+MFFUPL*        THRU CDSI-1000-WRITE-X.
+MFFUPL*
+MFFUPL*6465-CREATE-CDSI-X.
+MFFUPL*    EXIT.
+      /
+MFFUPL*---------------------
+MFFUPL*6470-CALC-ALLOCATION.
+MFFUPL*---------------------
+MFFUPL*
+MFFUPL*    IF  WS-DIA-CVG = 0
+MFFUPL*    AND WS-GIA-CVG = 0
+MFFUPL*    AND WS-PALC-CVG-CTR > 0
+MFFUPL*        COMPUTE WS-ALLOC-PCT = +100.00 / WS-PALC-CVG-CTR
+MFFUPL*        MOVE WS-ALLOC-PCT       TO RCDSI-CDI-ALLOC-PCT
+MFFUPL*    END-IF.
+MFFUPL*
+MFFUPL*    IF  WS-DIA-CVG = WS-CVG
+MFFUPL*        IF  WS-CVG-ALLOC-PCT1 (WS-DIA-CVG) > 0
+MFFUPL*        AND WCDSI-CDI-TYP-CD = 'I'
+MFFUPL*            MOVE WS-CVG-ALLOC-PCT1 (WS-DIA-CVG)
+MFFUPL*                                TO RCDSI-CDI-ALLOC-PCT
+MFFUPL*        END-IF
+MFFUPL*        IF  WS-CVG-ALLOC-PCT2 (WS-DIA-CVG) > 0
+MFFUPL*        AND WCDSI-CDI-TYP-CD = 'S'
+MFFUPL*            MOVE WS-CVG-ALLOC-PCT2 (WS-DIA-CVG)
+MFFUPL*                                TO RCDSI-CDI-ALLOC-PCT
+MFFUPL*        END-IF
+MFFUPL*    END-IF.
+MFFUPL*
+MFFUPL*    IF  WS-GIA-CVG = WS-CVG
+MFFUPL*        IF  WS-CVG-ALLOC-PCT1 (WS-GIA-CVG) > 0
+MFFUPL*        AND WCDSI-CDI-TYP-CD = 'I'
+MFFUPL*            MOVE WS-CVG-ALLOC-PCT1 (WS-GIA-CVG)
+MFFUPL*                                TO RCDSI-CDI-ALLOC-PCT
+MFFUPL*        END-IF
+MFFUPL*        IF  WS-CVG-ALLOC-PCT2 (WS-GIA-CVG) > 0
+MFFUPL*        AND WCDSI-CDI-TYP-CD = 'S'
+MFFUPL*            MOVE WS-CVG-ALLOC-PCT2 (WS-GIA-CVG)
+MFFUPL*                                TO RCDSI-CDI-ALLOC-PCT
+MFFUPL*        END-IF
+MFFUPL*    END-IF.
+MFFUPL*
+MFFUPL*6470-CALC-ALLOCATION-X.
+MFFUPL*    EXIT.
+      /
+
+HNB014*---------------------------
+HNB014 6500-PROCESS-EXTRACT-REQTS.
+HNB014*---------------------------
+HNB203
+HNB203     MOVE RPOL-SBSDRY-CO-ID        TO WSCOM-SBSDRY-CO-ID.
+HNB203
+HNB203     PERFORM  SCOM-1000-READ
+HNB203         THRU SCOM-1000-READ-X.
+HNB203
+HNB203     IF  NOT WSCOM-IO-OK
+HNB203*MSG: SCOM RECORD NOT FOUND FOR SUB-COMPANY (@1) ON POLICY (@2)
+HNB203          MOVE RPOL-SBSDRY-CO-ID   TO WGLOB-MSG-PARM (1)
+HNB203          MOVE RPOL-POL-ID         TO WGLOB-MSG-PARM (2)
+HNB203          MOVE 'AS94009704'        TO WGLOB-MSG-REF-INFO
+HNB203          PERFORM  0260-1000-GENERATE-MESSAGE
+HNB203              THRU 0260-1000-GENERATE-MESSAGE-X
+HNB203          PERFORM  0030-5000-LOGIC-ERROR
+HNB203              THRU 0030-5000-LOGIC-ERROR-X
+HNB203     END-IF.
+HNB014
+HNB014     SET WS-ERROR-NO TO TRUE.
+HNB014
+HNB014     PERFORM  6510-BUILD-INSRD-CLI-ARRAY
+HNB014         THRU 6510-BUILD-INSRD-CLI-ARRAY-X.
+HNB014
+HNB014     PERFORM  6520-CREATE-REQT-FOR-INSRD
+HNB014         THRU 6520-CREATE-REQT-FOR-INSRD-X.
+HNB014
+HNB014     IF  WS-ERROR-YES
+HNB014         PERFORM  0030-5000-LOGIC-ERROR
+HNB014             THRU 0030-5000-LOGIC-ERROR-X
+HNB014     END-IF.
+HNB014
+HNB014 6500-PROCESS-EXTRACT-REQTS-X.
+HNB014     EXIT.
+HNB014/
+HNB014*---------------------------
+HNB014 6510-BUILD-INSRD-CLI-ARRAY.
+HNB014*---------------------------
+HNB014
+HNB014     MOVE SPACE           TO WS-INSRD-CLI-ID-TABLE.
+HNB014     MOVE ZERO            TO WS-TOT-INSRD.
+HNB014
+HNB014     MOVE LOW-VALUES      TO WCCLI-KEY.
+HNB014     MOVE RPOL-POL-ID     TO WCCLI-POL-ID.
+HNB014
+HNB014     MOVE HIGH-VALUES     TO WCCLI-ENDBR-KEY.
+HNB014     MOVE RPOL-POL-ID     TO WCCLI-ENDBR-POL-ID.
+HNB014
+HNB014     PERFORM  CCLI-1000-BROWSE
+HNB014         THRU CCLI-1000-BROWSE-X.
+HNB014
+HNB014     IF  WCCLI-IO-OK
+HNB014         PERFORM  CCLI-2000-READ-NEXT
+HNB014             THRU CCLI-2000-READ-NEXT-X
+HNB014     ELSE
+HNB014*MSG: CCLI CURSOR CAN NOT BE OPENED FOR POLICY (@1)
+HNB014         MOVE RPOL-POL-ID   TO WGLOB-MSG-PARM (1)
+HNB014         MOVE 'AS94009000'  TO WGLOB-MSG-REF-INFO
+HNB014         PERFORM  0260-1000-GENERATE-MESSAGE
+HNB014             THRU 0260-1000-GENERATE-MESSAGE-X
+HNB014         SET WS-ERROR-YES   TO TRUE
+HNB014         GO TO 6510-BUILD-INSRD-CLI-ARRAY-X
+HNB014     END-IF.
+HNB014
+HNB014     IF  WCCLI-IO-EOF
+HNB014*MSG: NO CVGC RECORD EXISTS FOR POLICY (@1)
+HNB014         MOVE RPOL-POL-ID   TO WGLOB-MSG-PARM (1)
+HNB014         MOVE 'AS94009001'  TO WGLOB-MSG-REF-INFO
+HNB014         PERFORM  0260-1000-GENERATE-MESSAGE
+HNB014             THRU 0260-1000-GENERATE-MESSAGE-X
+HNB014         PERFORM  CCLI-3000-END-BROWSE
+HNB014             THRU CCLI-3000-END-BROWSE-X
+HNB014         SET WS-ERROR-YES   TO TRUE
+HNB014         GO TO 6510-BUILD-INSRD-CLI-ARRAY-X
+HNB014     END-IF.
+HNB014
+HNB014     PERFORM  6515-PRCES-EACH-INSRD
+HNB014         THRU 6515-PRCES-EACH-INSRD-X
+HNB014         UNTIL NOT WCCLI-IO-OK
+HNB014         OR    WS-ERROR-YES.
+HNB014
+HNB014     PERFORM  CCLI-3000-END-BROWSE
+HNB014         THRU CCLI-3000-END-BROWSE-X.
+HNB014
+HNB014 6510-BUILD-INSRD-CLI-ARRAY-X.
+HNB014     EXIT.
+HNB014/
+HNB014*-----------------------
+HNB014 6515-PRCES-EACH-INSRD.
+HNB014*-----------------------
+HNB014
+HNB014     SET WS-INSRD-MATCH-NO TO TRUE.
+HNB014
+HNB014     PERFORM  6516-CHECK-INSRD-EXISTS
+HNB014         THRU 6516-CHECK-INSRD-EXISTS-X
+HNB014         VARYING I FROM 1 BY 1
+HNB014         UNTIL   I > WS-TOT-INSRD
+HNB014         OR      WS-INSRD-MATCH-YES.
+HNB014
+HNB014     IF  WS-INSRD-MATCH-NO
+HNB014         ADD 1                  TO WS-TOT-INSRD
+HNB014         IF  WS-TOT-INSRD > WS-TOT-LIMIT-INSRD
+HNB014*MSG: INSURED CLIENT ARRAY OVERFLOWED FOR POLICY (@1)
+HNB014             MOVE RPOL-POL-ID   TO WGLOB-MSG-PARM (1)
+HNB014             MOVE 'AS94009002'  TO WGLOB-MSG-REF-INFO
+HNB014             PERFORM  0260-1000-GENERATE-MESSAGE
+HNB014                 THRU 0260-1000-GENERATE-MESSAGE-X
+HNB014             SET WS-ERROR-YES   TO TRUE
+HNB014             GO TO 6515-PRCES-EACH-INSRD-X
+HNB014         ELSE
+HNB014             MOVE WCCLI-INSRD-CLI-ID TO
+HNB014                        WS-INSRD-CLI-ID(WS-TOT-INSRD)
+HNB014         END-IF
+HNB014     END-IF.
+HNB014
+HNB014     PERFORM  CCLI-2000-READ-NEXT
+HNB014         THRU CCLI-2000-READ-NEXT-X.
+HNB014
+HNB014 6515-PRCES-EACH-INSRD-X.
+HNB014     EXIT.
+HNB014/
+HNB014*------------------------
+HNB014 6516-CHECK-INSRD-EXISTS.
+HNB014*------------------------
+HNB014
+HNB014     IF  WS-INSRD-CLI-ID(I) = WCCLI-INSRD-CLI-ID
+HNB014         SET WS-INSRD-MATCH-YES  TO TRUE
+HNB014     END-IF.
+HNB014
+HNB014 6516-CHECK-INSRD-EXISTS-X.
+HNB014     EXIT.
+HNB014/
+HNB014*---------------------------
+HNB014 6520-CREATE-REQT-FOR-INSRD.
+HNB014*---------------------------
+HNB014
+HNB014     PERFORM  6525-PROCESS-EACH-INSRD
+HNB014         THRU 6525-PROCESS-EACH-INSRD-X
+HNB014         VARYING I FROM 1 BY 1
+HNB014         UNTIL   I > WS-TOT-INSRD.
+HNB014
+HNB014 6520-CREATE-REQT-FOR-INSRD-X.
+HNB014     EXIT.
+HNB014/
+HNB014*------------------------
+HNB014 6525-PROCESS-EACH-INSRD.
+HNB014*------------------------
+HNB014
+HNB014* ACTION THE DETAILS OF EXTRACT FILE(S)
+HNB014*     1)   'HISTORY AND SELECTION' RESPONSE FILE
+HNB014
+HNB014     PERFORM  6530-CREATE-HFR-REQT
+HNB014         THRU 6530-CREATE-HFR-REQT-X.
+HNB014
+MP310C
+MP310C*CREATE REQUIREMENT BASED ON INCOMPLETENESS DETAILS.
+MP310C     PERFORM  6565-PROCESS-UAPE-REC
+MP310C         THRU 6565-PROCESS-UAPE-REC-X.
+MP310C
+HNB203*     2)   INSURED CONSENT FORMS
+EN9703*HNB203
+EN9703*HNB203     PERFORM  6540-CREATE-INS-CONSENT-REQT
+EN9703*HNB203         THRU 6540-CREATE-INS-CONSENT-REQT-X.
+EN9703*HNB203
+HNB005*     3)   MEDICAL FORMS
+HNB005
+HNB005      PERFORM  6550-CREATE-MED-FORM-REQT
+HNB005          THRU 6550-CREATE-MED-FORM-REQT-X.
+HNB005
+R12024* EXIT IF CLIU RECORD IS NOT FOUND OR UW TYP IS INVALID
+R12024
+R12024      IF  WS-ERROR-YES
+R12024          GO TO 6525-PROCESS-EACH-INSRD-X
+R12024      END-IF.
+R12024
+R12024* CREATE REQUIREMENT BASED ON UW REVIEW FLAG
+R12024
+R12024     IF  RCLIU-UW-REVW-YES
+R12024         PERFORM  6555-CREAT-UW-REVW-REQT
+R12024             THRU 6555-CREAT-UW-REVW-REQT-X
+R12024     END-IF.
+HNB014
+HNB014 6525-PROCESS-EACH-INSRD-X.
+HNB014     EXIT.
+HNB014/
+HNB014*---------------------
+HNB014 6530-CREATE-HFR-REQT.
+HNB014*---------------------
+HNB014
+HNB014     PERFORM  6560-INIT-UW-REQT
+HNB014         THRU 6560-INIT-UW-REQT-X.
+HNB014
+HNB014     MOVE 'HFR'                     TO L0080-REQIR-CODE.
+HNB014     SET  L0080-REQIR-STAT-ORDERED  TO TRUE.
+HNB014
+HNB014     PERFORM  6570-WRITE-A-REQT
+HNB014         THRU 6570-WRITE-A-REQT-X.
+HNB014
+HNB014 6530-CREATE-HFR-REQT-X.
+HNB014     EXIT.
+HNB014/
+HNB203*-----------------------------
+HNB203 6540-CREATE-INS-CONSENT-REQT.
+HNB203*-----------------------------
+HNB203
+HNB203* EXIT IF THE OWNER AND INSURED ARE THE SAME
+HNB203
+HNB203     IF  LAPUP-POLC-OWN-CLI-ID (1) = WS-INSRD-CLI-ID (I)
+HNB203         GO TO 6540-CREATE-INS-CONSENT-REQT-X
+HNB203     END-IF.
+HNB203
+HNB203* LOOP THROUGH COVERAGES FOR THIS INSURED AND CALCULATE THE
+HNB203* TOTAL DEATH BENEFIT AMOUNT
+HNB203
+HNB203     INITIALIZE WS-TOT-DB-AMT.
+HNB203
+HNB203     MOVE LOW-VALUES                 TO WCCLI-KEY.
+HNB203     MOVE RPOL-POL-ID                TO WCCLI-POL-ID.
+HNB203     MOVE WS-INSRD-CLI-ID (I)        TO WCCLI-INSRD-CLI-ID.
+HNB203     MOVE WCCLI-KEY                  TO WCCLI-ENDBR-KEY.
+HNB203     MOVE HIGH-VALUES                TO WCCLI-ENDBR-CVG-NUM.
+HNB203
+HNB203     PERFORM  CCLI-1000-BROWSE
+HNB203         THRU CCLI-1000-BROWSE-X.
+HNB203
+HNB203     PERFORM  CCLI-2000-READ-NEXT
+HNB203         THRU CCLI-2000-READ-NEXT-X.
+HNB203
+HNB203     IF  NOT WCCLI-IO-OK
+HNB203* MSG: COVERAGE-CLIENT RECORD NOT FOUND FOR CLIENT (@1)
+HNB203*      AND POLICY (@2).
+HNB203         MOVE 'AS94009705'           TO WGLOB-MSG-REF-INFO
+HNB203         MOVE WS-INSRD-CLI-ID (I)    TO WGLOB-MSG-PARM (1)
+HNB203         MOVE RPOL-POL-ID            TO WGLOB-MSG-PARM (2)
+HNB203         PERFORM  0260-1000-GENERATE-MESSAGE
+HNB203             THRU 0260-1000-GENERATE-MESSAGE-X
+HNB203         SET WS-ERROR-YES            TO TRUE
+HNB203         PERFORM  CCLI-3000-END-BROWSE
+HNB203             THRU CCLI-3000-END-BROWSE-X
+HNB203         GO TO 6540-CREATE-INS-CONSENT-REQT-X
+HNB203     END-IF.
+HNB203
+HNB203     PERFORM
+HNB203         UNTIL NOT WCCLI-IO-OK
+HNB203
+HNB203         IF  WCVGS-PLAN-BNFT-TYP-CD (RCVGC-CVG-NUM-N) = SPACES
+IPDDUP             IF WCVGS-PLAN-FMLY-IP (RCVGC-CVG-NUM-N)
+IPDDUP             OR WCVGS-PLAN-NSMKR-FMLY-IP (RCVGC-CVG-NUM-N)
+IPDDUP                PERFORM 6545-GET-CVG-COVR-FACE-AMT
+IPDDUP                   THRU 6545-GET-CVG-COVR-FACE-AMT-X
+IPDDUP                ADD WS-CVG-PRES-CNVR-FACE-AMT TO WS-TOT-DB-AMT
+IPDDUP             ELSE
+HNB203                ADD WCVGS-CVG-FACE-AMT (RCVGC-CVG-NUM-N)
+HNB203                TO WS-TOT-DB-AMT
+ABF124             END-IF
+HNB203         END-IF
+HNB203
+HNB203         PERFORM  CCLI-2000-READ-NEXT
+HNB203             THRU CCLI-2000-READ-NEXT-X
+HNB203
+HNB203     END-PERFORM.
+HNB203
+HNB203     PERFORM  CCLI-3000-END-BROWSE
+HNB203         THRU CCLI-3000-END-BROWSE-X.
+HNB203
+HNB203* EXIT IF TOTAL DEATH BENEFIT IS BELOW A THRESHOLD AMOUNT
+HNB203
+HNB203     IF  WS-TOT-DB-AMT > RSCOM-INSRD-CNSNT-DB-AMT
+HNB203         CONTINUE
+HNB203     ELSE
+HNB203         GO TO 6540-CREATE-INS-CONSENT-REQT-X
+HNB203     END-IF.
+HNB203
+HNB203* RETRIEVE THE CLIU RECORD FOR THIS INSURED AND APPLICATION
+HNB203
+HNB203     MOVE RPOL-POL-ID                TO WCLUA-POL-ID.
+HNB203     MOVE WS-INSRD-CLI-ID (I)        TO WCLUA-CLI-ID.
+HNB203     MOVE WCLUA-KEY                  TO WCLUA-ENDBR-KEY.
+HNB203
+HNB203     PERFORM  CLUA-1000-BROWSE
+HNB203         THRU CLUA-1000-BROWSE-X.
+HNB203
+HNB203     PERFORM  CLUA-2000-READ-NEXT
+HNB203         THRU CLUA-2000-READ-NEXT-X.
+HNB203
+HNB203     IF  NOT WCLUA-IO-OK
+HNB203         PERFORM  CLUA-3000-END-BROWSE
+HNB203             THRU CLUA-3000-END-BROWSE-X
+HNB203* MSG: CLIU RECORD NOT FOUND FOR CLIENT (@1) AND POLICY (@2).
+HNB203         MOVE 'AS94009706'           TO WGLOB-MSG-REF-INFO
+HNB203         MOVE WS-INSRD-CLI-ID (I)    TO WGLOB-MSG-PARM (1)
+HNB203         MOVE RPOL-POL-ID            TO WGLOB-MSG-PARM (2)
+HNB203         PERFORM  0260-1000-GENERATE-MESSAGE
+HNB203             THRU 0260-1000-GENERATE-MESSAGE-X
+HNB203         SET WS-ERROR-YES            TO TRUE
+HNB203         GO TO 6540-CREATE-INS-CONSENT-REQT-X
+HNB203     END-IF.
+HNB203
+HNB203     PERFORM  CLUA-3000-END-BROWSE
+HNB203         THRU CLUA-3000-END-BROWSE-X.
+HNB203
+HNB203* RETRIEVE THE OWNERS NAME
+HNB203
+HNB203     PERFORM  2435-1000-BUILD-PARM-INFO
+HNB203         THRU 2435-1000-BUILD-PARM-INFO-X.
+HNB203
+HNB203     MOVE LAPUP-POLC-OWN-CLI-ID (1)  TO L2435-CLI-ID.
+HNB203
+HNB203     PERFORM  2435-1000-OBTAIN-CLI-INFO
+HNB203         THRU 2435-1000-OBTAIN-CLI-INFO-X.
+HNB203
+HNB203     IF  L2435-RETRN-OK
+HNB203         MOVE L2435-CLI-SUR-NM       TO WS-CLI-SUR-NM
+HNB203     ELSE
+HNB203* MSG: CLIENT INFORMATION NOT FOUND FOR CLIENT (@1).
+HNB203         MOVE 'AS94009707'           TO WGLOB-MSG-REF-INFO
+HNB203         MOVE L2435-CLI-ID           TO WGLOB-MSG-PARM (1)
+HNB203         PERFORM  0260-1000-GENERATE-MESSAGE
+HNB203             THRU 0260-1000-GENERATE-MESSAGE-X
+HNB203         SET WS-ERROR-YES            TO TRUE
+HNB203         GO TO 6540-CREATE-INS-CONSENT-REQT-X
+HNB203     END-IF.
+HNB203
+HNB203* RETRIEVE THE INSUREDS NAME, AND CALCULATE THEIR AGE AS OF
+HNB203* THE APPLICATION UPLOAD DATE
+HNB203
+HNB203     IF  RPOL-POL-APP-UPLD-DT = WWKDT-ZERO-DT
+HNB203     OR  RPOL-POL-APP-UPLD-DT = SPACES
+HNB203* MSG: POLICY APPLICATION UPLOAD DATE IS BLANK FOR POLICY (@1).
+HNB203         MOVE 'AS94009708'           TO WGLOB-MSG-REF-INFO
+HNB203         MOVE RPOL-POL-ID            TO WGLOB-MSG-PARM (1)
+HNB203         PERFORM  0260-1000-GENERATE-MESSAGE
+HNB203             THRU 0260-1000-GENERATE-MESSAGE-X
+HNB203         SET WS-ERROR-YES            TO TRUE
+HNB203         GO TO 6540-CREATE-INS-CONSENT-REQT-X
+HNB203     END-IF.
+HNB203
+HNB203     PERFORM  2435-1000-BUILD-PARM-INFO
+HNB203         THRU 2435-1000-BUILD-PARM-INFO-X.
+HNB203
+HNB203     MOVE WS-INSRD-CLI-ID (I)        TO L2435-CLI-ID.
+HNB203     SET L2435-ATTAIN-AGE-REQD       TO TRUE.
+HNB203     MOVE RPOL-POL-APP-UPLD-DT       TO L2435-EFF-DT.
+HNB203
+HNB203     PERFORM  2435-1000-OBTAIN-CLI-INFO
+HNB203         THRU 2435-1000-OBTAIN-CLI-INFO-X.
+HNB203
+HNB203     IF  L2435-RETRN-OK
+HNB203         CONTINUE
+HNB203     ELSE
+HNB203* MSG: CLIENT INFORMATION NOT FOUND FOR CLIENT (@1).
+HNB203         MOVE 'AS94009709'           TO WGLOB-MSG-REF-INFO
+HNB203         MOVE L2435-CLI-ID           TO WGLOB-MSG-PARM (1)
+HNB203         PERFORM  0260-1000-GENERATE-MESSAGE
+HNB203             THRU 0260-1000-GENERATE-MESSAGE-X
+HNB203         SET WS-ERROR-YES            TO TRUE
+HNB203         GO TO 6540-CREATE-INS-CONSENT-REQT-X
+HNB203     END-IF.
+HNB203
+HNB203* CHECK WHETHER AN INSURED CONSENT FORM IS REQUIRED
+HNB203
+HNB203     IF  L2435-CLI-SUR-NM = WS-CLI-SUR-NM
+HNB203     AND RCLIU-OWNR-REL-INSR-CHILD
+HNB203     AND L2435-CLI-ATT-AGE-YEARS < 20
+HNB203         GO TO 6540-CREATE-INS-CONSENT-REQT-X
+HNB203     END-IF.
+HNB203
+HNB203     PERFORM  6560-INIT-UW-REQT
+HNB203         THRU 6560-INIT-UW-REQT-X.
+HNB203
+HNB203      MOVE '00070'                       TO L0080-REQIR-CODE.
+HNB203      SET L0080-REQIR-STAT-NEED-TO-ORDER TO TRUE.
+HNB203
+HNB203      PERFORM  6570-WRITE-A-REQT
+HNB203          THRU 6570-WRITE-A-REQT-X.
+HNB203
+HNB203 6540-CREATE-INS-CONSENT-REQT-X.
+HNB203     EXIT.
+HNB203/
+
+IPDDUP*--------------------------
+IPDDUP 6545-GET-CVG-COVR-FACE-AMT.
+IPDDUP*--------------------------
+IPDDUP
+IPDDUP     MOVE ZEROS TO WS-CVG-PRES-CNVR-FACE-AMT.
+IPDDUP
+IPDDUP     PERFORM  PLIN-1000-PLAN-HEADER-IN
+IPDDUP         THRU PLIN-1000-PLAN-HEADER-IN-X.
+IPDDUP     PERFORM  9876-1000-BUILD-PARM-INFO
+IPDDUP         THRU 9876-1000-BUILD-PARM-INFO-X.
+IPDDUP
+IPDDUP     MOVE RCVGC-CVG-NUM-N              TO L9876-CVG-NUM.
+IPDDUP     MOVE WCVGS-CVG-FACE-AMT (RCVGC-CVG-NUM-N)
+IPDDUP                                       TO L9876-MTHLY-BNFT-AMT.
+IPDDUP     MOVE WCVGS-CVG-STBL-4-CD (RCVGC-CVG-NUM-N)
+IPDDUP                                       TO L9876-STBL-4-CD.
+IPDDUP     MOVE WCVGS-CVG-ISS-EFF-DT (RCVGC-CVG-NUM-N)
+IPDDUP                                       TO L9876-PCFA-PRES-DT.
+IPDDUP     MOVE WCVGS-CVG-MAT-XPRY-DT (RCVGC-CVG-NUM-N)
+IPDDUP                                       TO L9876-XPRY-DT.
+IPDDUP     PERFORM  9876-1000-CALC-PCFA
+IPDDUP         THRU 9876-1000-CALC-PCFA-X.
+IPDDUP
+IPDDUP     IF  L9876-RETRN-OK
+IPDDUP         MOVE L9876-PRES-CNVR-FACE-AMT
+IPDDUP           TO WS-CVG-PRES-CNVR-FACE-AMT
+IPDDUP     END-IF.
+IPDDUP
+IPDDUP 6545-GET-CVG-COVR-FACE-AMT-X.
+IPDDUP     EXIT.
+IPDDUP/
+HNB005*--------------------------
+HNB005 6550-CREATE-MED-FORM-REQT.
+HNB005*--------------------------
+HNB005
+HNB005* RETRIEVE THE CLIU RECORD FOR THIS INSURED AND APPLICATION
+HNB005
+HNB005     MOVE RPOL-POL-ID                TO WCLUA-POL-ID.
+HNB005     MOVE WS-INSRD-CLI-ID (I)        TO WCLUA-CLI-ID.
+HNB005     MOVE WCLUA-KEY                  TO WCLUA-ENDBR-KEY.
+HNB005
+HNB005     PERFORM  CLUA-1000-BROWSE
+HNB005         THRU CLUA-1000-BROWSE-X.
+HNB005
+HNB005     PERFORM  CLUA-2000-READ-NEXT
+HNB005         THRU CLUA-2000-READ-NEXT-X.
+HNB005
+HNB005     IF  NOT WCLUA-IO-OK
+HNB005* MSG: CLIU RECORD NOT FOUND FOR CLIENT (@1) AND POLICY (@2).
+HNB005         MOVE 'AS94009714'           TO WGLOB-MSG-REF-INFO
+HNB005         MOVE WS-INSRD-CLI-ID (I)    TO WGLOB-MSG-PARM (1)
+HNB005         MOVE RPOL-POL-ID            TO WGLOB-MSG-PARM (2)
+HNB005         PERFORM  0260-1000-GENERATE-MESSAGE
+HNB005             THRU 0260-1000-GENERATE-MESSAGE-X
+HNB005         SET WS-ERROR-YES            TO TRUE
+HNB005     END-IF.
+HNB005
+HNB005     PERFORM  CLUA-3000-END-BROWSE
+HNB005         THRU CLUA-3000-END-BROWSE-X.
+HNB005
+HNB005     IF WS-ERROR-YES
+HNB005         GO TO 6550-CREATE-MED-FORM-REQT-X
+HNB005     END-IF.
+HNB005
+HNB005* CREATE THE APPROPRIATE MEDICAL FORM REQUIREMENT FOR THE INSURED
+HNB005
+HNB005     PERFORM  6560-INIT-UW-REQT
+HNB005         THRU 6560-INIT-UW-REQT-X.
+HNB005
+HNB005     EVALUATE TRUE
+HNB005
+HNB005         WHEN RCLIU-UW-TYP-DOCTOR
+HNB005              MOVE 'FORM1'           TO L0080-REQIR-CODE
+M328C2              MOVE RPOL-POL-ID        TO L0080-REQIR-POL-ID
+HNB005
+HNB005         WHEN RCLIU-UW-TYP-INTERV
+HNB005              MOVE 'FORM2'           TO L0080-REQIR-CODE
+M328C2              MOVE RPOL-POL-ID        TO L0080-REQIR-POL-ID
+HNB005
+HNB005         WHEN RCLIU-UW-TYP-SDSCLSR
+HNB005              MOVE 'FORM3'           TO L0080-REQIR-CODE
+M328C2              MOVE RPOL-POL-ID        TO L0080-REQIR-POL-ID
+HNB005
+MFFUPL         WHEN RCLIU-UW-TYP-CORPHLTH
+MFFUPL              MOVE 'FORM4'           TO L0080-REQIR-CODE
+M328C2              MOVE RPOL-POL-ID        TO L0080-REQIR-POL-ID
+MFFUPL
+MFFUPL         WHEN RCLIU-UW-TYP-PHYSCHK
+MFFUPL              MOVE 'FORM5'           TO L0080-REQIR-CODE
+MFFUPL
+MFFUPL         WHEN RCLIU-UW-TYP-CLINSURVEY
+MFFUPL              MOVE 'FORM6'           TO L0080-REQIR-CODE
+MFFUPL
+MFFUPL         WHEN RCLIU-UW-TYP-HLTHCHK
+MFFUPL              MOVE 'FORM7'           TO L0080-REQIR-CODE
+MFFUPL
+MP55OU         WHEN RCLIU-UW-TYP-FORMA 
+MP55OU              MOVE 'FORMA'           TO L0080-REQIR-CODE
+M328C2              MOVE RPOL-POL-ID        TO L0080-REQIR-POL-ID
+MP55OU
+MP55OU         WHEN RCLIU-UW-TYP-FORMB
+MP55OU              MOVE 'FORMB'           TO L0080-REQIR-CODE
+M328C2              MOVE RPOL-POL-ID        TO L0080-REQIR-POL-ID
+MP55OU
+MP55OU         WHEN RCLIU-UW-TYP-FORMC
+MP55OU              MOVE 'FORMC'           TO L0080-REQIR-CODE
+M328C2              MOVE RPOL-POL-ID        TO L0080-REQIR-POL-ID
+MP55OU
+MP55OU         WHEN RCLIU-UW-TYP-FORMD 
+MP55OU              MOVE 'FORMD'           TO L0080-REQIR-CODE
+M328C2              MOVE RPOL-POL-ID        TO L0080-REQIR-POL-ID
+MP55OU
+MFFUPL         WHEN RCLIU-UW-TYP-NONE
+MFFUPL              GO TO 6550-CREATE-MED-FORM-REQT-X
+MFFUPL
+HNB005         WHEN OTHER
+HNB005* MSG: UNDERWRITING TYPE CODE NOT VALID FOR CLIENT (@1) AND
+HNB005*      POLICY (@2)
+HNB005              MOVE 'AS94009715'      TO WGLOB-MSG-REF-INFO
+HNB005              MOVE RCLIU-CLI-ID      TO WGLOB-MSG-PARM (1)
+HNB005              MOVE RPOL-POL-ID       TO WGLOB-MSG-PARM (2)
+HNB005              PERFORM  0260-1000-GENERATE-MESSAGE
+HNB005                  THRU 0260-1000-GENERATE-MESSAGE-X
+HNB005              SET WS-ERROR-YES       TO TRUE
+HNB005              GO TO 6550-CREATE-MED-FORM-REQT-X
+HNB005
+HNB005     END-EVALUATE.
+HNB005
+HNB005     SET L0080-REQIR-STAT-NEED-TO-ORDER  TO TRUE.
+PR006Q
+PR006Q     IF  NOT RPOL-MY-KEMPO-TYP-NO
+UCPUPL     OR  RPOL-POL-CNVR-TYP-UCP
+PR006Q         SET L0080-REQIR-STAT-REVW-ACPT  TO TRUE
+PR006Q     END-IF.
+PR006Q
+HNB005     PERFORM  6570-WRITE-A-REQT
+HNB005         THRU 6570-WRITE-A-REQT-X.
+HNB005
+HNB005 6550-CREATE-MED-FORM-REQT-X.
+HNB005     EXIT.
+HNB005/
+R12024*------------------------
+R12024 6555-CREAT-UW-REVW-REQT.
+R12024*------------------------
+R12024
+R12024     PERFORM  6560-INIT-UW-REQT
+R12024         THRU 6560-INIT-UW-REQT-X.
+MP310C     MOVE RPOL-POL-ID                 TO L0080-REQIR-POL-ID.
+R12024
+R12024     MOVE '31R13'                     TO L0080-REQIR-CODE.
+R12024     SET L0080-REQIR-STAT-NEED-TO-ORDER  
+R12024                                      TO TRUE.
+R12024
+R12024     PERFORM  6570-WRITE-A-REQT
+R12024         THRU 6570-WRITE-A-REQT-X.
+R12024
+R12024 6555-CREAT-UW-REVW-REQT-X.
+R12024     EXIT.
+R12024/
+HNB014*------------------
+HNB014 6560-INIT-UW-REQT.
+HNB014*------------------
+HNB014
+HNB014     PERFORM 0080-1000-BUILD-PARM-INFO
+HNB014        THRU 0080-1000-BUILD-PARM-INFO-X.
+HNB014
+HNB014      SET  L0080-RQST-WRITE          TO TRUE.
+HNB014      SET  L0080-CLIENT-LEVEL        TO TRUE.
+HNB014      MOVE WS-INSRD-CLI-ID (I)       TO L0080-CLI-ID.
+HNB014      MOVE ZEROES                    TO L0080-COVERAGE-NUMBER.
+HNB014
+HNB014 6560-INIT-UW-REQT-X.
+HNB014      EXIT.
+HNB014/
+MP310C*-----------------------        
+MP310C 6565-PROCESS-UAPE-REC.      
+MP310C*-----------------------      
+MP310C      
+MP310C     MOVE WS-APP-ID                   TO WUAPE-APP-ID
+MP310C                                         WUAPE-ENDBR-APP-ID.
+MP310C     MOVE LOW-VALUES                  TO WUAPE-INCMPLT-SEQ-NUM.
+MP310C     MOVE HIGH-VALUES                 TO 
+MP310C                                    WUAPE-ENDBR-INCMPLT-SEQ-NUM.
+MP310C
+MP310C     PERFORM  UAPE-1000-BROWSE
+MP310C         THRU UAPE-1000-BROWSE-X.
+MP310C
+MP310C     IF NOT WUAPE-IO-OK
+MP310C         GO TO 6565-PROCESS-UAPE-REC-X
+MP310C     END-IF.
+MP310C
+MP310C     PERFORM  UAPE-2000-READ-NEXT
+MP310C         THRU UAPE-2000-READ-NEXT-X.
+MP310C
+MP310C     PERFORM  6575-GENERATE-INCMPLT-REQTS
+MP310C         THRU 6575-GENERATE-INCMPLT-REQTS-X
+MP310C         UNTIL WUAPE-IO-EOF
+MP310C         OR WS-ERROR-YES.
+MP310C
+MP310C     
+MP310C     PERFORM  UAPE-3000-END-BROWSE
+MP310C         THRU UAPE-3000-END-BROWSE-X.
+MP310C
+MP310C 6565-PROCESS-UAPE-REC-X.
+MP310C     EXIT.
+MP310C/
+MP310C
+HNB014*------------------
+HNB014 6570-WRITE-A-REQT.
+HNB014*------------------
+HNB014
+HNB014      PERFORM  0080-9000-WRITE-NEW-REQT
+HNB014          THRU 0080-9000-WRITE-NEW-REQT-X.
+HNB014
+HNB014      IF  NOT L0080-RETRN-OK
+HNB014*MSG: REQUIREMENT TYPE (@1) NOT GENERATED FOR CLIENT (@2)
+HNB014          MOVE L0080-REQIR-CODE        TO WGLOB-MSG-PARM (1)
+HNB014          MOVE WS-INSRD-CLI-ID (I)     TO WGLOB-MSG-PARM (2)
+HNB014          MOVE 'AS94009003'            TO WGLOB-MSG-REF-INFO
+HNB014          PERFORM  0260-1000-GENERATE-MESSAGE
+HNB014              THRU 0260-1000-GENERATE-MESSAGE-X
+HNB014          SET WS-ERROR-YES             TO TRUE
+HNB014          GO TO 6570-WRITE-A-REQT-X
+HNB014      END-IF.
+HNB014
+HNB014 6570-WRITE-A-REQT-X.
+HNB014     EXIT.
+HNB014/
+MP310C
+MP310C*----------------------------        
+MP310C 6575-GENERATE-INCMPLT-REQTS.      
+MP310C*----------------------------  
+MP310C
+MP310C     MOVE 'ICREQ'                     TO WEDIT-ETBL-TYP-ID.
+MP310C     MOVE RUAPE-INCMPLT-ID            TO WEDIT-ETBL-VALU-ID.
+MP310C     MOVE WGLOB-USER-LANG             TO WEDIT-ETBL-LANG-CD.  
+MP310C
+MP310C     PERFORM  EDIT-1000-READ
+MP310C         THRU EDIT-1000-READ-X.
+MP310C     
+MP310C     IF  WEDIT-IO-OK
+MP310C     OR (WEDIT-IO-NOT-FOUND
+MP310C     AND RUAPE-INCMPLT-ID NOT = SPACES)
+MP310C* GENERATE THE REQUIREMENT
+109682*MP310C         PERFORM  0080-1000-BUILD-PARM-INFO
+109682*MP310C             THRU 0080-1000-BUILD-PARM-INFO-X
+MP310C
+109682*MP310C         SET L0080-CLIENT-LEVEL       TO TRUE
+109682*MP310C         MOVE WS-INSRD-CLI-ID (I)     TO L0080-CLI-ID
+109682*MP310C         MOVE REDIT-ETBL-DESC-TXT     TO L0080-REQIR-CODE
+109682*MP310C         IF  (WEDIT-IO-NOT-FOUND
+109682*MP310C         AND RUAPE-INCMPLT-ID NOT = SPACES)
+109682*MP310C             MOVE '98R90'             TO L0080-REQIR-CODE
+109682*MP310C         END-IF
+109682*MP310C         MOVE RPOL-POL-ID             TO L0080-REQIR-POL-ID
+109682*MP310C         SET L0080-REQIR-STAT-NEED-TO-ORDER 
+109682*MP310C                                      TO TRUE
+MP310C
+109682*MP310C         PERFORM  0080-9000-WRITE-NEW-REQT
+109682*MP310C             THRU 0080-9000-WRITE-NEW-REQT-X
+109682
+109682         SET WS-CLIENT-LEVEL          TO TRUE 
+109682         MOVE WS-INSRD-CLI-ID (I)     TO WS-CLI-ID
+109682         MOVE REDIT-ETBL-DESC-TXT     TO WS-REQIR-CODE
+109682
+109682         IF  (WEDIT-IO-NOT-FOUND
+109682         AND RUAPE-INCMPLT-ID NOT = SPACES)
+109682             MOVE '98R90'         TO WS-REQIR-CODE
+109682         END-IF
+109682
+109682         MOVE RPOL-POL-ID             TO WS-REQIR-POL-ID
+109682         SET WS-REQIR-STAT-NEED-TO-ORDER 
+109682                                      TO TRUE
+109682         SET WS-RETRN-OK              TO TRUE
+109682         SET WS-RSLT-NOT-FOUND        TO TRUE
+109682         MOVE WGLOB-SYSTEM-DATE-INT   TO WS-DATE
+109682
+109682         PERFORM  6580-WRITE-NEW-REQT
+109682             THRU 6580-WRITE-NEW-REQT-X
+109682
+MP310C
+MP310C         IF NOT WS-RETRN-OK
+MP310C*MSG: REQUIREMENT TYPE (@1) NOT GENERATED FOR POLICY (@2).
+MP310C             MOVE WS-REQIR-CODE       TO WGLOB-MSG-PARM (1)
+MP310C             MOVE RPOL-POL-ID         TO WGLOB-MSG-PARM (2)
+MP310C             MOVE 'AS94009712'        TO WGLOB-MSG-REF-INFO
+MP310C             PERFORM  0260-1000-GENERATE-MESSAGE
+MP310C                 THRU 0260-1000-GENERATE-MESSAGE-X
+MP310C             SET WS-ERROR-YES         TO TRUE
+MP310C             GO TO 6575-GENERATE-INCMPLT-REQTS-X
+MP310C         END-IF 
+MP310C     END-IF.
+MP310C
+MP310C     PERFORM  UAPE-2000-READ-NEXT
+MP310C         THRU UAPE-2000-READ-NEXT-X.
+MP310C      
+MP310C 6575-GENERATE-INCMPLT-REQTS-X.
+MP310C     EXIT.
+MP310C/
+MP310C
+109682
+109682*---------------------        
+109682 6580-WRITE-NEW-REQT.      
+109682*---------------------
+109682
+109682     PERFORM  6581-SEARCH-BY-REQT
+109682         THRU 6581-SEARCH-BY-REQT-X.
+109682
+112130*109682     IF  WS-RSLT-OUTSTNDG-FOUND 
+112130*109904     AND WS-REQIR-CODE <> '98R90'
+112130*109682         GO TO 6580-WRITE-NEW-REQT-X
+112130*109682     END-IF.
+109682
+109682     SET WS-RSLT-WRITTEN              TO TRUE.
+109682
+109682     PERFORM  6583-WRITE-REQT
+109682         THRU 6583-WRITE-REQT-X.
+109682
+109682 6580-WRITE-NEW-REQT-X.
+109682     EXIT.
+109682/
+109682*---------------------        
+109682 6581-SEARCH-BY-REQT.      
+109682*---------------------
+109682
+109682** SETUP BROWSE KEYS.
+109682     MOVE LOW-VALUES             TO WREQT-KEY.
+109682     MOVE HIGH-VALUES            TO WREQT-ENDBR-KEY.
+109682     MOVE WS-POL-CLI-CD          TO WREQT-CPREQ-POL-CLI-CD.
+109682     MOVE WS-POL-CLI-CD          TO WREQT-ENDBR-CPREQ-POL-CLI-CD.
+109682     MOVE WS-CLI-ID              TO WREQT-CLI-ID.
+109682     MOVE WS-CLI-ID              TO WREQT-ENDBR-CLI-ID.
+109682     MOVE WS-REQIR-CODE          TO WREQT-REQIR-ID.
+109682     MOVE WS-REQIR-CODE          TO WREQT-ENDBR-REQIR-ID.
+109682
+109682     MOVE 1                      TO WS-NEW-SEQUENCE
+109682     MOVE 1                      TO WS-OLD-SEQUENCE.
+109682
+109682     PERFORM  REQT-1000-BROWSE
+109682         THRU REQT-1000-BROWSE-X.
+109682
+109682     IF  NOT WREQT-IO-OK
+109682         GO TO 6581-SEARCH-BY-REQT-X
+109682     END-IF.
+109682
+109682** FETCH FIRST, AND SET SEQUENCE FOR NEW ENTRY.
+109682** SEARCH REQUIREMENT FILE.
+109682*
+109682     PERFORM  REQT-2000-READ-NEXT
+109682         THRU REQT-2000-READ-NEXT-X.
+109682
+109682     IF  WREQT-IO-OK
+109682         IF  RREQT-CPREQ-POL-CLI-CD   =  WS-POL-CLI-CD
+109682         AND RREQT-CLI-ID             =  WS-CLI-ID
+109682         AND RREQT-REQIR-ID           =  WS-REQIR-CODE
+109682             MOVE RREQT-CPREQ-SEQ-NUM-N TO WS-OLD-SEQUENCE
+109682             PERFORM  6582-SEARCH-REQT-TEST
+109682                 THRU 6582-SEARCH-REQT-TEST-X
+109682                 UNTIL (NOT WREQT-IO-OK)
+112130*109682                 OR WS-RSLT-OUTSTNDG-FOUND
+109682             COMPUTE WS-NEW-SEQUENCE = WS-OLD-SEQUENCE + 1
+109682         END-IF
+109682     END-IF.
+109682     PERFORM  REQT-3000-END-BROWSE
+109682         THRU REQT-3000-END-BROWSE-X.
+109682
+109682 6581-SEARCH-BY-REQT-X.
+109682     EXIT.
+109682/
+109682*-----------------------        
+109682 6582-SEARCH-REQT-TEST.      
+109682*-----------------------
+109682
+109682     MOVE RREQT-CPREQ-SEQ-NUM-N         TO WS-OLD-SEQUENCE.
+109682*
+109682** SET STATUS & EXIT IF FOUND OUTSTANDING.
+109682*
+112130*109682     IF  RREQT-CPREQ-STAT-OUTSTANDING
+112130*109904     AND WS-REQIR-CODE <> '98R90'
+112130*109682         IF  RREQT-CPREQ-VALID-DT    = WWKDT-ZERO-DT
+112130*109682         OR  (RREQT-CPREQ-VALID-DT   > WS-DATE)
+112130*109682         OR  (RREQT-CPREQ-VALID-DT   = WS-DATE)
+112130*109682             SET WS-RSLT-OUTSTNDG-FOUND 
+112130*109682                                      TO TRUE
+112130*109682             GO TO 6582-SEARCH-REQT-TEST-X
+112130*109682         END-IF
+112130*109682     END-IF.
+109682
+109682     PERFORM  REQT-2000-READ-NEXT
+109682         THRU REQT-2000-READ-NEXT-X.
+109682
+109682 6582-SEARCH-REQT-TEST-X.
+109682     EXIT.
+109682/
+109682*----------------------- 
+109682 6583-WRITE-REQT.  
+109682*-----------------------
+109682
+109682     MOVE LOW-VALUES              TO RRTAB-REC-INFO.
+109682     PERFORM  6584-READ-RTAB
+109682         THRU 6584-READ-RTAB-X.
+109682
+109682     IF  NOT WS-RETRN-OK
+109682         GO TO 6583-WRITE-REQT-X
+109682     END-IF.
+109682
+109682* SETUP REQUIREMENT KEY.
+109682
+109682     MOVE WS-POL-CLI-CD               TO WREQT-CPREQ-POL-CLI-CD.
+109682     MOVE WS-CLI-ID                   TO WREQT-CLI-ID.
+109682     MOVE WS-REQIR-CODE               TO WREQT-REQIR-ID.
+109682     MOVE WS-NEW-SEQUENCE             TO WREQT-CPREQ-SEQ-NUM-N.
+109682
+109682
+109682* INITIALIZE REQT.
+109682
+109682     PERFORM  REQT-1000-CREATE
+109682         THRU REQT-1000-CREATE-X.
+109682
+109682     MOVE WS-DATE                   TO L1680-INTERNAL-1
+109682     MOVE ZERO                      TO L1680-NUMBER-OF-YEARS.
+109682     MOVE ZERO                      TO L1680-NUMBER-OF-MONTHS.
+109682     MOVE ZERO                      TO L1680-NUMBER-OF-DAYS.
+109682     PERFORM  1680-3000-ADD-Y-M-D-TO-DATE
+109682         THRU 1680-3000-ADD-Y-M-D-TO-DATE-X.
+109682     MOVE L1680-INTERNAL-2          TO RREQT-CPREQ-CREAT-DT.
+109682
+109682     PERFORM  6585-SET-REQT-DETAILS
+109682         THRU 6585-SET-REQT-DETAILS-X.
+109682
+109682     IF  NOT WS-RETRN-OK
+109682         GO TO 6583-WRITE-REQT-X
+109682     END-IF.
+109682* WRITE NEW REQT
+109682
+109682     PERFORM  REQT-1000-WRITE
+109682         THRU REQT-1000-WRITE-X.
+109682     PERFORM  6587-TWRK-READ               
+109682         THRU 6587-TWRK-READ-X.
+109682* DIARY LOG ENTRY
+109682     MOVE SPACES                    TO L0760-MESSAGE-NUMBER.
+109682     PERFORM  6589-WRITE-DALG
+109682         THRU 6589-WRITE-DALG-X.
+109682         
+109682         
+109682 6583-WRITE-REQT-X.
+109682     EXIT.
+109682/
+109682*----------------------
+109682 6584-READ-RTAB.  
+109682*----------------------
+109682
+109682     MOVE WS-REQIR-CODE         TO WRTAB-REQIR-ID.
+109682     PERFORM  RTAB-1000-READ
+109682         THRU RTAB-1000-READ-X.
+109682
+109682     IF  WRTAB-IO-OK
+109682         SET WS-RTAB-OK         TO TRUE
+109682         GO TO 6584-READ-RTAB-X
+109682     END-IF.
+109682
+109682** NOT FOUND - GENERATE MESSAGE.
+109682     SET WS-RTAB-NOT-FOUND      TO TRUE
+109682     MOVE WS-REQIR-CODE         TO WGLOB-MSG-PARM (1)
+109682     MOVE 'XS00000114'          TO WGLOB-MSG-REF-INFO
+109682
+109682     PERFORM  0260-3000-AUDIT-MESSAGE
+109682         THRU 0260-3000-AUDIT-MESSAGE-X.
+109682
+109682     IF  WGLOB-MSG-SEVRTY-SYSTEM
+109682     OR  WGLOB-MSG-SEVRTY-FATAL
+109682         SET WS-RETRN-NO-RTAB-ERROR TO TRUE
+109682     END-IF.
+109682
+109682 6584-READ-RTAB-X.
+109682     EXIT.
+109682/
+109682*----------------------
+109682 6585-SET-REQT-DETAILS.  
+109682*----------------------
+109682
+109682     MOVE WS-REQIR-STAT-CD            TO RREQT-CPREQ-STAT-CD.
+109682     MOVE WS-DATE                     TO L1680-INTERNAL-1.
+109682     MOVE ZERO                        TO L1680-NUMBER-OF-YEARS.
+109682     MOVE ZERO                        TO L1680-NUMBER-OF-MONTHS.
+109682     MOVE ZERO                        TO L1680-NUMBER-OF-DAYS.
+109682     PERFORM  1680-3000-ADD-Y-M-D-TO-DATE
+109682         THRU 1680-3000-ADD-Y-M-D-TO-DATE-X.
+109682     MOVE L1680-INTERNAL-2            TO RREQT-CPREQ-EFF-DT.
+109682     MOVE WGLOB-USER-ID               TO RREQT-USER-ID.
+109682     MOVE SPACES                      TO RREQT-CPREQ-DESGNT-ID.
+109682     MOVE WS-DATE                     TO RREQT-CPREQ-TST-DT
+109682                                         WS-TST-DT.
+109682     MOVE SPACES                      TO RREQT-CPREQ-TST-RSLT-CD.
+109682
+109682* SET/OVERRIDE TEST DETAILS IF GIVEN.
+109682
+109682     IF  WS-TST-DT                      >  WWKDT-ZERO-DT
+109682*        MOVE L0080-REQIR-TST-DT      TO RREQT-CPREQ-TST-DT
+109682         MOVE WS-TST-DT               TO L1680-INTERNAL-1
+109682         MOVE ZERO                    TO L1680-NUMBER-OF-YEARS
+109682         MOVE ZERO                    TO L1680-NUMBER-OF-MONTHS
+109682         MOVE ZERO                    TO L1680-NUMBER-OF-DAYS
+109682         PERFORM  1680-3000-ADD-Y-M-D-TO-DATE
+109682             THRU 1680-3000-ADD-Y-M-D-TO-DATE-X
+109682         MOVE L1680-INTERNAL-2        TO RREQT-CPREQ-TST-DT
+109682         PERFORM  6590-SET-VALIDITY-DATE
+109682             THRU 6590-SET-VALIDITY-DATE-X
+109682     END-IF.
+109682*
+109682* SET LAB CODE TO DEFAULT FROM RTAB
+109682* - IF A FORCED STATUS CHANGE TAKES PLACE, RTAB LOOKUPS ARE
+109682*   BYPASSED, AND THE FIELD CONTAINS LOW VALUES.  THE FIELD
+109682*   MUST NOT BE TRANSFERRED TO THE REQT RECORD IF THIS IS THE
+109682*   CASE.
+109682     IF  RREQT-CPREQ-DESGNT-ID  =  SPACES
+109682     AND RRTAB-LAB-ID       NOT =  LOW-VALUES
+109682         MOVE RRTAB-LAB-ID            TO RREQT-CPREQ-DESGNT-ID
+109682     END-IF.
+109682
+109682*
+109682* FOR REQUIREMENT CREATED THRU BATCH                      
+109682* POPULATE CATEGORY CODE FROM RTAB                
+109682*
+109682 
+109682     IF  RREQT-REQIR-CAT-CD = SPACES
+109682         MOVE RRTAB-REQIR-CAT-CD      TO RREQT-REQIR-CAT-CD    
+109682     END-IF.
+109682 
+109682     MOVE WS-REQIR-POL-ID             TO RREQT-REQIR-POL-ID.
+109682
+109682     IF  RUAPE-INCMPLT-DTL-TXT = SPACES
+109682         MOVE RRTAB-STD-COMNT-INFO    TO RREQT-REQIR-COMNT-INFO
+109682     ELSE
+109682         MOVE RUAPE-INCMPLT-DTL-TXT   TO RREQT-REQIR-COMNT-INFO
+109682     END-IF.
+109682
+109682     MOVE ZEROS                       TO RREQT-CPREQ-FOLWUP-NUM.
+109682     MOVE WWKDT-ZERO-DT               TO RREQT-CPREQ-FOLWUP-DT.
+109682
+109682 6585-SET-REQT-DETAILS-X.
+109682     EXIT.
+109682/
+109682*----------------
+109682 6587-TWRK-READ.
+109682*----------------
+109682     IF  WGLOB-ENVRMNT-BATCH
+109682         CONTINUE
+109682     ELSE 
+109682         PERFORM  6588-READ-TWRK-TS
+109682             THRU 6588-READ-TWRK-TS-X
+109682     END-IF.
+109682 6587-TWRK-READ-X.
+109682     EXIT. 
+109682/
+109682*--------------------
+109682 6588-READ-TWRK-TS.
+109682*--------------------
+109682
+109682     INITIALIZE               L8090-INPUT-PARM-INFO.
+109682     INITIALIZE               L8090-IO-PARM-INFO.
+109682
+109682     PERFORM  REQT-1000-READ
+109682         THRU REQT-1000-READ-X.
+109682
+109682     IF NOT WREQT-IO-OK
+109682        GO TO 6588-READ-TWRK-TS-X
+109682     END-IF.
+109682
+109682     MOVE ZEROS                       TO L8090-TEMP-WRK-SEQ-NUM.
+109682     SET L8090-TEMP-WRK-TYP-TS        TO TRUE.
+109682     MOVE  'REQT'                     TO L8090-TEMP-WRK-TS-TBL-ID.
+109682     MOVE LENGTH OF WLOCK-TWRK-TIMESTAMP-INFO 
+109682                                      TO L8090-AREA-LEN.
+109682     PERFORM  8090-3000-DELETE-TWRK
+109682         THRU 8090-3000-DELETE-TWRK-X.
+109682
+109682     INITIALIZE                WLOCK-TWRK-TIMESTAMP-INFO.
+109682     MOVE RREQT-PREV-UPDT-TS          TO WLOCK-TWRK-TIMESTAMP.
+109682     MOVE ZEROS                       TO L8090-TEMP-WRK-SEQ-NUM.
+109682     MOVE WLOCK-TWRK-TIMESTAMP        TO L8090-AREA-INFO-TEXT.
+109682     SET L8090-TEMP-WRK-TYP-TS        TO TRUE.
+109682     MOVE 'REQT'                      TO L8090-TEMP-WRK-TS-TBL-ID.
+109682     MOVE LENGTH OF WLOCK-TWRK-TIMESTAMP-INFO 
+109682                                      TO L8090-AREA-LEN.
+109682
+109682     PERFORM  8090-1000-WRITE-TWRK
+109682         THRU 8090-1000-WRITE-TWRK-X.
+109682
+109682 6588-READ-TWRK-TS-X.
+109682     EXIT.
+109682/
+109682
+109682*------------------
+109682 6589-WRITE-DALG.  
+109682*------------------
+109682
+109682     MOVE WS-POL-CLI-CD            TO L0760-POL-OR-CLI-TYPE.
+109682     MOVE WS-POL-ID                TO L0760-POL-OR-CLI-ID.
+109682     MOVE WS-REQIR-CODE            TO L0760-DAL-ACTIVITY.
+109682     MOVE WS-REQIR-STAT-CD         TO L0760-DAL-ACTION.
+109682     MOVE WS-CVG                   TO L0760-CVG-NUM.
+109682
+109682
+109682     PERFORM  0760-1000-PROCESS-DAL-ENTRY
+109682         THRU 0760-1000-PROCESS-DAL-ENTRY-X.
+109682
+109682     IF  NOT L0760-RETRN-OK
+109682         SET WS-RETRN-DALG-ERROR   TO TRUE
+109682     END-IF.
+109682 6589-WRITE-DALG-X.
+109682     EXIT.
+109682/
+109682*-----------------------
+109682 6590-SET-VALIDITY-DATE.  
+109682*-----------------------
+109682
+109682     PERFORM  6584-READ-RTAB
+109682         THRU 6584-READ-RTAB-X.
+109682
+109682     IF  NOT WRTAB-IO-OK
+109682         MOVE WWKDT-ZERO-DT        TO RREQT-CPREQ-VALID-DT
+109682         GO TO 6590-SET-VALIDITY-DATE-X
+109682     END-IF.
+109682
+109682* CALCULATE VALIDITY DATE.
+109682     PERFORM  RVAL-1000-SET-REQT-VALIDITY
+109682         THRU RVAL-1000-SET-REQT-VALIDITY-X.
+109682
+109682 6590-SET-VALIDITY-DATE-X.
+109682     EXIT.
+109682/
+
+      *------------------
+       6600-POLICY-EDITS.
+      *------------------
+
+           IF  L0953-NOT-FINAL-CALL
+               PERFORM  I953-1000-INIT-L0953-VALUES
+                   THRU I953-1000-INIT-L0953-VALUES-X
+               MOVE SPACES             TO L0953-SPND-POL-CSTAT-CD
+               MOVE SPACES             TO L0953-SPND-POL-EFF-DT
+           END-IF.
+
+P00090     IF  L0953-FINAL-CALL
+NWLCWA         MOVE RPOL-SERV-AGT-ID        TO L0953-SERV-AGT-ID
+P00090         MOVE RPOL-POL-INS-TYP-CD TO L0953-INS-TYP-CD
+29746F         MOVE RPOL-JPY-PAYO-IND       TO L0953-JPY-PAYO-IND
+B50518         IF RPOL-POL-CNVR-TYP-DHY-PHASE1
+B50518            MOVE RPOL-POL-ISS-EFF-DT    TO L0953-ISS-EFF-DT-X
+B50518            MOVE RPOL-POL-FINAL-DISP-DT TO L0953-FINAL-DISP-DT-X
+B50518         END-IF
+P00090     END-IF.
+101192
+101192     SET L0953-DEFAULT-INSURED-NO     TO TRUE.
+101192     IF  RPOL-PROD-APP-TYP-FXWL
+101192         SET L0953-DEFAULT-INSURED    TO TRUE
+101192     END-IF.
+101192
+           MOVE L8240-AGT-ID (1)       TO L0953-POLW-AGT-ID (1).
+           MOVE L8240-AGT-ID (2)       TO L0953-POLW-AGT-ID (2).
+           MOVE L8240-AGT-ID (3)       TO L0953-POLW-AGT-ID (3).
+MFFUPL
+MFFUPL     SET L0953-BPSS-ALLOC-CREAT-YES  TO TRUE.
+
+           PERFORM  0953-1000-MAINTAIN-POLICY
+               THRU 0953-1000-MAINTAIN-POLICY-X.
+
+           MOVE L0953-POLW-AGT-ID (1)  TO L8240-AGT-ID (1).
+           MOVE L0953-POLW-AGT-ID (2)  TO L8240-AGT-ID (2).
+           MOVE L0953-POLW-AGT-ID (3)  TO L8240-AGT-ID (3).
+
+       6600-POLICY-EDITS-X.
+           EXIT.
+      /
+HNB203*-----------------------
+HNB203 6610-PROCESS-POL-REQTS.
+HNB203*-----------------------
+HNB203
+HNB203     SET WS-ERROR-NO TO TRUE.
+HNB203
+HNB203      PERFORM  6620-CREATE-OWNER-REQT
+HNB203          THRU 6620-CREATE-OWNER-REQT-X.
+HNB203
+B10912      PERFORM  6630-CREATE-PAP-REQT
+B10912          THRU 6630-CREATE-PAP-REQT-X.
+B10912
+HNB203      IF  WS-ERROR-YES
+HNB203          PERFORM  0030-5000-LOGIC-ERROR
+HNB203              THRU 0030-5000-LOGIC-ERROR-X
+HNB203      END-IF.
+HNB203
+HNB203 6610-PROCESS-POL-REQTS-X.
+HNB203     EXIT.
+HNB203/
+HNB203*----------------------
+HNB203 6620-CREATE-OWNER-REQT.
+HNB203*----------------------
+HNB203
+HNB203* CREATE AN ISSUE REQUIREMENT IF THE POLICY OWNER IS UNDER
+HNB203* 20 YEARS OF AGE AS AT THE APPLICATION UPLOAD DATE
+HNB203
+HNB203     IF  RPOL-POL-APP-UPLD-DT = WWKDT-ZERO-DT
+HNB203     OR  RPOL-POL-APP-UPLD-DT = SPACES
+HNB203* MSG: POLICY APPLICATION UPLOAD DATE IS BLANK FOR POLICY (@1).
+HNB203         MOVE 'AS94009710'           TO WGLOB-MSG-REF-INFO
+HNB203         MOVE RPOL-POL-ID            TO WGLOB-MSG-PARM (1)
+HNB203         PERFORM  0260-1000-GENERATE-MESSAGE
+HNB203             THRU 0260-1000-GENERATE-MESSAGE-X
+HNB203         SET WS-ERROR-YES            TO TRUE
+HNB203         GO TO 6620-CREATE-OWNER-REQT-X
+HNB203     END-IF.
+HNB203
+NV3N01     MOVE SPACES               TO WS-COMPRESSED-NAME-X.
+NV3N01     PERFORM  2435-1000-BUILD-PARM-INFO
+NV3N01         THRU 2435-1000-BUILD-PARM-INFO-X.
+NV3N01
+NV3N01     MOVE LAPUP-POLC-OWN-CLI-ID (1)  TO L2435-CLI-ID.
+NV3N01     MOVE RPOL-AGE-CALC-MTHD-CD       TO L2435-AGE-CALC-MTHD-CD.
+NV3N01     SET L2435-ATTAIN-AGE-REQD       TO TRUE.
+NV3N01     IF  RPOL-SPCL-AGT-SIGN-DT <> WWKDT-ZERO-DT
+NV3N01         MOVE RPOL-SPCL-AGT-SIGN-DT   TO L2435-EFF-DT
+NV3N01     ELSE
+NV3N01         MOVE RPOL-POL-APP-UPLD-DT    TO L2435-EFF-DT
+NV3N01     END-IF.
+NV3N01
+NV3N01     PERFORM  2435-1000-OBTAIN-CLI-INFO
+NV3N01         THRU 2435-1000-OBTAIN-CLI-INFO-X.
+NV3N01
+NV3N01     IF  NOT L2435-RETRN-OK
+NV3N01* MSG: CLIENT INFORMATION NOT FOUND FOR CLIENT (@1).
+NV3N01         MOVE 'AS94009711'           TO WGLOB-MSG-REF-INFO
+NV3N01         MOVE L2435-CLI-ID           TO WGLOB-MSG-PARM (1)
+NV3N01         PERFORM  0260-1000-GENERATE-MESSAGE
+NV3N01             THRU 0260-1000-GENERATE-MESSAGE-X
+NV3N01         SET WS-ERROR-YES            TO TRUE
+NV3N01         GO TO 6620-CREATE-OWNER-REQT-X
+NV3N01     END-IF.
+NV3N01
+NV3N01* EXIT IF THE OWNER IS A COMPANY
+NV3N01
+NV3N01     IF  L2435-CLI-SEX-CD = 'C'
+NV3N01         GO TO 6620-CREATE-OWNER-REQT-X
+NV3N01     END-IF.
+NV3N01
+NV3N01* WRITE KATAKANA GIVEN NAME AND SURNAME
+NV3N01
+NV3N01*COMPRESS KATAKANA GIVEN & SUR NAME
+NV3N01
+NV3N01     MOVE L2435-CLI-NM-COMPRESSED     TO WS-COMPRESSED-NAME-X.
+NV3N01     MOVE RPOL-SERV-AGT-ID            TO L2435-CLI-ID.
+NV3N01
+NV3N01     PERFORM  2435-1000-BUILD-PARM-INFO
+NV3N01         THRU 2435-1000-BUILD-PARM-INFO-X.
+NV3N01     PERFORM  2435-1000-OBTAIN-CLI-INFO
+NV3N01         THRU 2435-1000-OBTAIN-CLI-INFO-X.
+NV3N01     IF  L2435-RETRN-OK
+NV3N01         CONTINUE
+NV3N01     ELSE
+NV3N01* MSG: CLIENT INFORMATION NOT FOUND FOR CLIENT (@1).
+NV3N01         MOVE 'AS94009709'           TO WGLOB-MSG-REF-INFO
+NV3N01         MOVE L2435-CLI-ID           TO WGLOB-MSG-PARM (1)
+NV3N01         PERFORM  0260-1000-GENERATE-MESSAGE
+NV3N01             THRU 0260-1000-GENERATE-MESSAGE-X
+NV3N01     END-IF.
+NV3N01
+NV3N01     IF  L2435-CLI-NM-COMPRESSED  = WS-COMPRESSED-NAME-X
+NV3N01* FALLS UNDER MLJ EMPLOYEE POLICY (SELF-CONTRACTING POLICY)
+NV3N01
+NV3N01         PERFORM  0080-1000-BUILD-PARM-INFO
+NV3N01             THRU 0080-1000-BUILD-PARM-INFO-X
+NV3N01
+NV3N01         SET L0080-POLICY-LEVEL          TO TRUE
+NV3N01         MOVE RPOL-POL-ID                TO L0080-POL-ID
+NV3N01         MOVE 'SELFC'                    TO L0080-REQIR-CODE
+NV3N01         SET L0080-REQIR-STAT-SUGG-ISS-RQIR TO TRUE
+NV3N01
+NV3N01         PERFORM  0080-9000-WRITE-NEW-REQT
+NV3N01             THRU 0080-9000-WRITE-NEW-REQT-X
+NV3N01
+NV3N01         IF  NOT L0080-RETRN-OK
+NV3N01* MSG: REQUIREMENT TYPE (@1) NOT GENERATED FOR POLICY (@2).
+NV3N01             MOVE L0080-REQIR-CODE       TO WGLOB-MSG-PARM (1)
+NV3N01             MOVE RPOL-POL-ID            TO WGLOB-MSG-PARM (2)
+NV3N01             MOVE 'AS94009716'           TO WGLOB-MSG-REF-INFO
+NV3N01             PERFORM  0260-1000-GENERATE-MESSAGE
+NV3N01                 THRU 0260-1000-GENERATE-MESSAGE-X
+NV3N01             SET WS-ERROR-YES            TO TRUE
+NV3N01             GO TO 6620-CREATE-OWNER-REQT-X
+NV3N01         END-IF
+NV3N01     END-IF.
+NV3N01
+HNB203     PERFORM  2435-1000-BUILD-PARM-INFO
+HNB203         THRU 2435-1000-BUILD-PARM-INFO-X.
+HNB203
+HNB203     MOVE LAPUP-POLC-OWN-CLI-ID (1)  TO L2435-CLI-ID.
+M176B1     MOVE RPOL-AGE-CALC-MTHD-CD       TO L2435-AGE-CALC-MTHD-CD.
+HNB203     SET L2435-ATTAIN-AGE-REQD       TO TRUE.
+CR0026*HNB203     MOVE RPOL-POL-APP-UPLD-DT       TO L2435-EFF-DT.
+CR0026     IF  RPOL-SPCL-AGT-SIGN-DT <> WWKDT-ZERO-DT
+CR0026         MOVE RPOL-SPCL-AGT-SIGN-DT   TO L2435-EFF-DT
+CR0026     ELSE
+CR0026         MOVE RPOL-POL-APP-UPLD-DT    TO L2435-EFF-DT
+CR0026     END-IF.
+HNB203
+HNB203     PERFORM  2435-1000-OBTAIN-CLI-INFO
+HNB203         THRU 2435-1000-OBTAIN-CLI-INFO-X.
+HNB203
+HNB203     IF  NOT L2435-RETRN-OK
+HNB203* MSG: CLIENT INFORMATION NOT FOUND FOR CLIENT (@1).
+HNB203         MOVE 'AS94009711'           TO WGLOB-MSG-REF-INFO
+HNB203         MOVE L2435-CLI-ID           TO WGLOB-MSG-PARM (1)
+HNB203         PERFORM  0260-1000-GENERATE-MESSAGE
+HNB203             THRU 0260-1000-GENERATE-MESSAGE-X
+HNB203         SET WS-ERROR-YES            TO TRUE
+HNB203         GO TO 6620-CREATE-OWNER-REQT-X
+HNB203     END-IF.
+HNB203
+B10899* EXIT IF THE OWNER IS A COMPANY
+B10899
+B10899     IF  L2435-CLI-SEX-CD = 'C'
+B10899         GO TO 6620-CREATE-OWNER-REQT-X
+B10899     END-IF.
+B10899
+26878D* POLICYOWNER HISTORY FILE REQUEST
+26878D     IF  (WS-APP-CHNL-NWL-PA
+26878D     OR   WS-APP-CHNL-NWL-MGA)
+26878D     AND  RPOL-POL-STAT-PENDING
+26878D     AND  L2435-CLI-ATT-AGE-YEARS  >= 70 
+26878D     AND  RPOL-COLI-PROD-NO
+26878D         PERFORM  6621-CREATE-PEHCK-REQT
+26878D             THRU 6621-CREATE-PEHCK-REQT-X
+EP1923             VARYING WS-INSRD-CNTR FROM 1 BY 1
+EP1923             UNTIL WS-INSRD-CNTR > WS-TOT-INSRD
+26878D     END-IF.
+26878D
+023800     MOVE '023800'                    TO WTRNS-PROJ-ID.
+023800     PERFORM  TRNS-1000-READ
+023800         THRU TRNS-1000-READ-X.
+023800
+023800     MOVE WWKDT-ZERO-DT               TO WS-MINR-CHG-EFF-DT.
+CR0008     MOVE +18                         TO WS-MINR-CHG-AGE.
+023800     EVALUATE TRUE
+CR0025*023800        WHEN RPOL-POL-APP-RECV-DT <> WWKDT-ZERO-DT
+CR0025*023800            MOVE RPOL-POL-APP-RECV-DT   TO WS-MINR-CHG-EFF-DT
+CR0025        WHEN RPOL-SPCL-AGT-SIGN-DT <> WWKDT-ZERO-DT
+CR0025             MOVE RPOL-SPCL-AGT-SIGN-DT 
+CR0025                                      TO WS-MINR-CHG-EFF-DT
+023800        WHEN RPOL-POL-APP-UPLD-DT <> WWKDT-ZERO-DT
+023800            MOVE RPOL-POL-APP-UPLD-DT
+023800                                      TO WS-MINR-CHG-EFF-DT
+CR0008*023800        WHEN OTHER
+CR0008*023800            MOVE +18                  TO WS-MINR-CHG-AGE
+023800     END-EVALUATE.
+023800
+023800     IF  WS-MINR-CHG-EFF-DT < RTRNS-STRT-DT 
+023800     AND WS-MINR-CHG-EFF-DT <> WWKDT-ZERO-DT
+023800         MOVE +20                      TO WS-MINR-CHG-AGE
+023800     END-IF.
+023800*HNB203     IF  L2435-CLI-ATT-AGE-YEARS < 20
+023800     IF  L2435-CLI-ATT-AGE-YEARS < WS-MINR-CHG-AGE
+HNB203         CONTINUE
+HNB203     ELSE
+HNB203         GO TO 6620-CREATE-OWNER-REQT-X
+HNB203     END-IF.
+HNB203
+HNB203     PERFORM 0080-1000-BUILD-PARM-INFO
+HNB203        THRU 0080-1000-BUILD-PARM-INFO-X.
+HNB203
+HNB203     SET L0080-POLICY-LEVEL          TO TRUE.
+HNB203     MOVE RPOL-POL-ID                TO L0080-POL-ID.
+HNB203     MOVE '00071'                    TO L0080-REQIR-CODE.
+HNB203     SET L0080-REQIR-STAT-NEED-TO-ORDER TO TRUE.
+HNB203
+HNB203     PERFORM  0080-9000-WRITE-NEW-REQT
+HNB203         THRU 0080-9000-WRITE-NEW-REQT-X.
+HNB203
+HNB203     IF  NOT L0080-RETRN-OK
+HNB203*MSG: REQUIREMENT TYPE (@1) NOT GENERATED FOR POLICY (@2).
+HNB203         MOVE L0080-REQIR-CODE       TO WGLOB-MSG-PARM (1)
+HNB203         MOVE RPOL-POL-ID            TO WGLOB-MSG-PARM (2)
+HNB203         MOVE 'AS94009712'           TO WGLOB-MSG-REF-INFO
+HNB203         PERFORM  0260-1000-GENERATE-MESSAGE
+HNB203             THRU 0260-1000-GENERATE-MESSAGE-X
+HNB203         SET WS-ERROR-YES            TO TRUE
+HNB203         GO TO 6620-CREATE-OWNER-REQT-X
+HNB203     END-IF.
+HNB203
+HNB203 6620-CREATE-OWNER-REQT-X.
+HNB203     EXIT.
+HNB203/
+26878D*-----------------------
+26878D 6621-CREATE-PEHCK-REQT.
+26878D*-----------------------
+26878D
+EP1923
+EP1923     MOVE RPOL-POL-ID                 TO WCLUA-POL-ID.
+EP1923     MOVE WS-INSRD-CLI-ID (WS-INSRD-CNTR)         
+EP1923                                      TO WCLUA-CLI-ID.
+EP1923     MOVE WCLUA-KEY                   TO WCLUA-ENDBR-KEY.
+EP1923    
+EP1923     PERFORM  CLUA-1000-BROWSE
+EP1923         THRU CLUA-1000-BROWSE-X.
+EP1923
+EP1923     PERFORM  CLUA-2000-READ-NEXT
+EP1923         THRU CLUA-2000-READ-NEXT-X.
+EP1923
+EP1923     IF NOT WCLUA-IO-OK
+EP1923        PERFORM  CLUA-3000-END-BROWSE
+EP1923            THRU CLUA-3000-END-BROWSE-X
+EP1923        GO TO 6621-CREATE-PEHCK-REQT-X
+EP1923     END-IF.
+EP1923
+EP1923     PERFORM  CLUA-3000-END-BROWSE
+EP1923         THRU CLUA-3000-END-BROWSE-X.
+EP1923
+26878D     IF (RPOL-POL-INS-TYP-TRAD
+26878D     AND RCLIU-OWNR-REL-INSR-EMPLOYER)
+26878D     OR  (RPOL-POL-INS-TYP-UL
+26878D     AND RCLIU-OWNR-REL-INSR-EMPLOYEE)
+26878D         GO TO 6621-CREATE-PEHCK-REQT-X
+26878D     END-IF.    
+26878D     
+26878D     PERFORM 0080-1000-BUILD-PARM-INFO
+26878D        THRU 0080-1000-BUILD-PARM-INFO-X.
+26878D
+26878D   SET L0080-CLIENT-LEVEL       TO TRUE.
+26878D   MOVE WS-INSRD-CLI-ID(WS-INSRD-CNTR)
+26878D                                TO L0080-CLI-ID.
+26878D   MOVE 'PEHCK'                 TO L0080-REQIR-CODE.
+26878D
+26878D   PERFORM  0080-1000-SEARCH-ONE
+26878D       THRU 0080-1000-SEARCH-ONE-X.
+26878D
+26878D   IF  L0080-RSLT-OUTSTNDG-FOUND
+26878D         GO TO 6621-CREATE-PEHCK-REQT-X
+26878D   END-IF.
+26878D     MOVE RPOL-POL-ID                 TO L0080-REQIR-POL-ID.
+26878D     SET L0080-REQIR-STAT-ORDERED     TO TRUE.
+26878D
+26878D     PERFORM  0080-9000-WRITE-NEW-REQT
+26878D         THRU 0080-9000-WRITE-NEW-REQT-X.
+26878D
+26878D     IF  NOT L0080-RETRN-OK
+26878D*MSG: REQUIREMENT TYPE (@1) NOT GENERATED FOR CLIENT (@2)
+26878D         MOVE L0080-REQIR-CODE        TO WGLOB-MSG-PARM (1)
+26878D         MOVE WS-INSRD-CLI-ID (WS-INSRD-CNTR)
+26878D                                      TO WGLOB-MSG-PARM (2)
+26878D         MOVE 'AS94009003'            TO WGLOB-MSG-REF-INFO
+26878D         PERFORM  0260-1000-GENERATE-MESSAGE
+26878D             THRU 0260-1000-GENERATE-MESSAGE-X
+26878D         SET WS-ERROR-YES             TO TRUE
+26878D         GO TO 6621-CREATE-PEHCK-REQT-X
+26878D     END-IF.
+26878D
+26878D 6621-CREATE-PEHCK-REQT-X.
+26878D     EXIT.
+26878D/
+B10912*---------------------
+B10912 6630-CREATE-PAP-REQT.
+B10912*---------------------
+B10912
+B10912* CREATE THE PAPER APPLICATION REQUIREMENT FOR THIS POLICY
+B10912
+B10912     PERFORM  0080-1000-BUILD-PARM-INFO
+B10912         THRU 0080-1000-BUILD-PARM-INFO-X.
+B10912
+B10912     SET L0080-POLICY-LEVEL          TO TRUE.
+B10912     MOVE RPOL-POL-ID                TO L0080-POL-ID.
+B10912     MOVE 'PAP'                      TO L0080-REQIR-CODE.
+B10912     SET L0080-REQIR-STAT-SUGG-ISS-RQIR TO TRUE.
+MP270F 
+MP270F     IF RPOL-PAPR-LESS-APP-YES
+MP270F         SET L0080-REQIR-STAT-REVW-ACPT  TO TRUE
+MP270F     END-IF.
+B10912
+B10912     PERFORM  0080-9000-WRITE-NEW-REQT
+B10912         THRU 0080-9000-WRITE-NEW-REQT-X.
+B10912
+B10912     IF  NOT L0080-RETRN-OK
+B10912* MSG: REQUIREMENT TYPE (@1) NOT GENERATED FOR POLICY (@2).
+B10912         MOVE L0080-REQIR-CODE       TO WGLOB-MSG-PARM (1)
+B10912         MOVE RPOL-POL-ID            TO WGLOB-MSG-PARM (2)
+B10912         MOVE 'AS94009716'           TO WGLOB-MSG-REF-INFO
+B10912         PERFORM  0260-1000-GENERATE-MESSAGE
+B10912             THRU 0260-1000-GENERATE-MESSAGE-X
+B10912         SET WS-ERROR-YES            TO TRUE
+B10912         GO TO 6630-CREATE-PAP-REQT-X
+B10912     END-IF.
+B10912
+B10912 6630-CREATE-PAP-REQT-X.
+B10912     EXIT.
+B10912/
+      *------------------------
+       6650-CALCULATE-PREMIUMS.
+      *------------------------
+
+      *    MOVE 1                      TO L0183-RECALC-PREM-IND.
+      *    MOVE 1                      TO L0183-OFF-ANNV-SAVE-SIDE.
+      *    MOVE 1                      TO L0183-PMT-REVRS-CD.
+
+           SET  L0183-RECALC-PREM-FORCED TO TRUE.
+           MOVE +1                       TO L0183-OFF-ANNV-SAVE-SIDE.
+           SET  L0183-PMT-REVRS-PAYMENT  TO TRUE.
+
+           PERFORM  0183-1000-CALC-NXT-PREM
+               THRU 0183-1000-CALC-NXT-PREM-X.
+
+       6650-CALCULATE-PREMIUMS-X.
+           EXIT.
+      /
+      *--------------------
+       6750-WRITE-COVERAGE.
+      *--------------------
+
+           IF WS-CVG = 1
+               IF LAPUP-BASE-CVG-JOINT
+                  MOVE 'J'                TO WCVGS-CVG-SEX-CD (WS-CVG)
+               END-IF
+           END-IF.
+
+           MOVE WPOL-POL-ID              TO WCVG-POL-ID.
+           MOVE WS-CVG                   TO WCVG-CVG-NUM-N.
+           MOVE WCVGS-CVG-INFO (WS-CVG)  TO RCVG-CVG-INFO.
+
+           PERFORM  CVG-1000-WRITE
+               THRU CVG-1000-WRITE-X.
+
+       6750-WRITE-COVERAGE-X.
+           EXIT.
+      /
+      *----------------------
+       6800-REWRITE-COVERAGE.
+      *----------------------
+
+           MOVE WPOL-POL-ID              TO WCVG-POL-ID.
+           MOVE WS-CVG                   TO WCVG-CVG-NUM-N.
+
+           PERFORM  CVG-1000-READ-FOR-UPDATE
+               THRU CVG-1000-READ-FOR-UPDATE-X.
+
+           MOVE WCVGS-CVG-INFO (WS-CVG)  TO RCVG-CVG-INFO.
+B10775*
+B10775*    FOR CONVERTED POLICIES WE MUST ENSURE THAT THE COVERAGE
+B10775*    ISSUE EFFECTIVE DATE IS THE SAME AS THE RECENTLY UPDATED
+B10775*    POLICY ISSUE EFFECTIVE DATE
+B10775*
+B10775     IF RPOL-POL-CNVR-TYP-DHY-PHASE1
+B10775         MOVE RPOL-POL-ISS-EFF-DT TO RCVG-CVG-ISS-EFF-DT
+B10775     END-IF.
+
+           PERFORM  CVG-2000-REWRITE
+               THRU CVG-2000-REWRITE-X.
+
+       6800-REWRITE-COVERAGE-X.
+           EXIT.
+02NB01/
+02NB01*------------------------
+02NB01 6810-PROCESS-CONVERSION.
+02NB01*------------------------
+02NB01
+02NB01     PERFORM  7200-SET-UCNV-KEYS
+02NB01         THRU 7200-SET-UCNV-KEYS-X.
+02NB01
+02NB01     PERFORM  UCNV-1000-BROWSE
+02NB01         THRU UCNV-1000-BROWSE-X.
+02NB01
+02NB01     PERFORM  UCNV-2000-READ-NEXT
+02NB01         THRU UCNV-2000-READ-NEXT-X.
+02NB01
+02NB01     IF  WUCNV-IO-EOF
+02NB01*MSG: UPLOAD CONVERSION DATA INCOMPLETE FOR APP ID (@1)
+02NB01         MOVE 'AS94000038'       TO WGLOB-MSG-REF-INFO
+02NB01         MOVE WUCNV-APP-ID       TO WGLOB-MSG-PARM (1)
+02NB01         PERFORM  9000-BUILD-MESSAGE-EXTRACT
+02NB01             THRU 9000-BUILD-MESSAGE-EXTRACT-X
+02NB01         PERFORM  UCNV-3000-END-BROWSE
+02NB01             THRU UCNV-3000-END-BROWSE-X
+               PERFORM  POL-3000-UNLOCK
+                   THRU POL-3000-UNLOCK-X
+02NB01         GO TO 6810-PROCESS-CONVERSION-X
+02NB01     END-IF.
+02NB01
+02NB01     PERFORM  6820-PROCESS-UCNV
+02NB01         THRU 6820-PROCESS-UCNV-X
+02NB01         UNTIL WUCNV-IO-EOF.
+02NB01
+02NB01     PERFORM  UCNV-3000-END-BROWSE
+02NB01         THRU UCNV-3000-END-BROWSE-X.
+02NB01
+02NB01 6810-PROCESS-CONVERSION-X.
+02NB01     EXIT.
+02NB01/
+02NB01*------------------
+02NB01 6820-PROCESS-UCNV.
+02NB01*------------------
+02NB01
+02NB01     PERFORM  UCNV-1000-PROCESS-UCNV-FIELD
+02NB01         THRU UCNV-1000-PROCESS-UCNV-FIELD-X.
+02NB01
+02NB01     PERFORM  UCNV-2000-READ-NEXT
+02NB01         THRU UCNV-2000-READ-NEXT-X.
+02NB01
+B01137*    MOVE RPOL-POL-CSTAT-CD           TO RPOLX-CSTAT-CD.
+B01120*    MOVE LAPUP-POLC-OWN-CLI-ID (1)   TO RPOLX-INSRD-CLI-ID.
+B10737*
+B10737*    SET BASE-INSURED-NOT-FOUND TO TRUE.
+B10737*    MOVE ZERO TO WS-BASE-SEARCH-SUB.
+B10737*
+B10737*    PERFORM WITH TEST AFTER UNTIL BASE-INSURED-FOUND
+B10737*               OR WS-BASE-SEARCH-SUB >= LAPUP-CLI-SUB
+B10737*      ADD 1 TO WS-BASE-SEARCH-SUB
+B10737*      IF LAPUP-BASE-INSURED-IND (WS-BASE-SEARCH-SUB) = '1' OR '2'
+B10737*         SET BASE-INSURED-FOUND TO TRUE
+B10737*      END-IF
+B10737*    END-PERFORM
+B10737*
+B10737*    IF BASE-INSURED-FOUND
+B10737*       MOVE LAPUP-CLI-ID (WS-BASE-SEARCH-SUB)
+B10737*       TO   RPOLX-INSRD-CLI-ID
+B10737*    ELSE
+B10737*       MOVE LAPUP-CLI-ID (1)
+B10737*       TO   RPOLX-INSRD-CLI-ID
+B10737*    END-IF.
+B10737
+B10737     MOVE WS-BASE-INSRD-CLI-ID        TO RPOLX-INSRD-CLI-ID.
+02NB01     MOVE WPOL-POL-ID                 TO WPOLX-POL-ID.
+02NB01     MOVE LAPUP-UCNV-SUB              TO WPOLX-SEQ-NUM.
+02NB01
+B01137*    APPLY EDITS AND SET THE STATUS OF THE CONVERTED POLICY
+B01137*
+B01137     PERFORM  9196-1000-BUILD-PARM-INFO
+B01137         THRU 9196-1000-BUILD-PARM-INFO-X.
+B01137
+B01137     PERFORM  9196-1000-POLX-EDITS
+B01137         THRU 9196-1000-POLX-EDITS-X.
+B01137
+02NB01     PERFORM  POLX-1000-WRITE
+02NB01         THRU POLX-1000-WRITE-X.
+02NB01
+02NB01 6820-PROCESS-UCNV-X.
+02NB01     EXIT.
+02NB01/
+      *------------------
+02NB01 6830-REWRITE-CLIU.
+      *------------------
+02NB01
+02NB01* HERE WE WANT UPDATE THE CLIU RECORD FOR THE BASE INSURED WITH
+02NB01* THE ORIG DEATH BENEFIT AND HOSPITALIZATION AMOUNTS FROM
+02NB01* PRE-CONVERSION.
+02NB01
+02NB01     IF WS-BASE-INSRD-CLI-ID = SPACES
+02NB01     OR WS-BASE-INSRD-STCKR-ID = SPACES
+02NB01         GO TO 6830-REWRITE-CLIU-X
+02NB01     END-IF.
+02NB01
+02NB01     MOVE WS-BASE-INSRD-CLI-ID     TO WCLIU-CLI-ID.
+02NB01     MOVE WS-BASE-INSRD-STCKR-ID   TO WCLIU-STCKR-ID.
+02NB01     MOVE WPOL-POL-ID              TO WCLIU-POL-ID.
+02NB01
+02NB01     PERFORM  CLIU-1000-READ-FOR-UPDATE
+02NB01         THRU CLIU-1000-READ-FOR-UPDATE-X.
+02NB01
+02NB01     MOVE LAPUP-CNVR-ORIG-DB-AMT   TO RCLIU-CNVR-ORIG-DB-AMT.
+02NB01     MOVE LAPUP-CNVR-ORIG-HOSP-AMT TO RCLIU-CNVR-ORIG-HOSP-AMT.
+02NB01
+02NB01     PERFORM  CLIU-2000-REWRITE
+02NB01         THRU CLIU-2000-REWRITE-X.
+02NB01
+02NB01 6830-REWRITE-CLIU-X.
+02NB01     EXIT.
+      /
+PR006Q*----------------------
+PR006Q 6840-PROCESS-MY-KEMPO.
+PR006Q*----------------------
+PR006Q
+PR006Q     PERFORM  9846-1000-BUILD-PARM-INFO
+PR006Q         THRU 9846-1000-BUILD-PARM-INFO-X.
+PR006Q
+PR006Q     MOVE RPOLK-SUB-CAT-CD          TO L9846-SUB-CAT-CD.
+PR006Q     MOVE RPOLK-ORIG-POL-ID         TO L9846-ORIG-POL-ID.
+PR006Q     MOVE RPOLK-ORIG-POL-ISS-DT     TO L9846-ORIG-POL-ISS-DT.
+PR006Q     MOVE RPOLK-ORIG-POL-DUR        TO L9846-ORIG-POL-DUR.
+PR006Q
+PR006Q     PERFORM  9846-1000-POLK-EDITS
+PR006Q         THRU 9846-1000-POLK-EDITS-X.
+PR006Q
+PR006Q     PERFORM  POLK-1000-WRITE
+PR006Q         THRU POLK-1000-WRITE-X.
+PR006Q
+PR006Q     MOVE 'Y'                 TO RPOL-POL-SUPRES-ISS-IND.
+B11216     SET RPOL-POL-ISS-DT-TYP-EFFECTIVE TO TRUE.
+BU4644     SET RPOL-SUPRES-LCD-CALC-YES      TO TRUE.
+PR006Q
+PR006Q 6840-PROCESS-MY-KEMPO-X.
+PR006Q     EXIT.
+      /
+      *--------------------
+       6850-PRINT-MESSAGES.
+      *--------------------
+
+           IF  WS-MESSAGE-SET (X)
+               COMPUTE WS-MESSAGE-NUMBER = 1000 + X
+               MOVE WS-MESSAGE-NUMBER-X  TO WGLOB-MSG-REF-NUM
+               PERFORM  9000-BUILD-MESSAGE-EXTRACT
+                   THRU 9000-BUILD-MESSAGE-EXTRACT-X
+           END-IF.
+
+       6850-PRINT-MESSAGES-X.
+           EXIT.
+      /
+MFFUPL*------------------------
+MFFUPL 6855-CALC-LAPUP-FND-AMT.
+MFFUPL*------------------------
+MFFUPL
+MFFUPL* PROCESS THE INITIAL PREMIUM ARRAY.
+MFFUPL
+MFFUPL     MOVE ZEROES                  TO WS-CTL-TOT-AMT.
+MFFUPL     MOVE ZEROES                  TO WS-CTL-TOT-PCT.
+MFFUPL
+MFFUPL* PERFORM THE OUTER LOOP FOR ALL COVERAGES ON THE ALLOCATION ARRAY
+MFFUPL
+MFFUPL     PERFORM
+MFFUPL         VARYING J FROM +1 BY +1
+MFFUPL         UNTIL   J > LAPUP-ALLOC-INP-CVG-CTR
+MFFUPL
+MFFUPL* PERFORM THE INNER LOOP FOR ALL FUND ELEMENTS ON A CVG.
+MFFUPL* CALCULATE THE FUND AMOUNT AND ACCUMULATE INTO A CONTROL TOTAL.
+MFFUPL
+MFFUPL         PERFORM
+MFFUPL             VARYING JJ FROM +1 BY +1
+MFFUPL             UNTIL   JJ > LAPUP-ALLOC-INP-FND-CTR (J)
+MFFUPL
+MFFUPL             COMPUTE L0289-CRCY-AMT
+MFFUPL                   = LAPUP-ALLOC-INP-CVG-AMT (J)
+MFFUPL                   * LAPUP-ALLOC-INP-FND-PCT (J, JJ) / 100
+MFFUPL
+MFFUPL             PERFORM  0289-1000-CRCY-RND
+MFFUPL                 THRU 0289-1000-CRCY-RND-X
+MFFUPL
+MFFUPL             MOVE L0289-CRCY-AMT
+MFFUPL                               TO LAPUP-ALLOC-INP-FND-AMT (J, JJ)
+MFFUPL             ADD LAPUP-ALLOC-INP-FND-AMT (J, JJ)
+MFFUPL                               TO WS-CTL-TOT-AMT
+MFFUPL             ADD LAPUP-ALLOC-INP-FND-PCT (J, JJ)
+MFFUPL                               TO WS-CTL-TOT-PCT
+MFFUPL
+MFFUPL         END-PERFORM
+MFFUPL
+MFFUPL* USE THE CONTROL TOTAL TO DO ANY NECESSARY ROUNDING TO THE
+MFFUPL* FIRST FUND ELEMENT FOR THE COVERAGE. THIS WILL BE THE
+MFFUPL* OCCURRENCE INDEXED BY THE OUTER LOOP.
+MFFUPL* DO NOT DO THE ROUNDING IF PERCENTAGES DO NOT ADD UP TO 100%.
+MFFUPL
+MFFUPL         IF WS-CTL-TOT-AMT
+MFFUPL         NOT = LAPUP-ALLOC-INP-CVG-AMT (J)
+MFFUPL         AND WS-CTL-TOT-PCT = +100
+MFFUPL             COMPUTE LAPUP-ALLOC-INP-FND-AMT (J, 1)
+MFFUPL                   = LAPUP-ALLOC-INP-FND-AMT (J, 1)
+MFFUPL                   + LAPUP-ALLOC-INP-CVG-AMT (J)
+MFFUPL                   - WS-CTL-TOT-AMT
+MFFUPL         END-IF
+MFFUPL
+MFFUPL* RESET VALUES TO PROCESS FOR THE NEXT CVG IN THE ARRAY.
+MFFUPL
+MFFUPL         MOVE ZEROES              TO WS-CTL-TOT-AMT
+MFFUPL         MOVE ZEROES              TO WS-CTL-TOT-PCT
+MFFUPL
+MFFUPL     END-PERFORM.
+MFFUPL
+MFFUPL
+MFFUPL* PROCESS THE INITIAL LUMP SUM ARRAY.
+MFFUPL
+MFFUPL     MOVE ZEROES                  TO WS-CTL-TOT-AMT.
+MFFUPL     MOVE ZEROES                  TO WS-CTL-TOT-PCT.
+MFFUPL
+MFFUPL* PERFORM THE OUTER LOOP FOR ALL COVERAGES ON THE ALLOCATION ARRAY
+MFFUPL
+MFFUPL     PERFORM
+MFFUPL         VARYING J FROM +1 BY +1
+MFFUPL         UNTIL   J > LAPUP-ALLOC-INL-CVG-CTR
+MFFUPL
+MFFUPL* PERFORM THE INNER LOOP FOR ALL FUND ELEMENTS ON A CVG.
+MFFUPL* CALCULATE THE FUND AMOUNT AND ACCUMULATE INTO A CONTROL TOTAL.
+MFFUPL
+MFFUPL         PERFORM
+MFFUPL             VARYING JJ FROM +1 BY +1
+MFFUPL             UNTIL   JJ > LAPUP-ALLOC-INL-FND-CTR (J)
+MFFUPL
+MFFUPL             COMPUTE L0289-CRCY-AMT
+MFFUPL                   = LAPUP-ALLOC-INL-CVG-AMT (J)
+MFFUPL                   * LAPUP-ALLOC-INL-FND-PCT (J, JJ) / 100
+MFFUPL
+MFFUPL             PERFORM  0289-1000-CRCY-RND
+MFFUPL                 THRU 0289-1000-CRCY-RND-X
+MFFUPL
+MFFUPL             MOVE L0289-CRCY-AMT
+MFFUPL                               TO LAPUP-ALLOC-INL-FND-AMT (J, JJ)
+MFFUPL             ADD LAPUP-ALLOC-INL-FND-AMT (J, JJ)
+MFFUPL                               TO WS-CTL-TOT-AMT
+MFFUPL             ADD LAPUP-ALLOC-INL-FND-PCT (J, JJ)
+MFFUPL                               TO WS-CTL-TOT-PCT
+MFFUPL
+MFFUPL         END-PERFORM
+MFFUPL
+MFFUPL* USE THE CONTROL TOTAL TO DO ANY NECESSARY ROUNDING TO THE
+MFFUPL* FIRST FUND ELEMENT FOR THE COVERAGE. THIS WILL BE THE
+MFFUPL* OCCURRENCE INDEXED BY THE OUTER LOOP.
+MFFUPL* DO NOT DO THE ROUNDING IF PERCENTAGES DO NOT ADD UP TO 100%.
+MFFUPL
+MFFUPL         IF WS-CTL-TOT-AMT
+MFFUPL         NOT = LAPUP-ALLOC-INL-CVG-AMT (J)
+MFFUPL         AND WS-CTL-TOT-PCT = +100
+MFFUPL             COMPUTE LAPUP-ALLOC-INL-FND-AMT (J, 1)
+MFFUPL                   = LAPUP-ALLOC-INL-FND-AMT (J, 1)
+MFFUPL                   + LAPUP-ALLOC-INL-CVG-AMT (J)
+MFFUPL                   - WS-CTL-TOT-AMT
+MFFUPL         END-IF
+MFFUPL
+MFFUPL* RESET VALUES TO PROCESS FOR THE NEXT CVG IN THE ARRAY.
+MFFUPL
+MFFUPL         MOVE ZEROES              TO WS-CTL-TOT-AMT
+MFFUPL         MOVE ZEROES              TO WS-CTL-TOT-PCT
+MFFUPL
+MFFUPL     END-PERFORM.
+MFFUPL
+MFFUPL
+MFFUPL* PROCESS THE SUBSEQUENT PREMIUM ARRAY.
+MFFUPL
+MFFUPL     MOVE ZEROES                  TO WS-CTL-TOT-AMT.
+MFFUPL     MOVE ZEROES                  TO WS-CTL-TOT-PCT.
+MFFUPL
+MFFUPL* PERFORM THE OUTER LOOP FOR ALL COVERAGES ON THE ALLOCATION ARRAY
+MFFUPL
+MFFUPL     PERFORM
+MFFUPL         VARYING J FROM +1 BY +1
+MFFUPL         UNTIL   J > LAPUP-ALLOC-DIP-CVG-CTR
+MFFUPL
+MFFUPL* PERFORM THE INNER LOOP FOR ALL FUND ELEMENTS ON A CVG.
+MFFUPL* CALCULATE THE FUND AMOUNT AND ACCUMULATE INTO A CONTROL TOTAL.
+MFFUPL
+MFFUPL         PERFORM
+MFFUPL             VARYING JJ FROM +1 BY +1
+MFFUPL             UNTIL   JJ > LAPUP-ALLOC-DIP-FND-CTR (J)
+MFFUPL
+MFFUPL             COMPUTE L0289-CRCY-AMT
+MFFUPL                   = LAPUP-ALLOC-DIP-CVG-AMT (J)
+MFFUPL                   * LAPUP-ALLOC-DIP-FND-PCT (J, JJ) / 100
+MFFUPL
+MFFUPL             PERFORM  0289-1000-CRCY-RND
+MFFUPL                 THRU 0289-1000-CRCY-RND-X
+MFFUPL
+MFFUPL             MOVE L0289-CRCY-AMT
+MFFUPL                               TO LAPUP-ALLOC-DIP-FND-AMT (J, JJ)
+MFFUPL             ADD LAPUP-ALLOC-DIP-FND-AMT (J, JJ)
+MFFUPL                               TO WS-CTL-TOT-AMT
+MFFUPL             ADD LAPUP-ALLOC-DIP-FND-PCT (J, JJ)
+MFFUPL                               TO WS-CTL-TOT-PCT
+MFFUPL
+MFFUPL         END-PERFORM
+MFFUPL
+MFFUPL* USE THE CONTROL TOTAL TO DO ANY NECESSARY ROUNDING TO THE
+MFFUPL* FIRST FUND ELEMENT FOR THE COVERAGE. THIS WILL BE THE
+MFFUPL* OCCURRENCE INDEXED BY THE OUTER LOOP.
+MFFUPL* DO NOT DO THE ROUNDING IF PERCENTAGES DO NOT ADD UP TO 100%.
+MFFUPL
+MFFUPL         IF WS-CTL-TOT-AMT
+MFFUPL         NOT = LAPUP-ALLOC-DIP-CVG-AMT (J)
+MFFUPL         AND WS-CTL-TOT-PCT = +100
+MFFUPL             COMPUTE LAPUP-ALLOC-DIP-FND-AMT (J, 1)
+MFFUPL                   = LAPUP-ALLOC-DIP-FND-AMT (J, 1)
+MFFUPL                   + LAPUP-ALLOC-DIP-CVG-AMT (J)
+MFFUPL                   - WS-CTL-TOT-AMT
+MFFUPL         END-IF
+MFFUPL
+MFFUPL* RESET VALUES TO PROCESS FOR THE NEXT CVG IN THE ARRAY.
+MFFUPL
+MFFUPL         MOVE ZEROES              TO WS-CTL-TOT-AMT
+MFFUPL         MOVE ZEROES              TO WS-CTL-TOT-PCT
+MFFUPL
+MFFUPL     END-PERFORM.
+MFFUPL
+MFFUPL
+MFFUPL* PROCESS THE CONVERSION FUND ARRAY.
+MFFUPL
+MFFUPL     MOVE ZEROES                  TO WS-CTL-TOT-AMT.
+MFFUPL     MOVE ZEROES                  TO WS-CTL-TOT-PCT.
+MFFUPL
+MFFUPL* PERFORM THE OUTER LOOP FOR ALL COVERAGES ON THE ALLOCATION ARRAY
+MFFUPL
+MFFUPL     PERFORM
+MFFUPL         VARYING J FROM +1 BY +1
+MFFUPL         UNTIL   J > LAPUP-ALLOC-CNV-CVG-CTR
+MFFUPL
+MFFUPL* PERFORM THE INNER LOOP FOR ALL FUND ELEMENTS ON A CVG.
+MFFUPL* CALCULATE THE FUND AMOUNT AND ACCUMULATE INTO A CONTROL TOTAL.
+MFFUPL
+MFFUPL         PERFORM
+MFFUPL             VARYING JJ FROM +1 BY +1
+MFFUPL             UNTIL   JJ > LAPUP-ALLOC-CNV-FND-CTR (J)
+MFFUPL
+MFFUPL             COMPUTE L0289-CRCY-AMT
+MFFUPL                   = LAPUP-ALLOC-CNV-CVG-AMT (J)
+MFFUPL                   * LAPUP-ALLOC-CNV-FND-PCT (J, JJ) / 100
+MFFUPL
+MFFUPL             PERFORM  0289-1000-CRCY-RND
+MFFUPL                 THRU 0289-1000-CRCY-RND-X
+MFFUPL
+MFFUPL             MOVE L0289-CRCY-AMT
+MFFUPL                               TO LAPUP-ALLOC-CNV-FND-AMT (J, JJ)
+MFFUPL             ADD LAPUP-ALLOC-CNV-FND-AMT (J, JJ)
+MFFUPL                               TO WS-CTL-TOT-AMT
+MFFUPL             ADD LAPUP-ALLOC-CNV-FND-PCT (J, JJ)
+MFFUPL                               TO WS-CTL-TOT-PCT
+MFFUPL
+MFFUPL         END-PERFORM
+MFFUPL
+MFFUPL* USE THE CONTROL TOTAL TO DO ANY NECESSARY ROUNDING TO THE
+MFFUPL* FIRST FUND ELEMENT FOR THE COVERAGE. THIS WILL BE THE
+MFFUPL* OCCURRENCE INDEXED BY THE OUTER LOOP.
+MFFUPL* DO NOT DO THE ROUNDING IF PERCENTAGES DO NOT ADD UP TO 100%.
+MFFUPL
+MFFUPL         IF WS-CTL-TOT-AMT
+MFFUPL         NOT = LAPUP-ALLOC-CNV-CVG-AMT (J)
+MFFUPL         AND WS-CTL-TOT-PCT = +100
+MFFUPL             COMPUTE LAPUP-ALLOC-CNV-FND-AMT (J, 1)
+MFFUPL                   = LAPUP-ALLOC-CNV-FND-AMT (J, 1)
+MFFUPL                   + LAPUP-ALLOC-CNV-CVG-AMT (J)
+MFFUPL                   - WS-CTL-TOT-AMT
+MFFUPL         END-IF
+MFFUPL
+MFFUPL* RESET VALUES TO PROCESS FOR THE NEXT CVG IN THE ARRAY.
+MFFUPL
+MFFUPL         MOVE ZEROES              TO WS-CTL-TOT-AMT
+MFFUPL         MOVE ZEROES              TO WS-CTL-TOT-PCT
+MFFUPL
+MFFUPL     END-PERFORM.
+MFFUPL
+MFFUPL 6855-CALC-LAPUP-FND-AMT-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL/
+MFFUPL*---------------------
+MFFUPL 6860-UPDT-FC-FS-RECS.
+MFFUPL*---------------------
+MFFUPL
+MFFUPL* SET UP ADDITIONAL FIELDS REQUIRED BY THE FC/FS MODULE.
+MFFUPL
+MFFUPL     MOVE LAPUP-FCFS-CVG-NUM-N (I)    TO J.
+MFFUPL     MOVE WCVGS-PLAN-ID-BASE (J)      TO LSEGF-PLAN-ID-BASE.
+MFFUPL     MOVE WCVGS-PLAN-ID-RS (J)        TO LSEGF-PLAN-ID-RS.
+MFFUPL     MOVE WCVGS-CVG-UNIT-TYP-CD (J)   TO LSEGF-CVG-UNIT-TYP-CD.
+MFFUPL
+MFFUPL* USE THE SAVED DATA IN LAPUP-FCFS-TABLE AS THE SOURCE FOR THIS UPDATE.
+MFFUPL* ENTER THE FUNDS INTO THE FC/FS:
+MFFUPL* THERE WILL BE ONE FS RECORD FOR EACH FUND.
+MFFUPL* STATUS INDICATOR FIELDS FOR FC AND FS ARE UPDATED IN THE 0500 MODULE.
+MFFUPL
+MFFUPL*  BUILD FMAS KEY:  SET UP KEY TO BE USED IN SUBSEQUENT READ.
+MFFUPL
+MFFUPL     MOVE RPOL-POL-ID-BASE         TO LSEGF-INV-CVG-POL-ID-BASE.
+MFFUPL     MOVE RPOL-POL-ID-SFX          TO LSEGF-INV-CVG-POL-ID-SFX.
+MFFUPL     MOVE LAPUP-FCFS-CVG-NUM-N (I) TO LSEGF-INV-CVG-CVG-NUM.
+MFFUPL
+MFFUPL*    THE LINK TO SSLS0500 WILL READ THE FC AND ALL FS RECORDS
+MFFUPL
+MFFUPL     SET  LSEGF-INV-CVG-CFN-OPT-READ-INQ TO TRUE.
+MFFUPL
+MFFUPL     PERFORM  0500-1000-PROCESS-FC-FS
+MFFUPL         THRU 0500-1000-PROCESS-FC-FS-X.
+MFFUPL
+MFFUPL     IF L0500-RETRN-ERROR
+MFFUPL         GO TO 6860-UPDT-FC-FS-RECS-X
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL     MOVE LSEGF-INV-CVG-REC-INFO TO RFC-REC-INFO.
+MFFUPL
+MFFUPL     PERFORM  6862-FCFS-LOAD-LOOP
+MFFUPL         THRU 6862-FCFS-LOAD-LOOP-X
+MFFUPL         VARYING J FROM +1 BY +1
+MFFUPL         UNTIL   J > LAPUP-FCFS-FND-CTR (I).
+MFFUPL
+MFFUPL     MOVE WGLOB-PROCESS-DATE       TO LSEGF-INV-CVG-CFN-EFF-DT.
+MFFUPL
+MFFUPL*    THE LINK TO SSLS0500 WILL UPDATE THE FC AND ALL FS RECORDS
+MFFUPL
+MFFUPL     SET  LSEGF-INV-CVG-CFN-OPT-UPD-FILE TO TRUE.
+MFFUPL
+MFFUPL     PERFORM  0500-1000-PROCESS-FC-FS
+MFFUPL         THRU 0500-1000-PROCESS-FC-FS-X.
+MFFUPL
+MFFUPL 6860-UPDT-FC-FS-RECS-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL/
+MFFUPL*--------------------
+MFFUPL 6862-FCFS-LOAD-LOOP.
+MFFUPL*--------------------
+MFFUPL
+MFFUPL     MOVE LSEGF-CFN-REC-INFO (J)   TO RFS-REC-INFO.
+MFFUPL     MOVE RFC-POL-ID               TO RFS-POL-ID.
+MFFUPL     MOVE RFC-CVG-NUM-N            TO RFS-CVG-NUM-N.
+MFFUPL     MOVE LAPUP-FCFS-FND-ID (I, J) TO RFS-FND-ID.
+MFFUPL     MOVE 'I'                      TO RFS-CFN-STAT-CD.
+B50548     MOVE WGLOB-SYSTEM-DATE-INT    TO RFS-CFN-STAT-CHNG-DT.
+MFFUPL     MOVE J                        TO LSEGF-FND-CTR.
+MFFUPL     MOVE 'A'                      TO LSEGF-CFN-STAT-IND (J).
+MFFUPL     MOVE RFS-REC-INFO             TO LSEGF-CFN-REC-INFO (J).
+MFFUPL
+MFFUPL 6862-FCFS-LOAD-LOOP-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL/
+MFFUPL*----------------------
+MFFUPL 6870-CREATE-CVG-ALLOC.
+MFFUPL*----------------------
+MFFUPL
+MFFUPL     PERFORM  6872-CREATE-INP-ALLOC-RULE
+MFFUPL         THRU 6872-CREATE-INP-ALLOC-RULE-X.
+MFFUPL
+MFFUPL     IF RPOL-POL-LUMP-SUM-AMT > ZEROES
+MFFUPL         PERFORM  6874-CREATE-INL-ALLOC-RULE
+MFFUPL             THRU 6874-CREATE-INL-ALLOC-RULE-X
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL     PERFORM  6876-CREATE-DIP-ALLOC-RULE
+MFFUPL         THRU 6876-CREATE-DIP-ALLOC-RULE-X.
+MFFUPL
+MFFUPL     IF RPOL-POL-CNVR-TYP-DHY-PHASE1
+MFFUPL         PERFORM  6878-CREATE-CNV-ALLOC-RULE
+MFFUPL             THRU 6878-CREATE-CNV-ALLOC-RULE-X
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL 6870-CREATE-CVG-ALLOC-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL/
+MFFUPL*---------------------------
+MFFUPL 6872-CREATE-INP-ALLOC-RULE.
+MFFUPL*---------------------------
+MFFUPL
+MFFUPL* INITIALIZE AND FILL FCWLFUND WITH THE INITIAL PREMIUM
+MFFUPL* LAPUP ARRAY DATA.
+MFFUPL
+MFFUPL     INITIALIZE                      LFUND-FND-CTR.
+MFFUPL     MOVE LAPUP-ALLOC-INP-TOT-AMT TO LFUND-CDI-TOT-ALLOC-AMT.
+MFFUPL     SET LFUND-ACTV-INITIAL-PMT   TO TRUE.
+MFFUPL
+MFFUPL* PERFORM THE OUTER LOOP FOR ALL COVERAGES ON THE ALLOCATION ARRAY
+MFFUPL* PERFORM THE INNER LOOP FOR ALL FUND ELEMENTS ON A CVG.
+MFFUPL
+MFFUPL     PERFORM
+MFFUPL         VARYING J FROM +1 BY +1
+MFFUPL         UNTIL   J > LAPUP-ALLOC-INP-CVG-CTR
+MFFUPL
+MFFUPL         PERFORM
+MFFUPL             VARYING JJ FROM +1 BY +1
+MFFUPL             UNTIL   JJ > LAPUP-ALLOC-INP-FND-CTR (J)
+MFFUPL
+MFFUPL             ADD +1               TO LFUND-FND-CTR
+MFFUPL             MOVE LFUND-FND-CTR   TO N8
+MFFUPL             MOVE LAPUP-ALLOC-INP-CVG-NUM (J)
+MFFUPL                                  TO LFUND-CVG-NUM (N8)
+MFFUPL             MOVE LAPUP-ALLOC-INP-CVG-AMT (J)
+MFFUPL                                  TO LFUND-CDI-CVG-ALLOC-AMT (N8)
+MFFUPL             MOVE LAPUP-ALLOC-INP-FND-ID (J, JJ)
+MFFUPL                                  TO LFUND-FND-ID (N8)
+MFFUPL             MOVE ZEROES          TO LFUND-FND-ACUM-AMT (N8)
+MFFUPL             SET LFUND-ALLOC-AMOUNT (N8)
+MFFUPL                                  TO TRUE
+MFFUPL             MOVE LAPUP-ALLOC-INP-FND-AMT (J, JJ)
+MFFUPL                                  TO LFUND-ALLOC-AMT (N8)
+MFFUPL             MOVE LAPUP-ALLOC-INP-FND-PCT (J, JJ)
+MFFUPL                                  TO LFUND-ALLOC-PCT (N8)
+MFFUPL             MOVE ZEROES          TO LFUND-ALLOC-UNIT-QTY (N8)
+MFFUPL             MOVE ZEROES          TO LFUND-TRM-DUR-INFO (N8)
+MFFUPL
+MFFUPL         END-PERFORM
+MFFUPL
+MFFUPL     END-PERFORM.
+MFFUPL
+MFFUPL* THE FCWLFUND ARRAY SHOULD ALREADY BE IN ORDER, SORTED BY
+MFFUPL* COVERAGE AND FUND ID, DUE TO THE WAY THE UCVG AND UFND
+MFFUPL* DATA WAS LOADED INTO THE LAPUP ALLOCATION TABLES. WRITE OUT
+MFFUPL* THE CAIN AND CDSI RECORDS FROM THE FCWLFUND ARRAY
+MFFUPL
+MFFUPL     PERFORM  6882-BUILD-AND-WRITE-RULES
+MFFUPL         THRU 6882-BUILD-AND-WRITE-RULES-X.
+MFFUPL
+MFFUPL 6872-CREATE-INP-ALLOC-RULE-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL*---------------------------
+MFFUPL 6874-CREATE-INL-ALLOC-RULE.
+MFFUPL*---------------------------
+MFFUPL
+MFFUPL* INITIALIZE AND FILL FCWLFUND WITH THE INITIAL LUMP SUM
+MFFUPL* LAPUP ARRAY DATA.
+MFFUPL
+MFFUPL     INITIALIZE                      LFUND-FND-CTR.
+MFFUPL     MOVE LAPUP-ALLOC-INL-TOT-AMT TO LFUND-CDI-TOT-ALLOC-AMT.
+MFFUPL     SET LFUND-ACTV-INIT-LMPSM    TO TRUE.
+MFFUPL
+MFFUPL* PERFORM THE OUTER LOOP FOR ALL COVERAGES ON THE ALLOCATION ARRAY
+MFFUPL* PERFORM THE INNER LOOP FOR ALL FUND ELEMENTS ON A CVG.
+MFFUPL
+MFFUPL     PERFORM
+MFFUPL         VARYING J FROM +1 BY +1
+MFFUPL         UNTIL   J > LAPUP-ALLOC-INL-CVG-CTR
+MFFUPL
+MFFUPL         PERFORM
+MFFUPL             VARYING JJ FROM +1 BY +1
+MFFUPL             UNTIL   JJ > LAPUP-ALLOC-INL-FND-CTR (J)
+MFFUPL
+MFFUPL             ADD +1               TO LFUND-FND-CTR
+MFFUPL             MOVE LFUND-FND-CTR   TO N8
+MFFUPL             MOVE LAPUP-ALLOC-INL-CVG-NUM (J)
+MFFUPL                                  TO LFUND-CVG-NUM (N8)
+MFFUPL             MOVE LAPUP-ALLOC-INL-CVG-AMT (J)
+MFFUPL                                  TO LFUND-CDI-CVG-ALLOC-AMT (N8)
+MFFUPL             MOVE LAPUP-ALLOC-INL-FND-ID (J, JJ)
+MFFUPL                                  TO LFUND-FND-ID (N8)
+MFFUPL             MOVE ZEROES          TO LFUND-FND-ACUM-AMT (N8)
+MFFUPL             SET LFUND-ALLOC-AMOUNT (N8)
+MFFUPL                                  TO TRUE
+MFFUPL             MOVE LAPUP-ALLOC-INL-FND-AMT (J, JJ)
+MFFUPL                                  TO LFUND-ALLOC-AMT (N8)
+MFFUPL             MOVE LAPUP-ALLOC-INL-FND-PCT (J, JJ)
+MFFUPL                                  TO LFUND-ALLOC-PCT (N8)
+MFFUPL             MOVE ZEROES          TO LFUND-ALLOC-UNIT-QTY (N8)
+MFFUPL             MOVE ZEROES          TO LFUND-TRM-DUR-INFO (N8)
+MFFUPL
+MFFUPL         END-PERFORM
+MFFUPL
+MFFUPL     END-PERFORM.
+MFFUPL
+MFFUPL* THE FCWLFUND ARRAY SHOULD ALREADY BE IN ORDER, SORTED BY
+MFFUPL* COVERAGE AND FUND ID, DUE TO THE WAY THE UCVG AND UFND
+MFFUPL* DATA WAS LOADED INTO THE LAPUP ALLOCATION TABLES. WRITE OUT
+MFFUPL* THE CAIN AND CDSI RECORDS FROM THE FCWLFUND ARRAY
+MFFUPL
+MFFUPL     PERFORM  6882-BUILD-AND-WRITE-RULES
+MFFUPL         THRU 6882-BUILD-AND-WRITE-RULES-X.
+MFFUPL
+MFFUPL 6874-CREATE-INL-ALLOC-RULE-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL/
+MFFUPL*---------------------------
+MFFUPL 6876-CREATE-DIP-ALLOC-RULE.
+MFFUPL*---------------------------
+MFFUPL
+MFFUPL* INITIALIZE AND FILL FCWLFUND WITH THE SUBSEQUENT PREMIUM
+MFFUPL* LAPUP ARRAY DATA.
+MFFUPL
+MFFUPL     INITIALIZE                       LFUND-FND-CTR.
+MFFUPL     MOVE LAPUP-ALLOC-DIP-TOT-AMT  TO LFUND-CDI-TOT-ALLOC-AMT.
+MFFUPL     SET LFUND-ACTV-SUBSEQUENT-PMT TO TRUE.
+MFFUPL
+MFFUPL* PERFORM THE OUTER LOOP FOR ALL COVERAGES ON THE ALLOCATION ARRAY
+MFFUPL* PERFORM THE INNER LOOP FOR ALL FUND ELEMENTS ON A CVG.
+MFFUPL
+MFFUPL     PERFORM
+MFFUPL         VARYING J FROM +1 BY +1
+MFFUPL         UNTIL   J > LAPUP-ALLOC-DIP-CVG-CTR
+MFFUPL
+MFFUPL         PERFORM
+MFFUPL             VARYING JJ FROM +1 BY +1
+MFFUPL             UNTIL   JJ > LAPUP-ALLOC-DIP-FND-CTR (J)
+MFFUPL
+MFFUPL             ADD +1               TO LFUND-FND-CTR
+MFFUPL             MOVE LFUND-FND-CTR   TO N8
+MFFUPL             MOVE LAPUP-ALLOC-DIP-CVG-NUM (J)
+MFFUPL                                  TO LFUND-CVG-NUM (N8)
+MFFUPL             MOVE LAPUP-ALLOC-DIP-CVG-AMT (J)
+MFFUPL                                  TO LFUND-CDI-CVG-ALLOC-AMT (N8)
+MFFUPL             MOVE LAPUP-ALLOC-DIP-FND-ID (J, JJ)
+MFFUPL                                  TO LFUND-FND-ID (N8)
+MFFUPL             MOVE ZEROES          TO LFUND-FND-ACUM-AMT (N8)
+MFFUPL             SET LFUND-ALLOC-AMOUNT (N8)
+MFFUPL                                  TO TRUE
+MFFUPL             MOVE LAPUP-ALLOC-DIP-FND-AMT (J, JJ)
+MFFUPL                                  TO LFUND-ALLOC-AMT (N8)
+MFFUPL             MOVE LAPUP-ALLOC-DIP-FND-PCT (J, JJ)
+MFFUPL                                  TO LFUND-ALLOC-PCT (N8)
+MFFUPL             MOVE ZEROES          TO LFUND-ALLOC-UNIT-QTY (N8)
+MFFUPL             MOVE ZEROES          TO LFUND-TRM-DUR-INFO (N8)
+MFFUPL
+MFFUPL         END-PERFORM
+MFFUPL
+MFFUPL     END-PERFORM.
+MFFUPL
+MFFUPL* THE FCWLFUND ARRAY SHOULD ALREADY BE IN ORDER, SORTED BY
+MFFUPL* COVERAGE AND FUND ID, DUE TO THE WAY THE UCVG AND UFND
+MFFUPL* DATA WAS LOADED INTO THE LAPUP ALLOCATION TABLES. WRITE OUT
+MFFUPL* THE CAIN AND CDSI RECORDS FROM THE FCWLFUND ARRAY
+MFFUPL
+MFFUPL     PERFORM  6882-BUILD-AND-WRITE-RULES
+MFFUPL         THRU 6882-BUILD-AND-WRITE-RULES-X.
+MFFUPL
+MFFUPL 6876-CREATE-DIP-ALLOC-RULE-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL*---------------------------
+MFFUPL 6878-CREATE-CNV-ALLOC-RULE.
+MFFUPL*---------------------------
+MFFUPL
+MFFUPL* INITIALIZE AND FILL FCWLFUND WITH THE CONVERSION FUND
+MFFUPL* LAPUP ARRAY DATA.
+MFFUPL
+MFFUPL     INITIALIZE                      LFUND-FND-CTR.
+MFFUPL     MOVE LAPUP-ALLOC-CNV-TOT-AMT TO LFUND-CDI-TOT-ALLOC-AMT.
+MFFUPL     SET LFUND-ACTV-CNVR-FND      TO TRUE.
+MFFUPL
+MFFUPL* PERFORM THE OUTER LOOP FOR ALL COVERAGES ON THE ALLOCATION ARRAY
+MFFUPL* PERFORM THE INNER LOOP FOR ALL FUND ELEMENTS ON A CVG.
+MFFUPL
+MFFUPL     PERFORM
+MFFUPL         VARYING J FROM +1 BY +1
+MFFUPL         UNTIL   J > LAPUP-ALLOC-CNV-CVG-CTR
+MFFUPL
+MFFUPL         PERFORM
+MFFUPL             VARYING JJ FROM +1 BY +1
+MFFUPL             UNTIL   JJ > LAPUP-ALLOC-CNV-FND-CTR (J)
+MFFUPL
+MFFUPL             ADD +1               TO LFUND-FND-CTR
+MFFUPL             MOVE LFUND-FND-CTR   TO N8
+MFFUPL             MOVE LAPUP-ALLOC-CNV-CVG-NUM (J)
+MFFUPL                                  TO LFUND-CVG-NUM (N8)
+MFFUPL             MOVE LAPUP-ALLOC-CNV-CVG-AMT (J)
+MFFUPL                                  TO LFUND-CDI-CVG-ALLOC-AMT (N8)
+MFFUPL             MOVE LAPUP-ALLOC-CNV-FND-ID (J, JJ)
+MFFUPL                                  TO LFUND-FND-ID (N8)
+MFFUPL             MOVE ZEROES          TO LFUND-FND-ACUM-AMT (N8)
+MFFUPL             SET LFUND-ALLOC-AMOUNT (N8)
+MFFUPL                                  TO TRUE
+MFFUPL             MOVE LAPUP-ALLOC-CNV-FND-AMT (J, JJ)
+MFFUPL                                  TO LFUND-ALLOC-AMT (N8)
+MFFUPL             MOVE LAPUP-ALLOC-CNV-FND-PCT (J, JJ)
+MFFUPL                                  TO LFUND-ALLOC-PCT (N8)
+MFFUPL             MOVE ZEROES          TO LFUND-ALLOC-UNIT-QTY (N8)
+MFFUPL             MOVE ZEROES          TO LFUND-TRM-DUR-INFO (N8)
+MFFUPL
+MFFUPL         END-PERFORM
+MFFUPL
+MFFUPL     END-PERFORM.
+MFFUPL
+MFFUPL* THE FCWLFUND ARRAY SHOULD ALREADY BE IN ORDER, SORTED BY
+MFFUPL* COVERAGE AND FUND ID, DUE TO THE WAY THE UCVG AND UFND
+MFFUPL* DATA WAS LOADED INTO THE LAPUP ALLOCATION TABLES. WRITE OUT
+MFFUPL* THE CAIN AND CDSI RECORDS FROM THE FCWLFUND ARRAY
+MFFUPL
+MFFUPL     PERFORM  6882-BUILD-AND-WRITE-RULES
+MFFUPL         THRU 6882-BUILD-AND-WRITE-RULES-X.
+MFFUPL
+MFFUPL 6878-CREATE-CNV-ALLOC-RULE-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL/
+MFFUPL*---------------------------
+MFFUPL 6882-BUILD-AND-WRITE-RULES.
+MFFUPL*---------------------------
+MFFUPL
+MFFUPL     MOVE ZEROES                  TO WS-LAST-CDSI-ALLOC-NUM.
+MFFUPL     SET WS-CDI-DEL-FAIL-NO       TO TRUE.
+MFFUPL
+MFFUPL* BUILD CAIN KEY AND CREATE A RECORD
+MFFUPL
+MFFUPL     MOVE RPOL-POL-ID             TO WCAIN-POL-ID.
+MFFUPL     MOVE LFUND-ACTV-CD           TO WCAIN-CDI-TYP-CD.
+MFFUPL     MOVE ZEROES                  TO WCAIN-POL-PAYO-NUM.
+MFFUPL     MOVE RPOL-POL-ISS-EFF-DT     TO L1660-INTERNAL-DATE.
+MFFUPL     PERFORM  1660-2000-CONVERT-INT-TO-INV
+MFFUPL         THRU 1660-2000-CONVERT-INT-TO-INV-X.
+MFFUPL     MOVE L1660-INVERTED-DATE     TO WCAIN-CDI-EFF-IDT-NUM-N.
+MFFUPL
+MFFUPL     PERFORM  CAIN-1000-READ
+MFFUPL         THRU CAIN-1000-READ-X.
+MFFUPL
+MFFUPL* IF CAIN/CDSI WERE CREATED BY CCPP9160, THEN DELETE THESE.
+MFFUPL
+MFFUPL     IF WCAIN-IO-NOT-FOUND
+MFFUPL         CONTINUE
+MFFUPL     ELSE
+MFFUPL         PERFORM  6888-DELETE-ALLOC
+MFFUPL             THRU 6888-DELETE-ALLOC-X
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL     IF WS-CDI-DEL-FAIL-YES
+MFFUPL         GO TO 6882-BUILD-AND-WRITE-RULES-X
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL     PERFORM  CAIN-1000-CREATE
+MFFUPL         THRU CAIN-1000-CREATE-X.
+MFFUPL
+MFFUPL     MOVE LFUND-CDI-TOT-ALLOC-AMT TO RCAIN-CDI-TOT-ALLOC-AMT.
+MFFUPL
+MFFUPL* USE CAIN KEY TO BUILD CDSI KEY. INIT ALLOC NUM TO ZERO.
+MFFUPL
+MFFUPL     MOVE SPACES                  TO WCDSI-KEY.
+MFFUPL     MOVE RCAIN-KEY               TO WCDSI-KEY.
+MFFUPL     MOVE WS-LAST-CDSI-ALLOC-NUM  TO WCDSI-CDI-ALLOC-NUM.
+MFFUPL
+MFFUPL* PERFORM ENTER LOOP TO CREATE/WRITE ALL CDSI FOR THIS CAIN TYPE.
+MFFUPL
+MFFUPL     PERFORM  6884-CREATE-CDSI-RECS
+MFFUPL         THRU 6884-CREATE-CDSI-RECS-X
+MFFUPL         VARYING I FROM +1 BY +1
+MFFUPL         UNTIL   I > LFUND-FND-CTR.
+MFFUPL
+MFFUPL     PERFORM  CAIN-1000-WRITE
+MFFUPL         THRU CAIN-1000-WRITE-X.
+MFFUPL
+MFFUPL     PERFORM  6886-VALIDATE-CDSI-RECS
+MFFUPL         THRU 6886-VALIDATE-CDSI-RECS-X.
+MFFUPL
+MFFUPL 6882-BUILD-AND-WRITE-RULES-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL/
+MFFUPL*----------------------
+MFFUPL 6884-CREATE-CDSI-RECS.
+MFFUPL*----------------------
+MFFUPL
+MFFUPL     MOVE SPACES                  TO WCDSI-KEY.
+MFFUPL     MOVE RCAIN-KEY               TO WCDSI-KEY.
+MFFUPL     ADD +1                       TO WS-LAST-CDSI-ALLOC-NUM.
+MFFUPL     MOVE WS-LAST-CDSI-ALLOC-NUM  TO WCDSI-CDI-ALLOC-NUM.
+MFFUPL
+MFFUPL     PERFORM  CDSI-1000-CREATE
+MFFUPL         THRU CDSI-1000-CREATE-X.
+MFFUPL
+MFFUPL     MOVE WCDSI-CDI-EFF-IDT-NUM   TO L1660-INVERTED-DATE.
+MFFUPL     PERFORM  1660-3000-CONVERT-INV-TO-INT
+MFFUPL         THRU 1660-3000-CONVERT-INV-TO-INT-X.
+MFFUPL     MOVE L1660-INTERNAL-DATE     TO RCDSI-CDI-EFF-DT.
+MFFUPL
+MFFUPL     MOVE LFUND-ALLOC-CD (I)      TO RCDSI-CDI-ALLOC-CD.
+MFFUPL     MOVE LFUND-ALLOC-AMT (I)     TO RCDSI-CDI-ALLOC-AMT.
+MFFUPL     MOVE LFUND-ALLOC-PCT (I)     TO RCDSI-CDI-ALLOC-PCT.
+MFFUPL     MOVE LFUND-CVG-NUM (I)       TO RCDSI-DEST-CVG-NUM.
+MFFUPL     MOVE LFUND-FND-ID (I)        TO RCDSI-DEST-FND-ID.
+MFFUPL     MOVE LFUND-CDI-CVG-ALLOC-AMT (I)
+MFFUPL                                  TO RCDSI-CDI-CVG-ALLOC-AMT.
+MFFUPL
+MFFUPL     PERFORM  CDSI-1000-WRITE
+MFFUPL         THRU CDSI-1000-WRITE-X.
+MFFUPL
+MFFUPL 6884-CREATE-CDSI-RECS-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL/
+MFFUPL*------------------------
+MFFUPL 6886-VALIDATE-CDSI-RECS.
+MFFUPL*------------------------
+MFFUPL
+MFFUPL     PERFORM  CAIN-1000-READ-FOR-UPDATE
+MFFUPL         THRU CAIN-1000-READ-FOR-UPDATE-X.
+MFFUPL
+MFFUPL* CALL THE EDIT MODULE TO EDIT AND CROSS-EDIT OTHER VALUES
+MFFUPL
+MFFUPL     PERFORM  8210-1000-BUILD-PARM-INFO
+MFFUPL         THRU 8210-1000-BUILD-PARM-INFO-X.
+MFFUPL
+MFFUPL     MOVE RPOL-POL-ID             TO L8210-POL-ID.
+MFFUPL     MOVE RPOL-POL-ISS-EFF-DT     TO L8210-EFF-DT.
+MFFUPL     MOVE RCAIN-CDI-TYP-CD        TO L8210-CDI-TYP-CD.
+MFFUPL     MOVE ZERO                    TO L8210-POL-PAYO-NUM.
+MFFUPL     MOVE RCAIN-CDI-TOT-ALLOC-AMT TO L8210-CDI-TOT-ALLOC-AMT.
+MFFUPL     MOVE WS-ESC-CHRG-AMT         TO L8210-ESC-CHRG-AMT.
+MFFUPL
+MFFUPL     PERFORM  8210-1000-EDIT-FUND-ARRAY
+MFFUPL         THRU 8210-1000-EDIT-FUND-ARRAY-X.
+MFFUPL
+MFFUPL     IF L8210-RETRN-OK
+MFFUPL         IF L8210-NO-EDIT-ERROR
+MFFUPL             SET RCAIN-CDI-STAT-COMPLETE TO TRUE
+MFFUPL         ELSE
+MFFUPL             SET RCAIN-CDI-STAT-INCOMPLETE TO TRUE
+MFFUPL         END-IF
+MFFUPL     ELSE
+MFFUPL         SET RCAIN-CDI-STAT-INCOMPLETE TO TRUE
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL     PERFORM  CAIN-2000-REWRITE
+MFFUPL         THRU CAIN-2000-REWRITE-X.
+MFFUPL
+MFFUPL 6886-VALIDATE-CDSI-RECS-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL/
+MFFUPL*------------------
+MFFUPL 6888-DELETE-ALLOC.
+MFFUPL*------------------
+MFFUPL
+MFFUPL* MODULE CCPP9160 WAS CREATED TO AUTOMATICALLY CREATE CAIN/CDSI.
+MFFUPL* SINCE CCPP9160 CAN POTENTIALLY BE CALLED VIA CCPP0953 (CALLED TWICE
+MFFUPL* IN THIS PROGRAM) AND CCPP5990, WE NEED TO BE SURE THAT THERE ARE
+MFFUPL* NO CAIN OR CDSI RECORDS BEFORE WE ATTEMPT TO CREATE NEW ONES.
+MFFUPL
+MFFUPL     MOVE RCAIN-KEY               TO WCAIN-KEY.
+MFFUPL
+MFFUPL     PERFORM  CAIN-1000-READ-FOR-UPDATE
+MFFUPL         THRU CAIN-1000-READ-FOR-UPDATE-X.
+MFFUPL
+MFFUPL     IF NOT WCAIN-IO-OK
+MFFUPL         SET WS-CDI-DEL-FAIL-YES  TO TRUE
+MFFUPL         GO TO 6888-DELETE-ALLOC-X
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL     MOVE WCAIN-KEY               TO WCDSI-KEY.
+MFFUPL     MOVE ZERO                    TO WCDSI-CDI-ALLOC-NUM.
+MFFUPL     MOVE WCDSI-KEY               TO WCDSI-ENDBR-KEY.
+MFFUPL     MOVE 999                     TO WCDSI-ENDBR-CDI-ALLOC-NUM.
+MFFUPL
+MFFUPL     PERFORM  CDSI-1000-DELETE-KEY-RANGE
+MFFUPL         THRU CDSI-1000-DELETE-KEY-RANGE-X.
+MFFUPL
+MFFUPL     IF WCDSI-IO-OK
+MFFUPL     OR WCDSI-IO-NOT-FOUND
+MFFUPL         CONTINUE
+MFFUPL     ELSE
+MFFUPL         SET WS-CDI-DEL-FAIL-YES  TO TRUE
+MFFUPL         GO TO 6888-DELETE-ALLOC-X
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL     PERFORM  CAIN-1000-DELETE
+MFFUPL         THRU CAIN-1000-DELETE-X.
+MFFUPL
+MFFUPL     IF NOT WCAIN-IO-OK
+MFFUPL         SET WS-CDI-DEL-FAIL-YES  TO TRUE
+MFFUPL     END-IF.
+MFFUPL
+MFFUPL 6888-DELETE-ALLOC-X.
+MFFUPL     EXIT.
+MFFUPL
+MFFUPL/
+      *------------------------
+       6900-WRITE-AUDIT-REPORT.
+      *------------------------
+
+           MOVE SPACE                         TO R2110-SEQ-REC-INFO.
+MFFOP1*    MOVE WS-COMPANY-CODE               TO R2110-COMPANY-CODE.
+           MOVE WPOL-POL-ID                   TO R2110-POLICY-ID.
+           MOVE WS-APP-ID                     TO R2110-APP-NUMBER.
+           MOVE RPOL-SERV-AGT-ID              TO R2110-AGENT-CODE.
+           MOVE RPOL-SERV-BR-ID               TO R2110-BRANCH-CODE.
+P00103     MOVE LAPUP-AGT-SO-ID               TO R2110-SO-CODE.
+P00103     MOVE RPOL-POL-APP-RECV-DT          TO R2110-REPORT-DT.
+P00103*    MOVE WS-CVG-STICKER-ID (WS-CVG)    TO R2110-STCKR-ID.
+B10065*    MOVE SPACES                        TO R2110-INSURED-NAME.
+P00103*    MOVE WS-CVG-CLI-ID (WS-CVG)        TO R2110-CLIENT-NUMBER.
+P00103     MOVE LAPUP-CLI-ID (CLI-SUB)        TO R2110-CLIENT-NUMBER.
+P00103     MOVE LAPUP-CLI-GIV-NM (CLI-SUB)    TO R2110-CLI-GIV-NM.
+P00103     MOVE LAPUP-CLI-SUR-NM (CLI-SUB)    TO R2110-CLI-SUR-NM.
+P00103     MOVE LAPUP-CLI-BTH-DT (CLI-SUB)    TO R2110-CLI-BTH-DT.
+P00103     MOVE LAPUP-CLI-SEX-CD (CLI-SUB)    TO R2110-CLI-SEX-CD.
+
+5-0584*MFFOP1 IF  WS-SEG-FUND-YES
+5-0584*MFFOP1 AND LAPUP-CLI-ID (CLI-SUB) = LAPUP-CVGC-CLI-ID (WS-CVG, 1)
+5-0584*MFFOP1     MOVE WS-SEG-FUND-CD            TO R2110-SEG-FUND-CD
+5-0584*MFFOP1 END-IF.
+5-0584*MFFOP1
+5-0584
+5-0584* LOOP THROUGH THE COVERAGES IF THE INSURED CLIENT FOR A SA RIDER
+5-0584* IS SAME AS THE CLIENT ID ON APPLICATION. IF SO, PUT THE LITERAL
+5-0584* 'SA' TO THE FIELD 'R2110-SEG-FUND-CD'.
+5-0584
+5-0584     MOVE SPACES               TO WS-SEG-FUND-CD.
+5-0584
+5-0584     PERFORM
+5-0584         VARYING WS-CVG FROM +1 BY +1
+5-0584         UNTIL   WS-CVG > RPOL-POL-CVG-REC-CTR-N
+5-0584
+TVI001*5-0584         IF  WCVGS-CVG-INS-TYP-SEG-FUND (WS-CVG)
+TVI001         IF  (WCVGS-CVG-INS-TYP-SEG-FUND (WS-CVG)
+TVI001         OR  WCVGS-CVG-INS-TYP-TRAD-SEG-FND (WS-CVG))
+5-0584         AND LAPUP-CLI-ID (CLI-SUB)
+5-0584                                = LAPUP-CVGC-CLI-ID (WS-CVG, 1)
+5-0584             SET WS-SEG-FUND-YES         TO TRUE
+5-0584             MOVE WS-SEG-FUND-CD         TO R2110-SEG-FUND-CD
+5-0584         END-IF
+5-0584
+5-0584     END-PERFORM.
+
+B00995     IF R2110-CLI-SEX-CD = 'C'
+B00995        MOVE WS-CORP-NAME TO R2110-CLI-CO-NM
+B00995     END-IF.
+
+P01108     IF LAPUP-UW-TYP-CD (CLI-SUB) = SPACES
+P01108        MOVE '*'                        TO R2110-UW-TYP-CD
+P01108     ELSE
+P01108        MOVE LAPUP-UW-TYP-CD (CLI-SUB)  TO R2110-UW-TYP-CD
+P01108     END-IF.
+
+P00103*    MOVE WS-CVG-PLAN-ID (WS-CVG)       TO R2110-BASE-PRODUCT.
+B10065*    MOVE WS-RECORDS-IN-APP             TO R2110-NUMBER-OF-RECS.
+
+PR006Q* GET MY KEMPO INFORMATION FOR THE POLICY
+PR006Q
+MFFOP1*PR006Q     MOVE RPOL-MY-KEMPO-TYP-CD    TO R2110-MY-KEMPO-TYP-CD.
+PR006Q
+MFFOP1*UCPOUT     IF RPOL-POL-CNVR-TYP-UCP
+MFFOP1*UCPOUT         MOVE '1'                       TO R2110-UCP-CD
+MFFOP1*UCPOUT         MOVE RPOL-POL-ISS-EFF-DT       TO R2110-UCP-ISS-DT
+MFFOP1*UCPOUT     END-IF.
+MFFOP1*UCPOUT
+MFFOP1     MOVE RPOL-PROD-APP-TYP-CD          TO R2110-PROD-APP-TYP-CD.
+MFFOP1*    MOVE WS-SEG-FUND-CD                TO R2110-SEG-FUND-CD.
+MFFOP1
+MFFOP1*    IF  RPOL-POL-CNVR-TYP-DHY-PHASE1
+MFFOP1*        MOVE WS-POL-CNVR-TYP-DHY-CD    TO R2110-POL-CNVR-TYP-CD
+MFFOP1*    END-IF.
+MFFOP1
+MFFOP1     EVALUATE TRUE
+MFFOP1
+MFFOP1         WHEN RPOL-POL-CNVR-TYP-DHY-PHASE1
+MFFOP1              SET  WS-POL-CNVR-TYP-DHY  TO TRUE
+MFFOP1
+MFFOP1         WHEN RPOL-POL-CNVR-TYP-UCP
+MFFOP1              SET  WS-POL-CNVR-TYP-UCP  TO TRUE
+MFFOP1              MOVE RPOL-POL-ISS-EFF-DT  TO R2110-UCP-ISS-DT
+MFFOP1
+MFFOP1         WHEN RPOL-MY-KEMPO-TYP-MATURITY
+MFFOP1              SET  WS-MY-KEMPO-TYP-MATURITY TO TRUE
+MFFOP1
+MFFOP1         WHEN RPOL-MY-KEMPO-TYP-MID-TERM
+MFFOP1              SET  WS-MY-KEMPO-TYP-MID-TERM TO TRUE
+MFFOP1
+MFFOP1     END-EVALUATE.
+MFFOP1
+MFFOP1     MOVE WS-POL-CHNG-TYP-CD   TO  R2110-POL-CHNG-TYP-CD.
+MFFOP1
+MP270C     MOVE RPOL-PAPR-LESS-APP-IND      TO  R2110-PAPR-LESS-APP-IND.
+MP270C
+           PERFORM  2110-1000-WRITE
+               THRU 2110-1000-WRITE-X.
+
+       6900-WRITE-AUDIT-REPORT-X.
+           EXIT.
+      /
+MP261E*------------------------
+MP261E 6910-WRITE-CLUM-REPORT.
+MP261E*------------------------ 
+MP261E*    WRITE DETAIL RECORD FOR CLIENT UNMATCHED EXTRACT
+MP261E
+MP261E     MOVE WS-CLUM-LIST      TO RCLUM-SEQ-REC-INFO.
+MP261E     PERFORM  CLUM-1000-WRITE
+MP261E         THRU CLUM-1000-WRITE-X.
+MP261E
+MP261E 6910-WRITE-CLUM-REPORT-X.
+MP261E     EXIT.
+      /  
+NV3N01*-----------------------
+NV3N01 6920-GET-WP-REINS-DTLS.
+NV3N01*-----------------------
+NV3N01
+NV3N01     MOVE LOW-VALUES                  TO WETAB-KEY.
+NV3N01     MOVE HIGH-VALUES                 TO WETAB-ENDBR-KEY.
+NV3N01     MOVE WCVGS-PLAN-ID (RPOL-POL-BASE-CVG-NUM)  
+NV3N01                                    TO WETAB-ETBL-VALU-ID.
+NV3N01     MOVE 'TTWP'                      TO WETAB-ETBL-TYP-ID.
+NV3N01     MOVE WETAB-KEY                   TO WETAB-ENDBR-KEY.
+NV3N01     MOVE RPOL-POL-ISS-EFF-DT         TO L1660-INTERNAL-DATE.                                          
+NV3N01     PERFORM  1660-2000-CONVERT-INT-TO-INV
+NV3N01         THRU 1660-2000-CONVERT-INT-TO-INV-X.     
+NV3N01     MOVE L1660-INVERTED-DATE         TO WETAB-ETBL-IDT-NUM.
+NV3N01     MOVE HIGH-VALUES                 TO WETAB-ENDBR-ETBL-IDT-NUM.
+NV3N01
+NV3N01     PERFORM  ETAB-1000-BROWSE
+NV3N01         THRU ETAB-1000-BROWSE-X.
+NV3N01     IF  WETAB-IO-OK
+NV3N01         PERFORM  ETAB-2000-READ-NEXT
+NV3N01             THRU ETAB-2000-READ-NEXT-X
+NV3N01         IF  WETAB-IO-OK 
+NV3N01             MOVE RETAB-ETBL-VALU-TXT
+NV3N01                                      TO WS-REINS-TRTY-NUM
+NV3N01             SET WS-TREATY-FND-YES 
+NV3N01                                      TO TRUE
+NV3N01         END-IF
+NV3N01         PERFORM  ETAB-3000-END-BROWSE
+NV3N01             THRU ETAB-3000-END-BROWSE-X
+NV3N01     END-IF.
+NV3N01
+NV3N01     SET WS-EDIT-FND-YES            TO TRUE.
+NV3N01
+NV3N01     IF  WS-TREATY-FND-YES
+NV3N01* GET REINSURANCE COMPANY, CEDING PERCENTAGE AND WRITE RINS RECORDS
+NV3N01         MOVE +1                      TO WS-SUB1
+NV3N01         PERFORM  6925-AUTO-REINS-DTLS
+NV3N01             THRU 6925-AUTO-REINS-DTLS-X
+NV3N01             UNTIL WS-EDIT-FND-NO
+NV3N01     END-IF.
+NV3N01
+NV3N01 6920-GET-WP-REINS-DTLS-X.
+NV3N01     EXIT.
+NV3N01/
+NV3N01*---------------------
+NV3N01 6925-AUTO-REINS-DTLS.
+NV3N01*---------------------
+NV3N01
+NV3N01     MOVE WS-REINS-TRTY-NUM           TO WS-CONCAT-REINS-NUM.
+NV3N01     MOVE WS-SUB1                     TO WS-CONCAT-REINS-CTR.
+NV3N01     MOVE WS-CONCAT-REINS-NUM-CD      TO WEDIT-ETBL-VALU-ID.
+NV3N01
+NV3N01     MOVE 'RECOM'                     TO WEDIT-ETBL-TYP-ID.
+NV3N01     MOVE WGLOB-USER-LANG             TO WEDIT-ETBL-LANG-CD.
+NV3N01      
+NV3N01     PERFORM  EDIT-1000-READ
+NV3N01         THRU EDIT-1000-READ-X.
+NV3N01
+NV3N01     IF  WEDIT-IO-OK
+NV3N01         MOVE REDIT-ETBL-DESC-TXT     TO WS-REINS-UNIQ-NUM
+NV3N01         MOVE REDIT-ETBL-DESC-TXT (1:2)
+NV3N01                                      TO WS-AU-REINS-CO-ID
+NV3N01     ELSE
+NV3N01         SET WS-EDIT-FND-NO           TO TRUE
+NV3N01         GO TO 6925-AUTO-REINS-DTLS-X
+NV3N01     END-IF.
+NV3N01
+NV3N01     MOVE 'REPCT'                     TO WEDIT-ETBL-TYP-ID.
+NV3N01     MOVE WS-REINS-UNIQ-NUM           TO WEDIT-ETBL-VALU-ID.
+NV3N01     MOVE WGLOB-USER-LANG             TO WEDIT-ETBL-LANG-CD.
+NV3N01      
+NV3N01     PERFORM  EDIT-1000-READ
+NV3N01         THRU EDIT-1000-READ-X.
+NV3N01
+NV3N01     IF  WEDIT-IO-OK
+NV3N01         MOVE REDIT-ETBL-DESC-TXT     TO WS-REINS-CED-PCT-AUTO
+NV3N01     ELSE
+NV3N01         SET WS-EDIT-FND-NO           TO TRUE
+NV3N01         GO TO 6925-AUTO-REINS-DTLS-X
+NV3N01     END-IF.
+NV3N01
+NV3N01     PERFORM  6930-BUILD-RINS-KEY
+NV3N01         THRU 6930-BUILD-RINS-KEY-X.
+NV3N01
+NV3N01     PERFORM  RINS-1000-CREATE
+NV3N01         THRU RINS-1000-CREATE-X.
+NV3N01
+NV3N01     MOVE WS-REINS-TRTY-NUM           TO RRINS-REINS-TRTY-NUM.
+NV3N01     MOVE WS-AU-REINS-CO-ID           TO RRINS-REINS-CO-ID.
+NV3N01     MOVE WS-REINS-CED-PCT-AU1        TO RRINS-REINS-CED-PCT.
+NV3N01     MOVE RPOL-POL-BASE-CVG-NUM       TO RRINS-CVG-NUM.
+NV3N01     MOVE RPOL-POL-ID                 TO RRINS-POL-ID.
+NV3N01     MOVE WGLOB-COMPANY-CODE          TO RRINS-CO-ID.
+NV3N01     MOVE WGLOB-USER-ID               TO RRINS-PREV-UPDT-USER-ID.
+NV3N01     MOVE WGLOB-TRXN-GR-TS            TO RRINS-PREV-UPDT-TS.
+NV3N01     
+NV3N01     SET RRINS-REINS-TYP-AUTO         TO TRUE.
+NV3N01
+NV3N01     PERFORM  RINS-1000-WRITE
+NV3N01         THRU RINS-1000-WRITE-X.
+NV3N01
+NV3N01     SET WCVGS-CVG-REINS-YES (RPOL-POL-BASE-CVG-NUM)
+NV3N01                                TO TRUE.
+NV3N01     SET WCVGS-REINS-TYP-AUTO (RPOL-POL-BASE-CVG-NUM)  
+NV3N01                                TO TRUE.
+NV3N01
+NV3N01     ADD +1                           TO WS-SUB1.
+NV3N01
+NV3N01 6925-AUTO-REINS-DTLS-X.
+NV3N01     EXIT.
+NV3N01/
+NV3N01*--------------------
+NV3N01 6930-BUILD-RINS-KEY.
+NV3N01*--------------------
+NV3N01
+NV3N01     MOVE RPOL-POL-ID                 TO WRINS-POL-ID.
+NV3N01     MOVE RPOL-POL-BASE-CVG-NUM       TO WRINS-CVG-NUM.
+NV3N01     MOVE WS-REINS-TRTY-NUM           TO WRINS-REINS-TRTY-NUM.
+NV3N01     MOVE WS-AU-REINS-CO-ID           TO WRINS-REINS-CO-ID.
+NV3N01
+NV3N01 6930-BUILD-RINS-KEY-X.
+NV3N01     EXIT.
+NV3N01/
+      *-----------------------
+       7000-PRINT-PARM-TOTALS.
+      *-----------------------
+
+           MOVE SPACES                   TO L0040-INPUT-LINE.
+
+           PERFORM  0040-3000-WRITE-OTHER
+               THRU 0040-3000-WRITE-OTHER-X.
+
+      *MSG: TOTAL NUMBER OF PARM CARDS READ (@1)
+           MOVE 'XS00000142'             TO WGLOB-MSG-REF-INFO.
+           MOVE WS-PARM-CARD-COUNTER     TO WS-PIC-COUNTER.
+           MOVE WS-PIC-COUNTER           TO WGLOB-MSG-PARM (1).
+
+           PERFORM  0260-1000-GENERATE-MESSAGE
+               THRU 0260-1000-GENERATE-MESSAGE-X.
+
+           PERFORM  0040-4000-WRITE-ERROR-TOTAL
+               THRU 0040-4000-WRITE-ERROR-TOTAL-X.
+
+           IF  L0040-ERROR-CNT > ZERO
+      *MSG: INVALID PARM CARDS, NO PROCESSING PERFORMED
+               MOVE 'XS00000120'    TO WGLOB-MSG-REF-INFO
+               PERFORM  0260-1000-GENERATE-MESSAGE
+                   THRU 0260-1000-GENERATE-MESSAGE-X
+           END-IF.
+
+       7000-PRINT-PARM-TOTALS-X.
+           EXIT.
+      /
+      *-------------------
+       7100-SET-UCLI-KEYS.
+      *-------------------
+
+           MOVE WS-APP-ID                   TO WUCLI-APP-ID
+                                               WUCLI-ENDBR-APP-ID.
+           MOVE LOW-VALUES                  TO WUCLI-SEQ-NUM.
+           MOVE HIGH-VALUES                 TO WUCLI-ENDBR-SEQ-NUM.
+
+       7100-SET-UCLI-KEYS-X.
+           EXIT.
+      /
+      *-------------------
+       7150-SET-UCVG-KEYS.
+      *-------------------
+
+           MOVE WS-APP-ID                   TO WUCVG-APP-ID
+                                               WUCVG-ENDBR-APP-ID.
+           MOVE LOW-VALUES                  TO WUCVG-PLAN-ID
+                                               WUCVG-STCKR-ID.
+           MOVE HIGH-VALUES                 TO WUCVG-ENDBR-PLAN-ID
+                                               WUCVG-ENDBR-STCKR-ID.
+
+       7150-SET-UCVG-KEYS-X.
+           EXIT.
+02NB01/
+      *-------------------
+02NB01 7200-SET-UCNV-KEYS.
+      *-------------------
+02NB01
+02NB01     MOVE WS-APP-ID                   TO WUCNV-APP-ID
+02NB01                                         WUCNV-ENDBR-APP-ID.
+02NB01     MOVE LOW-VALUES                  TO WUCNV-SEQ-NUM.
+02NB01     MOVE HIGH-VALUES                 TO WUCNV-ENDBR-SEQ-NUM.
+02NB01
+02NB01 7200-SET-UCNV-KEYS-X.
+02NB01     EXIT.
+      /
+      *------------------------
+       7500-PRINT-GRAND-TOTALS.
+      *------------------------
+      *
+      * RE-INITIALIZE TITLES/HEADINGS USING DEFAULT COMPANY CODE
+      * SO THE REPORT IS NOT TIED TO ONE SPECIFIC COMPANY
+      *
+           MOVE WPGWS-CRNT-PGM-ID      TO L0960-PROGRAM-ID.
+
+           PERFORM  0960-4000-INIT-DEFAULT-COMP
+               THRU 0960-4000-INIT-DEFAULT-COMP-X.
+
+           PERFORM  0290-1000-BUILD-PARM-INFO
+               THRU 0290-1000-BUILD-PARM-INFO-X.
+
+           PERFORM  8000-INIT-TITLES
+               THRU 8000-INIT-TITLES-X.
+
+      *MSG: TOTAL NUMBER OF UPLOADED RECORDS READ
+           MOVE 'AS94000020'           TO WGLOB-MSG-REF-INFO.
+           MOVE WS-APP-REC-COUNTER     TO WS-PIC-COUNTER.
+           MOVE WS-PIC-COUNTER         TO WGLOB-MSG-PARM (1).
+
+           PERFORM  0260-1000-GENERATE-MESSAGE
+               THRU 0260-1000-GENERATE-MESSAGE-X.
+
+           MOVE SPACES                 TO L0040-INPUT-LINE.
+
+           PERFORM  0040-3000-WRITE-OTHER
+               THRU 0040-3000-WRITE-OTHER-X.
+
+       7500-PRINT-GRAND-TOTALS-X.
+           EXIT.
+      /
+TL0572*--------------------------
+TL0572 7600-UPDT-INSRD-ADDR-CODE.
+TL0572*--------------------------
+TL0572
+TL0572     MOVE SPACES                      TO WS-CLI-ADDR-LOC-CD.
+TL0572     MOVE SPACES                      TO WS-CLI-ADDR-KJ-TXT.
+TL0572     MOVE SPACES                      TO WS-CLI-ADDR-ADDL-TXT.
+TL0572     MOVE SPACES                      TO WS-CLI-ADDR-LN-2-TXT.
+TL0572
+TL0572     MOVE ZERO                        TO I.
+TL0572     PERFORM  2430-1000-BUILD-PARM-INFO
+TL0572         THRU 2430-1000-BUILD-PARM-INFO-X.
+TL0572     PERFORM  2430-2100-GET-OWNER
+TL0572         THRU 2430-2100-GET-OWNER-X.
+TL0572
+TL0572     IF  L2430-RETRN-OK
+TL0572         MOVE L2430-CLI-ID            TO WCLIA-CLI-ID
+TL0572         SET WCLIA-CLI-ADDR-GR-KANJI  TO TRUE
+TL0572         SET WCLIA-CLI-ADDR-TYP-PRIM-ADDR 
+TL0572                                      TO TRUE
+TL0572         MOVE '001'                   TO WCLIA-CLI-ADDR-SEQ-NUM  
+TL0572         PERFORM  CLIA-1000-READ
+TL0572             THRU CLIA-1000-READ-X
+TL0572
+TL0572         IF  WCLIA-IO-OK
+TL0572             MOVE RCLIA-CLI-ADDR-LOC-CD
+TL0572                                      TO WS-CLI-ADDR-LOC-CD
+TL0572             MOVE RCLIA-CLI-ADDR-KJ-TXT  
+TL0572                                      TO WS-CLI-ADDR-KJ-TXT
+TL0572             MOVE RCLIA-CLI-ADDR-ADDL-TXT
+TL0572                                      TO WS-CLI-ADDR-ADDL-TXT
+TL0572             MOVE RCLIA-CLI-ADDR-LN-2-TXT
+TL0572                                      TO WS-CLI-ADDR-LN-2-TXT
+TL0572         END-IF                              
+TL0572     END-IF. 
+TL0572
+TL0572     MOVE ZERO                        TO I.
+TL0572     PERFORM  2430-1000-BUILD-PARM-INFO
+TL0572         THRU 2430-1000-BUILD-PARM-INFO-X.
+TL0572     PERFORM  2430-4100-PRIM-INSRD-KEY
+TL0572         THRU 2430-4100-PRIM-INSRD-KEY-X.
+TL0572
+TL0572     IF NOT L2430-RETRN-OK
+TL0572         GO TO 7600-UPDT-INSRD-ADDR-CODE-X
+TL0572     END-IF. 
+TL0572        
+TL0572     MOVE L2430-CLI-ID                TO WCLIA-CLI-ID.
+TL0572     SET WCLIA-CLI-ADDR-GR-KANJI      TO TRUE.
+TL0572     SET WCLIA-CLI-ADDR-TYP-PRIM-ADDR TO TRUE.                    
+TL0572     MOVE '001'                       TO WCLIA-CLI-ADDR-SEQ-NUM.                                      
+TL0572     
+TL0572     PERFORM  CLIA-1000-READ-FOR-UPDATE
+TL0572         THRU CLIA-1000-READ-FOR-UPDATE-X.
+TL0572
+TL0572     MOVE WS-INSRD-ADDR-LOC-CD        TO RCLIA-INSRD-ADDR-LOC-CD.           
+TL0572     MOVE RCLIA-CLI-ADDR-LOC-CD     TO RCLIA-INSRD-ADDR-LOC-CD.
+TL0572     MOVE WS-CLI-ADDR-LOC-CD        TO RCLIA-CLI-ADDR-LOC-CD.
+TL0572     MOVE WS-CLI-ADDR-KJ-TXT        TO RCLIA-CLI-ADDR-KJ-TXT.
+TL0572     MOVE WS-CLI-ADDR-ADDL-TXT      TO RCLIA-CLI-ADDR-ADDL-TXT.
+TL0572     MOVE WS-CLI-ADDR-LN-2-TXT      TO RCLIA-CLI-ADDR-LN-2-TXT.
+TL0572
+TL0572     PERFORM  9124-1000-BUILD-PARM-INFO
+TL0572         THRU 9124-1000-BUILD-PARM-INFO-X.
+TL0572
+TL0572     MOVE WS-CLI-ADDR-LOC-CD          TO L9124-ADDR-LOC-CD.
+TL0572
+TL0572     PERFORM  9124-1000-READ-ADCD
+TL0572         THRU 9124-1000-READ-ADCD-X.
+TL0572
+TL0572     IF  L9124-RETRN-OK
+TL0572         MOVE L9124-ADDR-LOC-CD       TO RCLIA-CLI-ADDR-LOC-CD
+TL0572         MOVE L9124-PSTL-CD           TO RCLIA-CLI-PSTL-CD
+TL0572         MOVE L9124-KJ-PREFCT-TXT     TO RCLIA-CLI-PREFCT-TXT
+TL0572         MOVE L9124-PREFCT-CD         TO RCLIA-CLI-CRNT-LOC-CD
+TL0572         MOVE L9124-KJ-CITY-TXT       TO RCLIA-CLI-CITY-NM-TXT
+TL0572         MOVE L9124-KJ-NGHBRHD-TXT    TO RCLIA-CLI-ADDR-LN-1-TXT
+TL0572         MOVE L9124-KA-PREFCT-TXT     TO RCLIA-CLI-KA-PREFCT-TXT
+TL0572         MOVE L9124-KA-CITY-TXT       TO RCLIA-CLI-KA-CITY-TXT
+TL0572         MOVE L9124-KA-NGHBRHD-TXT    TO RCLIA-CLI-KA-NGHBRHD-TXT
+TL0572     END-IF.
+TL0572
+TL0614     SET  RCLIA-CLI-ADDR-STAT-COMPLETE TO TRUE.
+TL0614
+TL0614     IF (RCLIA-CLI-ADDR-LOC-CD    = SPACES
+TL0614     OR (RCLIA-CLI-ADDR-ADDL-TXT  = SPACES
+TL0614     AND RCLIA-CLI-ADDL-TXT-MORE  = SPACES)
+TL0614     OR  RCLIA-CLI-CITY-NM-TXT    = SPACES
+TL0614     OR  RCLIA-CLI-CRNT-LOC-CD    = SPACES
+TL0614     OR  RCLIA-CLI-CTRY-CD        = SPACES
+TL0614     OR  RCLIA-CLI-PREFCT-TXT     = SPACES
+TL0614     OR  RCLIA-CLI-KA-PREFCT-TXT  = SPACES
+TL0614     OR  RCLIA-CLI-KA-CITY-TXT    = SPACES
+TL0614     OR  RCLIA-CLI-PSTL-CD        = SPACES)
+TL0614         SET  RCLIA-CLI-ADDR-STAT-INCOMPLETE TO TRUE
+TL0614*MSG WARNING...ADDRESS INFORMATION IS INCOMPLETE
+TL0614         MOVE 'AS94000036'    TO WGLOB-MSG-REF-INFO
+TL0614         MOVE WCLIA-CLI-ID       TO WGLOB-MSG-PARM (1)
+TL0614         PERFORM 0260-1000-GENERATE-MESSAGE
+TL0614            THRU 0260-1000-GENERATE-MESSAGE-X
+TL0614     END-IF.
+TL0614
+TL0572     IF WCLIA-IO-OK
+TL0572         PERFORM  CLIA-2000-REWRITE
+TL0572             THRU CLIA-2000-REWRITE-X
+TL0572     END-IF.
+TL0572
+TL0572 7600-UPDT-INSRD-ADDR-CODE-X.
+TL0572     EXIT.
+
+      *-----------------
+       8000-INIT-TITLES.
+      *-----------------
+
+           MOVE L0960-COMPANY-NAME     TO L0040-COMPANY-NAME.
+           MOVE ZERO                   TO L0040-ERROR-CNT.
+
+      * SET UP THE TITLE/HEADING LINES
+      * GET THE SYSTEM ID
+      *
+           MOVE 'XS00000145'           TO WGLOB-MSG-REF-INFO.
+           PERFORM  0260-2000-GET-MESSAGE
+               THRU 0260-2000-GET-MESSAGE-X.
+           MOVE WGLOB-MSG-TXT          TO L0040-SYSTEM-ID.
+      *
+      * GET THE PROGRAM DESCRIPTION
+      *
+           MOVE 'AS94000021'           TO WGLOB-MSG-REF-INFO.
+           PERFORM  0260-2000-GET-MESSAGE
+               THRU 0260-2000-GET-MESSAGE-X.
+           MOVE WGLOB-MSG-TXT          TO L0040-PROGRAM-DESC.
+      *
+      * GET THE DETAIL HEADINGS FOR PRINTING CONTROL CARDS
+      *
+           MOVE 'XS00000150'           TO WGLOB-MSG-REF-INFO.
+           PERFORM  0260-2000-GET-MESSAGE
+               THRU 0260-2000-GET-MESSAGE-X.
+           MOVE WGLOB-MSG-TXT          TO L0040-HDG-LINE-3.
+
+           PERFORM  0040-1000-INIT-TITLE
+               THRU 0040-1000-INIT-TITLE-X.
+
+       8000-INIT-TITLES-X.
+           EXIT.
+      /
+      *-----------------
+       8100-READ-APP-ID.
+      *-----------------
+
+      * READ THE APPLICATION ID TO PROCESS FROM THE CS9400 INPUT FILE
+
+           MOVE SPACES TO WS-APP-ID.
+
+B10015*    PERFORM  8200-READ-CONTROL-CARD
+B10015*        THRU 8200-READ-CONTROL-CARD-X.
+
+B10015     PERFORM  9400-1000-READ
+B10015         THRU 9400-1000-READ-X.
+
+           IF  W9400-SEQ-IO-EOF
+               SET WAPIN-NO-MORE-APPS            TO TRUE
+           ELSE
+B10015*        MOVE RBCF-SEQ-REC-INFO            TO WPARM-CARD-AREA
+B10015*        MOVE WPARM-VALUE                  TO WS-APP-ID
+B10015         MOVE R9400-APP-ID                 TO WS-APP-ID
+NWLXML         MOVE R9400-APP-CHNL-CD            TO WS-APP-CHNL-CD
+B10015         ADD 1                             TO WS-APP-REC-COUNTER
+           END-IF.
+
+       8100-READ-APP-ID-X.
+           EXIT.
+      /
+      *-----------------------
+       8200-READ-CONTROL-CARD.
+      *-----------------------
+
+           PERFORM  BCF-1000-READ
+               THRU BCF-1000-READ-X.
+
+           IF  WBCF-SEQ-IO-OK
+               ADD 1                   TO WS-PARM-CARD-COUNTER
+           END-IF.
+
+       8200-READ-CONTROL-CARD-X.
+           EXIT.
+      /
+MFFUPL*--------------------------
+MFFUPL*8500-TRANSLATE-UPPER-CASE.
+MFFUPL*--------------------------
+MFFUPL*
+MFFUPL*    PERFORM  0005-1000-BUILD-PARM-INFO
+MFFUPL*        THRU 0005-1000-BUILD-PARM-INFO-X.
+MFFUPL*
+MFFUPL*    MOVE LAPUP-INPUT-DATA           TO L0005-INPUT-STRING.
+MFFUPL*    SET L0005-FORCE-UPPER           TO TRUE.
+MFFUPL*
+MFFUPL*    PERFORM  0005-2000-CONVERT-NO-ACCENTS
+MFFUPL*        THRU 0005-2000-CONVERT-NO-ACCENTS-X.
+MFFUPL*
+MFFUPL*    IF  L0005-RETRN-OK
+MFFUPL*        MOVE L0005-OUTPUT-STRING    TO LAPUP-INPUT-DATA
+MFFUPL*    END-IF.
+MFFUPL*
+MFFUPL*8500-TRANSLATE-UPPER-CASE-X.
+MFFUPL*    EXIT.
+      /
+B10959*--------------------
+B10959 8600-SETUP-PHONETIC.
+B10959*--------------------
+B10959
+B10959     IF  WGLOB-COUNTRY-JAPAN
+B10959         PERFORM  8700-SETUP-PHONETIC
+B10959             THRU 8700-SETUP-PHONETIC-X
+B10959         GO TO 8600-SETUP-PHONETIC-X
+B10959     END-IF.
+B10959
+B10959     PERFORM  2800-1000-BUILD-PARM-INFO
+B10959         THRU 2800-1000-BUILD-PARM-INFO-X.
+B10959
+B10959     MOVE RCLNM-CLI-INDV-SUR-NM  TO L2800-INPUT-NAME.
+B10959
+B10959     PERFORM  2800-2000-PHONETIC-ENCODE
+B10959         THRU 2800-2000-PHONETIC-ENCODE-X.
+B10959
+B10959     IF  L2800-RETRN-OK
+B10959         MOVE L2800-PHONETIC-NAME-N
+B10959                                 TO WS-NM-PHNT-NUM
+B10959         MOVE WS-NM-PHNT         TO RCLNM-SUR-NM-PHNT-TXT
+B10959     ELSE
+B10959         MOVE ZEROES             TO WS-NM-PHNT-NUM
+B10959         MOVE WS-NM-PHNT         TO RCLNM-SUR-NM-PHNT-TXT
+B10959     END-IF.
+B10959
+B10959     PERFORM  2800-1000-BUILD-PARM-INFO
+B10959         THRU 2800-1000-BUILD-PARM-INFO-X.
+B10959
+B10959     MOVE RCLNM-CLI-INDV-GIV-NM  TO L2800-INPUT-NAME.
+B10959
+B10959     PERFORM  2800-2000-PHONETIC-ENCODE
+B10959         THRU 2800-2000-PHONETIC-ENCODE-X.
+B10959
+B10959     IF  L2800-RETRN-OK
+B10959         MOVE L2800-PHONETIC-NAME-N  TO WS-NM-PHNT-NUM
+B10959         MOVE WS-NM-PHNT             TO RCLNM-GIV-NM-PHNT-TXT
+B10959     ELSE
+B10959         MOVE ZEROES                 TO WS-NM-PHNT-NUM
+B10959         MOVE WS-NM-PHNT             TO RCLNM-GIV-NM-PHNT-TXT
+B10959     END-IF.
+B10959
+B10959 8600-SETUP-PHONETIC-X.
+B10959     EXIT.
+B10959/
+B10959*--------------------
+B10959 8700-SETUP-PHONETIC.
+B10959*--------------------
+B10959
+B10959     PERFORM  2810-1000-BUILD-PARM-INFO
+B10959         THRU 2810-1000-BUILD-PARM-INFO-X.
+B10959
+B10959     SET  L2810-SRCH-GR-KATAKANA TO TRUE.
+B10959     MOVE SPACES                 TO RCLNM-SUR-NM-PHNT-TXT.
+B10959     MOVE SPACES                 TO RCLNM-GIV-NM-PHNT-TXT.
+B10959     MOVE RCLNM-CLI-INDV-SUR-NM  TO L2810-INPUT-NAME.
+B10959
+B10959     PERFORM  2810-2000-PHONETIC-ENCODE
+B10959         THRU 2810-2000-PHONETIC-ENCODE-X.
+B10959
+B10959     IF  L2810-RETRN-OK
+B10959         MOVE L2810-PHONETIC-NAME TO RCLNM-SUR-NM-PHNT-TXT
+B10959     END-IF.
+B10959
+B10959     PERFORM  2810-1000-BUILD-PARM-INFO
+B10959         THRU 2810-1000-BUILD-PARM-INFO-X
+B10959
+B10959     SET  L2810-SRCH-GR-KATAKANA TO TRUE.
+B10959     MOVE RCLNM-CLI-INDV-GIV-NM  TO L2810-INPUT-NAME.
+B10959
+B10959     PERFORM  2810-2000-PHONETIC-ENCODE
+B10959         THRU 2810-2000-PHONETIC-ENCODE-X.
+B10959
+B10959     IF  L2810-RETRN-OK
+B10959         MOVE L2810-PHONETIC-NAME TO RCLNM-GIV-NM-PHNT-TXT
+B10959     END-IF.
+B10959
+B10959 8700-SETUP-PHONETIC-X.
+B10959     EXIT.
+      /
+      *---------------------------
+       9000-BUILD-MESSAGE-EXTRACT.
+      *---------------------------
+
+           PERFORM  0260-2000-GET-MESSAGE
+               THRU 0260-2000-GET-MESSAGE-X.
+
+           MOVE SPACES                 TO R2120-SEQ-REC-INFO.
+           MOVE WS-COMPANY-CODE        TO R2120-COMPANY-CODE.
+           MOVE WPOL-POL-ID            TO R2120-POLICY-ID.
+           MOVE WS-APPL-FORM-NO-X      TO R2120-APP-NUMBER.
+           MOVE WS-SERV-AGT-ID         TO R2120-AGENT-CODE.
+           MOVE RPOL-SERV-BR-ID        TO R2120-BRANCH-CODE.
+           MOVE WGLOB-MSG-REF-INFO     TO R2120-MESSAGE-NUMBER.
+           MOVE WGLOB-MSG-TXT          TO R2120-MESSAGE-DATA.
+
+           PERFORM  2120-1000-WRITE
+               THRU 2120-1000-WRITE-X.
+
+       9000-BUILD-MESSAGE-EXTRACT-X.
+           EXIT.
+      /
+NWLXML
+NWLXML*---------------------------
+NWLXML 9010-BUILD-CHANNEL-EXTRACT.
+NWLXML*---------------------------
+NWLXML
+NWLXML     MOVE SPACES                      TO RXMEX-SEQ-REC-INFO.
+NWLXML     MOVE WS-APP-ID                   TO RXMEX-APP-ID.
+NWLXML     MOVE WS-APP-UPLD-DT              TO RXMEX-APP-UPLD-DT.
+NWLXML     MOVE WS-APP-CHNL-CD              TO RXMEX-CHNL-TYP-ID.
+NWLXML     MOVE WGLOB-MSG-TXT               TO RXMEX-MESSAGE-DESC.
+NWLXML
+NWLXML     IF  WS-APP-CHNL-PA-UL
+NWLXML         PERFORM  XMUL-1000-WRITE
+NWLXML             THRU XMUL-1000-WRITE-X
+NWLXML     END-IF.
+NWLXML
+NWLXML     IF  WS-APP-CHNL-NWL-PA
+NWLXML         PERFORM  XMPA-1000-WRITE
+NWLXML             THRU XMPA-1000-WRITE-X
+NWLXML     END-IF.
+NWLXML
+NWLXML     IF  WS-APP-CHNL-NWL-MGA
+NWLXML         PERFORM  XMGA-1000-WRITE
+NWLXML             THRU XMGA-1000-WRITE-X
+NWLXML     END-IF.
+NWLXML
+NWLXML     IF  WS-APP-CHNL-NWL-WMD
+NWLXML         PERFORM  XWMD-1000-WRITE
+NWLXML             THRU XWMD-1000-WRITE-X
+NWLXML     END-IF.
+NWLXML
+NWLXML 9010-BUILD-CHANNEL-EXTRACT-X.
+NWLXML     EXIT.
+NWLXML/
+NWLXML
+NWLXML*------------------------
+NWLXML 9020-WRITE-XML-ERR-HIST.
+NWLXML*------------------------
+NWLXML
+NWLXML     INITIALIZE  WXMLE-KEY.
+NWLXML     MOVE  WS-APP-ID                  TO WXMLE-APP-ID.
+NWLXML     MOVE  WS-APP-CHNL-CD             TO WXMLE-APP-CHNL-CD.
+NWLXML     MOVE  WS-APP-UPLD-DT             TO WXMLE-APP-UPLD-DT.
+NWLXML
+NWLXML     PERFORM  XMLE-1000-READ
+NWLXML         THRU XMLE-1000-READ-X.
+NWLXML
+NWLXML     IF  NOT WXMLE-IO-OK
+NWLXML         PERFORM  XMLE-1000-CREATE
+NWLXML             THRU XMLE-1000-CREATE-X
+NWLXML     ELSE
+NWLXML         GO TO 9020-WRITE-XML-ERR-HIST-X
+NWLXML     END-IF.
+NWLXML
+NWLXML     MOVE  WS-APP-REJ-REASN-CD        TO RXMLE-APP-REJ-REASN-CD.
+NWLXML
+NWLXML     PERFORM  XMLE-1000-WRITE
+NWLXML         THRU XMLE-1000-WRITE-X.
+NWLXML
+NWLXML 9020-WRITE-XML-ERR-HIST-X.
+NWLXML     EXIT.
+NWLXML/
+MP168A*---------------------
+MP168A 9030-MOVE-ISS-EFF-DT.
+MP168A*---------------------
+MP168A
+MP168A* IF THE CWA RECEIPT DATE IS ZERO DATE THEN THE SYSTEM DATE WILL 
+MP168A* BE MOVED TO POLICY ISSUE DATE.
+MP168A
+MP168A     IF  LAPUP-CWAR-RECPT-DT = WWKDT-ZERO-DT
+MP168A     AND RPOL-POL-ISS-DT-TYP-LCD 
+MP168A         MOVE WGLOB-PROCESS-DATE  TO RPOL-POL-ISS-EFF-DT
+Mp168A         GO TO 9030-MOVE-ISS-EFF-DT-X
+MP168A     END-IF.
+MP168A
+MP168A     IF  RPOL-POL-ISS-DT-TYP-LCD          
+MP168A*FEID01*MFFUPL MOVE LAPUP-CNVR-ISS-EFF-DT TO RPOL-POL-ISS-EFF-DT
+MP168A         MOVE LAPUP-CWAR-RECPT-DT
+MP168A                           TO RPOL-POL-ISS-EFF-DT
+MP168A     ELSE
+MP168A         MOVE LAPUP-CNVR-ISS-EFF-DT
+MP168A                           TO RPOL-POL-ISS-EFF-DT
+MP168A     END-IF.
+MP168A
+MP168A 9030-MOVE-ISS-EFF-DT-X.
+MP168A     EXIT.
+MP168A
+MP168A/
+TV2003*TVITMP*--------------------
+TV2003*TVITMP 9040-SUPPRESS-ISSUE.
+TV2003*TVITMP*--------------------
+TV2003*TVITMP
+TV2003*TVITMP     INITIALIZE WS-AGE-AT-UPLD
+TV2003*TVITMP                WS-AGE-AT-ILL-EXPIRY.
+TV2003*TVITMP
+TV2003*TVITMP* GET THE  PLAN LEVEL INFO FOR RATE AGE CALCN.
+TV2003*TVITMP*
+TV2003*TVITMP     MOVE 0                           TO I.
+TV2003*TVITMP     PERFORM  PLIN-1000-PLAN-HEADER-IN
+TV2003*TVITMP         THRU PLIN-1000-PLAN-HEADER-IN-X.
+TV2003*TVITMP
+TV2003*TVITMP     MOVE RPOL-POL-ID                 TO L5670-POL-ID.
+TV2003*TVITMP     SET  L5670-FORCE-AGE-CALC        TO TRUE.
+TV2003*TVITMP     MOVE RPH-AGE-CALC-MTHD-CD        TO L5670-AGE-CALC-MTHD-CD.
+TV2003*TVITMP     SET  L5670-USE-CLIENT-ID         TO TRUE.
+TV2003*TVITMP     MOVE WS-INSRD-CLI-ID(1)          TO L5670-CLI-ID.
+TV2003*TVITMP     MOVE RPOL-POL-APP-UPLD-DT        TO L5670-EFF-DT.
+TV2003*TVITMP
+TV2003*TVITMP     PERFORM  5670-1000-CALC-RATE-AGE
+TV2003*TVITMP         THRU 5670-1000-CALC-RATE-AGE-X.
+TV2003*TVITMP
+TV2003*TVITMP     IF NOT L5670-RETRN-OK
+TV2003*TVITMP        GO TO 9040-SUPPRESS-ISSUE-X
+TV2003*TVITMP     END-IF.
+TV2003*TVITMP
+TV2003*TVITMP     MOVE  L5670-RT-AGE               TO WS-AGE-AT-UPLD.
+TV2003*TVITMP
+TV2003*TVITMP     MOVE RPOL-POL-APP-UPLD-DT        TO L1680-INTERNAL-1.
+TV2003*TVITMP     MOVE ZERO                        TO L1680-NUMBER-OF-YEARS.
+TV2003*TVITMP     MOVE 2                           TO L1680-NUMBER-OF-MONTHS.
+TV2003*TVITMP     MOVE ZERO                        TO L1680-NUMBER-OF-DAYS.
+TV2003*TVITMP     PERFORM  1680-3000-ADD-Y-M-D-TO-DATE
+TV2003*TVITMP         THRU 1680-3000-ADD-Y-M-D-TO-DATE-X.
+TV2003*TVITMP
+TV2003*TVITMP     MOVE L1680-INTERNAL-2            TO L5670-EFF-DT.
+TV2003*TVITMP
+TV2003*TVITMP     PERFORM  5670-1000-CALC-RATE-AGE
+TV2003*TVITMP         THRU 5670-1000-CALC-RATE-AGE-X.
+TV2003*TVITMP
+TV2003*TVITMP     IF NOT L5670-RETRN-OK
+TV2003*TVITMP        GO TO 9040-SUPPRESS-ISSUE-X
+TV2003*TVITMP     END-IF.
+TV2003*TVITMP
+TV2003*TVITMP     MOVE  L5670-RT-AGE               TO WS-AGE-AT-ILL-EXPIRY.
+TV2003*TVITMP
+TV2003*TVITMP     IF  WS-AGE-AT-ILL-EXPIRY <> WS-AGE-AT-UPLD
+TV2003*TVITMP         SET RPOL-POL-SUPRES-ISS      TO TRUE
+TV2003*TVITMP     END-IF.
+TV2003*TVITMP
+TV2003*TVITMP 9040-SUPPRESS-ISSUE-X.
+TV2003*TVITMP     EXIT.
+TV2003*TVITMP/
+      *-----------------
+       9999-CLOSE-FILES.
+      *-----------------
+      *
+      * THIS ROUTINE WILL CLOSE ALL FILES PRIOR TO THE PROGRAM FINISH
+      *
+           PERFORM  0800-3000-FINISH-CKPT
+               THRU 0800-3000-FINISH-CKPT-X.
+
+           PERFORM  BCF-4000-CLOSE
+               THRU BCF-4000-CLOSE-X.
+
+P00045*    PERFORM  2110-4000-CLOSE
+P00045*        THRU 2110-4000-CLOSE-X.
+
+P00045*    PERFORM  2120-4000-CLOSE
+P00045*        THRU 2120-4000-CLOSE-X.
+
+B10015     PERFORM  9400-4000-CLOSE
+B10015        THRU  9400-4000-CLOSE-X.
+
+NWLXML     PERFORM  XMUL-4000-CLOSE
+NWLXML        THRU  XMUL-4000-CLOSE-X.
+NWLXML
+NWLXML     PERFORM  XMPA-4000-CLOSE
+NWLXML        THRU  XMPA-4000-CLOSE-X.
+NWLXML
+NWLXML     PERFORM  XMGA-4000-CLOSE
+NWLXML        THRU  XMGA-4000-CLOSE-X.
+NWLXML
+NWLXML     PERFORM  XWMD-4000-CLOSE
+NWLXML        THRU  XWMD-4000-CLOSE-X.
+NWLXML
+           PERFORM  OCF-4000-CLOSE
+               THRU OCF-4000-CLOSE-X.
+
+       9999-CLOSE-FILES-X.
+           EXIT.
+      /
+      *****************************************************************
+      *    PROCESSING COPYBOOKS                                       *
+      *****************************************************************
+       COPY ACPPI570.
+       COPY ACPPI953.
+       COPY ACPPPLNB.
+MFFUPL COPY ACPPTNLT.
+       COPY XCPPCKPT.
+109682 COPY NCPPRFUP.
+109682 COPY NCPPRVAL.
+R16171*109938 COPY CCPPTASK.
+      /
+      *****************************************************************
+      *    LINKAGE PROCESSING COPYBOOKS                               *
+      *****************************************************************
+
+TV2003*TVITMP COPY CCPL5670.
+TV2003*TVITMP COPY CCPS5670.
+TVITMP
+P02229 COPY XCPL0035.
+
+       COPY CCPL0066.
+
+       COPY CCPL0083.
+       COPY CCPS0083.
+
+P00653 COPY CCPL2810.
+P00653 COPY CCPS2810.
+
+       COPY NCPL0301.
+       COPY NCPS0301.
+
+       COPY NCPL0302.
+       COPY NCPS0302.
+
+MP9PHA COPY NCPL0303.
+MP9PHA COPY NCPS0303.
+
+PR006Q COPY CCPS9846.
+PR006Q COPY CCPL9846.
+
+       COPY CCPL0570.
+       COPY CCPS0570.
+       COPY CCPL0840.
+       COPY CCPS0840.
+R16171*MP310E COPY CCPL0010.
+R16171*MP310E COPY CCPS0010.
+       COPY ACPL2130.
+       COPY ACPLUCLI.
+       COPY ACPLUCVG.
+       COPY ACPLUPOL.
+02NB01 COPY ACPLUCNV.
+C12392 COPY ACPLUBEN.
+
+       COPY ACPNUPOL.
+B10319 COPY ACPUUPOL.
+       COPY ACPBUCVG.
+       COPY ACPBUCLI.
+02NB01 COPY ACPBUCNV.
+C12392 COPY ACPBUBEN.
+      /
+       COPY CCPL0183.
+       COPY CCPL0832.
+       COPY CCPL2430.
+TL0572 COPY CCPS2430.	   
+       COPY NCPL2437.
+       COPY CCPL2800.
+       COPY CCPS2800.
+       COPY CCPL5120.
+HNB203 COPY CCPL2435.
+HNB203 COPY CCPS2435.
+      /
+       COPY CCPL0953.
+       COPY CCPS0953.
+      /
+       COPY CCPL6180.
+       COPY CCPS6180.
+      /
+       COPY CCPSPGA.
+      /
+       COPY NCPL0080.
+       COPY NCPS0080.
+       COPY CCPL6060.
+       COPY CCPL5950.
+       COPY NCPL0760.
+       COPY NCPL0960.
+      /
+       COPY CCPS8240.
+       COPY CCPL8240.
+      /
+B01730 COPY CCPS9215.
+B01730 COPY CCPL9215.
+      /
+MFFUPL COPY CCPS9806.
+MFFUPL COPY CCPL9806.
+MFFUPL/
+       COPY XCPS0800.
+       COPY XCPL0800.
+       COPY XCPL0005.
+       COPY XCPL0015.
+       COPY XCPS0005.
+       COPY XCPL0040.
+       COPY XCPL0260.
+       COPY XCPS0290.
+       COPY XCPL0290.
+       COPY XCPL0280.
+       COPY XCPL1580.
+       COPY XCPL1610.
+       COPY XCPL1640.
+       COPY XCPL1660.
+       COPY XCPL1670.
+       COPY XCPL1680.
+       COPY CCPL0620.
+       COPY NCPS9140.
+       COPY NCPL9140.
+       COPY CCPS9285.
+       COPY CCPL9285.
+B01137 COPY CCPS9196.
+B01137 COPY CCPL9196.
+
+MFFUPL COPY NCPS9407.
+MFFUPL COPY NCPL9407.
+      /
+MFFUPL COPY FCPS8200.
+MFFUPL COPY FCPL8200.
+MFFUPL/
+MFFUPL COPY FCPS8210.
+MFFUPL COPY FCPL8210.
+MFFUPL/
+MFFUPL COPY SCPL0500.
+MFFUPL/
+MFFUPL COPY XCPL0289.
+MFFUPL/
+IPDDUP COPY CCPPPLIN.
+NWLSPN COPY CCPPPDIN.
+EN7281/
+EN7281 COPY CCPL2440.
+TL0572/
+TL0572 COPY XCPS9124.
+TL0572 COPY XCPL9124.
+TL0572/
+R16171*MP310E COPY XCPS0319.
+R16171*MP310E COPY XCPL0319.
+R16171*MP310E COPY CCPSSCVS.
+R16171*MP310E COPY CCPLSCVS.
+R16171*MP310E COPY CCPSALPS.
+R16171*MP310E COPY CCPLALPS.
+109682 COPY XCPS8090.
+109682 COPY XCPL8090.
+R16171*109938 COPY NCPS9316.
+R16171*109938 COPY NCPL9316.
+      **********************************
+      * APEX UPLOAD FILE I/O COPYBOOKS *
+      **********************************
+      /
+       COPY ACPN2100.
+       COPY ACPL2100.
+       COPY ACPO2100.
+      /
+       COPY ACPA2110.
+MP261E COPY ACPACLUM.
+P00045*COPY ACPL2110.
+P00045*COPY ACPO2110.
+B10015/
+B10015 COPY ACPO9400.
+B10015 COPY ACPN9400.
+B10015 COPY ACPL9400.
+      /
+       COPY ACPA2120.
+P00045*COPY ACPL2120.
+P00045*COPY ACPO2120.
+R16171*MP310E COPY XCPS0013.
+R16171*MP310E COPY XCPL0013.
+R14974 COPY XCPS0466.
+R14974 COPY XCPL0466.
+TLB08E COPY CCPL9228.
+TLB08E COPY CCPS9228.
+      /
+      *****************************************************************
+      *    FILE I/O PROCESS MODULES                                   *
+      *****************************************************************
+       COPY CCPBBENC.
+      /
+       COPY CCPABENE.
+       COPY CCPBBENE.
+       COPY CCPTBENE.
+       COPY CCPVBENE.
+       COPY CCPCBENE.
+       COPY CCPFBENE.
+R16171*110437 COPY CCPUBENE.       
+      /
+       COPY CCPNBNKA.
+       COPY CCPABNKA.
+       COPY CCPCBNKA.
+UYS110 COPY CCPUBNKA.
+UYS110 COPY CCPXBNKA.       
+      /
+       COPY CCPNBNKB.
+      /
+HNB014 COPY CCPBCCLI.
+HNB014/
+       COPY CCPACLI.
+       COPY CCPNCLI.
+       COPY CCPCCLI.
+P00734 COPY CCPUCLI.
+      /
+       COPY CCPACLII.
+       COPY CCPCCLII.
+       COPY CCPNCLII.
+MFFUPL COPY CCPUCLII.
+26878B COPY CCPVCLII.       
+      /
+       COPY CCPACLIC.
+       COPY CCPCCLIC.
+       COPY CCPNCLIC.
+      /
+      
+Q18254 COPY CCPBRL.      
+       COPY NCPACLIU.
+       COPY NCPCCLIU.
+       COPY NCPNCLIU.
+02NB01 COPY NCPUCLIU.
+MP261E COPY NCPBCLIU. 
+      /
+HNB203 COPY NCPBCLUA.
+      /
+       COPY CCPACLIA.
+       COPY CCPCCLIA.
+MP9PHA COPY CCPBCLIA.
+TL0572 COPY CCPNCLIA.
+TL0572 COPY CCPUCLIA.
+      /
+       COPY CCPNCLIB.
+       COPY CCPACLIB.
+       COPY CCPCCLIB.
+      /
+       COPY CCPNCLIN.
+      /
+       COPY CCPACLNC.
+       COPY CCPCCLNC.
+       COPY CCPNCLNC.
+      /
+       COPY CCPACLNM.
+       COPY CCPCCLNM.
+       COPY CCPNCLNM.
+02NB01/
+02NB01 COPY CCPCPOLX.
+02NB01 COPY CCPAPOLX.
+      /
+NWLXML COPY ACPAXMLE.
+NWLXML COPY ACPNXMLE.
+NWLXML COPY ACPCXMLE.
+NWLXML/
+       COPY CCPACVG.
+       COPY CCPUCVG.
+       COPY CCPCCVG.
+      /
+       COPY CCPACVGC.
+       COPY CCPCCVGC.
+      /
+       COPY CCPNEDIT.
+      /
+       COPY CCPNPCOM.
+       COPY CCPNSCOM.
+      /
+       COPY CCPNPSYS.
+      /
+       COPY CCPNPD.
+       COPY CCPCPD.
+      /
+       COPY CCPNPH.
+       COPY CCPCPH.
+      /
+       COPY CCPAPOL.
+       COPY CCPNPOL.
+       COPY CCPUPOL.
+       COPY CCPCPOL.
+      /
+       COPY CCPAPOLC.
+       COPY CCPCPOLC.
+      /
+       COPY CCPARL.
+       COPY CCPCRL.
+      /
+PR006Q COPY CCPUPOLK.
+PR006Q COPY CCPCPOLK.
+PR006Q COPY CCPAPOLK.
+      /
+       COPY CCPACAIN.
+MFFUPL*COPY CCPBCAIN.
+       COPY CCPCCAIN.
+MFFUPL COPY CCPNCAIN.
+MFFUPL COPY CCPUCAIN.
+MFFUPL COPY CCPXCAIN.
+      /
+       COPY CCPACDSI.
+MFFUPL*COPY CCPBCDSI.
+       COPY CCPCCDSI.
+MFFUPL*COPY CCPFCDSI.
+MFFUPL COPY CCPGCDSI.
+MFFUPL*COPY CCPUCDSI.
+      /
+       COPY CCPAPOLP.
+       COPY CCPCPOLP.
+       COPY CCPNMAST.
+P00653 COPY CCPBCLND.
+109682 COPY NCPNRTAB.
+109682 COPY NCPAREQT.
+109682 COPY NCPBREQT.
+109682 COPY NCPNREQT.
+109682 COPY NCPUREQT.
+109682 COPY NCPCREQT.
+UYS110 COPY NCPA9565.
+UYS110 COPY NCPB9565.
+UYS110 COPY NCPG9565.
+
+      /
+       COPY XCPLBCF.
+       COPY XCPNBCF.
+       COPY XCPOBCF.
+      /
+       COPY XCPLOCF.
+       COPY XCPOOCF.
+      /
+IPDDUP COPY CCPS9876.
+IPDDUP COPY CCPL9876.
+IPDDUP/
+NWLXML COPY XCSLFILE REPLACING ==:ID:==  BY XMEX
+NWLXML                         ==':PGM:'== BY =='ASRQXMEX'==.
+NWLXML COPY ACPAXMEX.
+NWLXML COPY ACPOXMEX.
+NWLXML COPY CCPNPOLF.
+NWLXML/
+MP301C COPY ACPBUAPE.
+M310K1 COPY CCPBCLNN.
+M310K1 COPY CCPBCLID.
+023800 COPY CCPNTRNS.
+NV3N01 COPY CCPARINS.
+NV3N01 COPY CCPCRINS.
+NV3N01 COPY CCPGRINS.
+NV3N01 COPY CCPNRINS.
+NV3N01 COPY CCPBETAB.
+26878B
+26878B COPY NCPNTTAB.
+      *****************************************************************
+      *    ERROR HANDLING ROUTINES                                    *
+      *****************************************************************
+       COPY XCPL0030.
+
+      *****************************************************************
+      **                 END OF PROGRAM ASBM9400                     **
+      *****************************************************************

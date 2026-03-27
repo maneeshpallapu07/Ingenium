@@ -1,0 +1,2697 @@
+      *************************
+       IDENTIFICATION DIVISION.
+      *************************
+ 
+       PROGRAM-ID.  ASRSCVG.
+ 
+       COPY XCWWCRHT.
+ 
+      *****************************************************************
+      **  MEMBER :  ASRSCVG                                          **
+      **  REMARKS:  APEX UPLOAD CVG TABLE PROCESSING                 **
+      **                                                             **
+      **  DOMAIN :  CV                                               **
+      **  CLASS  :  FD                                               **
+      *****************************************************************
+      **  DATE     AUTH.  DESCRIPTION                                **
+      **                                                             **
+      **  31JAN94  APEX   NBS/APEX REDESIGN                          **
+APEX52**  30NOV94  JJS    UPGRADE TO RELEASE 5.2                     **
+APEX53**  30NOV95  JJS    UPGRADE TO INGENIUM 5.3 & WINAPEX 1.0,     **
+APEX53**                  NAME CHANGES NOT TAGGED,                   **
+APEX53**                  ADD WORKING STORAGE COPYBOOK XCWWPGWS,     **
+APEX53**                  CHANGES TO SUPPORT I/O PROGRAMS            **
+APEX54**  31DEC96  TJS    MODIFICATIONS FOR MAINTAINABILITY          **
+557659**  30SEP97  KLE    DATA ARCHITECTURE MODIFICATION             **
+557700**  30SEP97  TJS    APEX UPLOAD 5.5                            **
+557788**  30SEP97  KLE    POLICY TABLE SPLIT                         **
+007766**  30OCT98  56     ARCHITECTURE CHANGES TO SUPPORT PASSING    **
+007766**                  PARAMETERS VIA AN ADDRESS                  **
+010302**  30OCT98  56     ARCHITECTURE CHANGES                       **
+010313**  30OCT98  56     DON'T PROCESS CVG INFO FOR EMBEDDED CVGS   **
+010418**  30OCT98  56     MULTI-COMPANY                              **
+011930**  30OCT98  56     MODULE RENAMED FROM ASRUCVG                **
+013064**  30OCT98  56     RENEWABLE TERM PREMIUM NOT CALCULATING     **
+012696**  07MAY99  56V    MOVE ALLOCATIONS TO THE POLICY LEVEL       **
+014178**  07MAY99  56V    APEX 3.1 UPLOAD TO INGENIUM 5.6V           **
+014591**  15DEC99  60     COMBINE TWO PART FIELDS                    **
+014590**  15DEC99  60     ARCHITECTURAL CHANGES                      **
+      *****************************************************************
+      /
+      **********************
+       ENVIRONMENT DIVISION.
+      **********************
+ 
+      ***************
+       DATA DIVISION.
+      ***************
+ 
+       WORKING-STORAGE SECTION.
+ 
+APEX53 COPY XCWWPGWS REPLACING '$VAR1' BY 'ASRSCVG'.
+ 
+       COPY SQLCA.
+ 
+014590*COPY XCWL0030.
+ 
+      /
+      *****************************************************************
+      *  COMMON COPYBOOKS                                             *
+      *****************************************************************
+APEX54 COPY CCWWINDX.
+      /
+      *****************************************************************
+      *  I/O COPYBOOKS                                                *
+      *****************************************************************
+       COPY ACFWUTTB.
+      /
+       COPY ACFRUTTB.
+      /
+       COPY CCFWPCOM.
+       COPY CCFRPCOM.
+      /
+       COPY CCFWPD.
+       COPY CCFRPD.
+      /
+       COPY CCFWPH.
+       COPY CCFRPH.
+      /
+       COPY CCFWPSYS.
+       COPY CCFRPSYS.
+      /
+       COPY CCFWQT.
+      /
+      *****************************************************************
+      *  CALLED MODULE PARAMETER INFORMATION                          *
+      *****************************************************************
+       COPY ACWWAPUP.
+      /
+APEX54 COPY CCWL5790.
+      /
+       COPY XCWL0280.
+      /
+      *****************************************************************
+      *  INPUT PARAMETER INFORMATION                                  *
+      *****************************************************************
+ 
+      *****************
+       LINKAGE SECTION.
+      *****************
+ 
+       01  WGLOB-GLOBAL-AREA.
+       COPY XCWWGLOB.
+ 
+       COPY CCWLPGA.
+ 
+       COPY ACWLAPUP.
+ 
+       COPY ACWLCVG.
+ 
+       COPY ACFRUFLD.
+ 
+       COPY CCFRQT.
+ 
+       COPY CCFRPOL.
+ 
+       COPY CCWWCVGS.
+      /
+       PROCEDURE DIVISION  USING  WGLOB-GLOBAL-AREA
+010311                            LPGA-PARM-INFO
+                                  LAPUP-PARM-AREA
+                                  LCVG-PARM-AREA
+                                  RUFLD-REC-INFO
+                                  RQT-REC-INFO
+                                  RPOL-REC-INFO
+                                  WCVGS-WORK-AREA.
+ 
+      *--------------
+       0000-MAINLINE.
+      *--------------
+ 
+           PERFORM  1000-INITIALIZE
+               THRU 1000-INITIALIZE-X.
+ 
+APEX54     EVALUATE TRUE
+ 
+557700*        WHEN RUFLD-UPLD-FLD-TYP-CHAR
+557700         WHEN RUFLD-UPLD-FLD-TYP-MIX-CASE
+557700         WHEN RUFLD-UPLD-FLD-TYP-UPPER-CASE
+                    PERFORM  2000-PROCESS-CHAR-FIELD
+                        THRU 2000-PROCESS-CHAR-FIELD-X
+ 
+APEX54         WHEN RUFLD-UPLD-FLD-TYP-DATE
+                    PERFORM  3000-PROCESS-DATE-FIELD
+                        THRU 3000-PROCESS-DATE-FIELD-X
+ 
+APEX54         WHEN RUFLD-UPLD-FLD-TYP-NUMERIC
+APEX54         WHEN RUFLD-UPLD-FLD-TYP-DOLLAR-AMT
+                    PERFORM  4000-PROCESS-NUMERIC-FIELD
+                        THRU 4000-PROCESS-NUMERIC-FIELD-X
+ 
+557700*        WHEN RUFLD-UPLD-FLD-TYP-TRANS
+557700         WHEN RUFLD-UPLD-FLD-TYP-TRANS-VALU
+                    PERFORM  5000-PROCESS-TRANS-FIELD
+                        THRU 5000-PROCESS-TRANS-FIELD-X
+ 
+APEX54         WHEN RUFLD-UPLD-FLD-TYP-COMPLEX
+                    PERFORM  6000-PROCESS-COMPLEX-FIELD
+                        THRU 6000-PROCESS-COMPLEX-FIELD-X
+ 
+557700*        WHEN RUFLD-UPLD-FLD-TYP-FIELD
+557700         WHEN RUFLD-UPLD-FLD-TYP-TRANS-NAME
+                    PERFORM  7000-PROCESS-FIELD-FIELD
+                        THRU 7000-PROCESS-FIELD-FIELD-X
+ 
+APEX54         WHEN RUFLD-UPLD-FLD-TYP-UNUSED
+APEX54              CONTINUE
+ 
+               WHEN OTHER
+                    MOVE WAPUP-C-UNKNOWN-FIELD-TYPE
+                                            TO LAPUP-RETURN-CD
+ 
+APEX54     END-EVALUATE.
+ 
+           GOBACK.
+ 
+       0000-MAINLINE-X.
+           EXIT.
+      /
+      *----------------
+       1000-INITIALIZE.
+      *----------------
+ 
+           MOVE WAPUP-C-GOOD-RETURN-CD       TO LAPUP-RETURN-CD.
+           MOVE WAPUP-C-GOOD-RETURN-CD       TO LAPUP-SUB-RETURN-CD.
+           MOVE WAPUP-C-NO                   TO LAPUP-REC-CHANGED-SW.
+ 
+           MOVE RPOL-POL-CVG-REC-CTR-N       TO I.
+ 
+557700*    FOR UNIVERSAL LIFE, PUT FUND ON BASE CVG IF SAME PLAN CD
+557700     IF  RUFLD-UNIVLIFE-STRUCT
+557700     AND RPH-PLAN-CF-TYP-CD = WCVGS-CVG-CF-TYP-CD (1)
+557700         MOVE +1                       TO I
+557700     END-IF.
+ 
+APEX54     IF  I = 0
+APEX54         MOVE +1                       TO I
+APEX54     END-IF.
+ 
+       1000-INITIALIZE-X.
+           EXIT.
+      /
+      *------------------------
+       2000-PROCESS-CHAR-FIELD.
+      *------------------------
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'AGE_RAT_REASN_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-AGE-RAT-REASN-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CFAGT_SETUP_IND'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CFAGT-SETUP-IND (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CLM_CHQ_ID'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CLM-CHQ-ID (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'COMM_TRG_CALC_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-COMM-TRG-CALC-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CONN_CVG_NUM'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CONN-CVG-NUM (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CONN_POL_ID'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CONN-POL-ID (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_ACCT_TYP_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-ACCT-TYP-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_APS_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-APS-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_BP_DUR'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-BP-DUR (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_CF_REC_CTR'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-CF-REC-CTR (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_CF_TYP_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-CF-TYP-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_CNVR_IND'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-CNVR-IND (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_COMIT_RT_IND'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-COMIT-RT-IND (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_CONN_REASN_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-CONN-REASN-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_CSN_REC_CTR'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-CSN-REC-CTR (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_CSTAT_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-CSTAT-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_EKG_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-EKG-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_ENHC_REC_CTR'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-ENHC-REC-CTR (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_ENHC_TYP_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-ENHC-TYP-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_FE_REASN_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-FE-REASN-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_GUAR_INT_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-GUAR-INT-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_HO_SPCMN_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-HO-SPCMN-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_INCM_BRCKT_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-INCM-BRCKT-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_INSPC_RPT_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-INSPC-RPT-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_INS_TYP_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-INS-TYP-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_INTRNL_EXAM_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-INTRNL-EXAM-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_INT_PAYO_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-INT-PAYO-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+012696***  IF  RUFLD-UPLD-FLD-NM = 'CVG_IN_ALLOC_CD'
+012696***      MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-IN-ALLOC-CD (I)
+012696***      MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+012696***      GO TO 2000-PROCESS-CHAR-FIELD-X
+012696***  END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_LIVES_INSRD_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-LIVES-INSRD-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_ME_REASN_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-ME-REASN-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_MISC_RAT_1_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-MISC-RAT-1-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_MISC_RAT_2_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-MISC-RAT-2-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_NMED_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-NMED-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_NMED_PRVLG_IND'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-NMED-PRVLG-IND (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_NOTI_DEPT_ID'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-NOTI-DEPT-ID (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_NOTI_REASN_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-NOTI-REASN-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_NXT_RENW_RT_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-NXT-RENW-RT-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_OCCP_CLAS_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-OCCP-CLAS-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_ORIG_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-ORIG-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_OUT_ALLOC_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-OUT-ALLOC-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_PAR_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-PAR-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_PHYS_EXAM_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-PHYS-EXAM-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_PMED_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-PMED-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_PREV_CSTAT_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-PREV-CSTAT-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_PRST_RAT_PCT'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-PRST-RAT-PCT (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+557659*    IF  RUFLD-UPLD-FLD-NM = 'CVG_RESTR_PREM_CD'
+557659     IF  RUFLD-UPLD-FLD-NM = 'CVG_RESTR_PREM_IND'
+557659*        MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-RESTR-PREM-CD (I)
+557659         MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-RESTR-PREM-IND (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_RT_AGE'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-RT-AGE (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_SALE_SRC_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-SALE-SRC-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_SEX_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-SEX-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_SMKR_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-SMKR-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_SPND_CSTAT_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-SPND-CSTAT-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_STBL_1_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-STBL-1-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_STBL_2_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-STBL-2-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_STBL_3_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-STBL-3-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_STBL_4_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-STBL-4-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_STRS_EKG_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-STRS-EKG-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_SUPP_BNFT_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-SUPP-BNFT-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_UWGDECN_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-UWGDECN-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_UWGDECN_SUB_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-UWGDECN-SUB-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_UWG_EXCL_1_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-UWG-EXCL-1-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_UWG_EXCL_2_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-UWG-EXCL-2-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_UWG_EXCL_3_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-UWG-EXCL-3-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_WTHDR_ORDR_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-WTHDR-ORDR-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_XHBT_ISS_IND'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-XHBT-ISS-IND (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_XHBT_TRMN_QTY'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-XHBT-TRMN-QTY (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_XRAY_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-CVG-XRAY-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'FRST_LF_CF_SEQ_NUM'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-FRST-LF-CF-SEQ-NUM (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'GIR_OPT_REMN_QTY'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-GIR-OPT-REMN-QTY (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'GIR_PREM_INCL_IND'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-GIR-PREM-INCL-IND (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'GIR_SEND_LTR_IND'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-GIR-SEND-LTR-IND (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+557659*    IF  RUFLD-UPLD-FLD-NM = 'MAT_XPRY_RECALC_CD'
+557659     IF  RUFLD-UPLD-FLD-NM = 'MAT_XPRY_DT_IND'
+557659*        MOVE LAPUP-INPUT-DATA TO WCVGS-MAT-XPRY-RECALC-CD (I)
+557659         MOVE LAPUP-INPUT-DATA TO WCVGS-MAT-XPRY-DT-IND (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'ORIG_PLAN_BASE_ID'
+014591*        MOVE LAPUP-INPUT-DATA TO WCVGS-ORIG-PLAN-BASE-ID (I)
+014591         MOVE LAPUP-INPUT-DATA TO WCVGS-ORIG-PLAN-ID (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'PMT_LOAD_TRG_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-PMT-LOAD-TRG-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'POL_APP_NUM'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-POL-APP-NUM (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'PREM_CALC_TYP_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-PREM-CALC-TYP-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'PREV_ANNV_CVGD_DUR'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-PREV-ANNV-CVGD-DUR (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'PREV_RENW_RT_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-PREV-RENW-RT-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'REL_CVG_NUM'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-REL-CVG-NUM (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'SNGL_CASE_AGRE_IND'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-SNGL-CASE-AGRE-IND (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'ULT_PREM_RT_AGE'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-ULT-PREM-RT-AGE (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'ULT_PREM_RT_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-ULT-PREM-RT-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'UWG_AMT_REASN_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-UWG-AMT-REASN-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'UWG_REJ_REASN_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-UWG-REJ-REASN-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'UWG_REQIR_ESTB_IND'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-UWG-REQIR-ESTB-IND (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'UWG_USER_DEFN_1_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-UWG-USER-DEFN-1-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'UWG_USER_DEFN_2_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-UWG-USER-DEFN-2-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'UWG_USER_DEFN_3_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-UWG-USER-DEFN-3-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'UWG_USER_DEFN_4_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-UWG-USER-DEFN-4-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'UWG_USER_DEFN_5_CD'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-UWG-USER-DEFN-5-CD (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'UW_USER_ID'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-UW-USER-ID (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'XHBT_REINST_QTY'
+               MOVE LAPUP-INPUT-DATA TO WCVGS-XHBT-REINST-QTY (I)
+               MOVE WAPUP-C-YES      TO LAPUP-REC-CHANGED-SW
+               GO TO 2000-PROCESS-CHAR-FIELD-X
+           END-IF.
+ 
+           MOVE WAPUP-C-UNKNOWN-FIELD-ERR
+                                     TO LAPUP-RETURN-CD.
+ 
+       2000-PROCESS-CHAR-FIELD-X.
+           EXIT.
+      /
+      *------------------------
+       3000-PROCESS-DATE-FIELD.
+      *------------------------
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'COMIT_RT_EFF_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-COMIT-RT-EFF-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+               GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'COMIT_RT_END_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-COMIT-RT-END-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+               GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+010302*    IF  RUFLD-UPLD-FLD-NM = 'CVG_ADJ_DT'
+010302*        MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+010302*        MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+010302*        MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+010302*        MOVE WAPUP-CONV-DT      TO WCVGS-CVG-ADJ-DT (I)
+010302*        MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+010302*        GO TO 3000-PROCESS-DATE-FIELD-X
+010302*    END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_AD_XPRY_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-AD-XPRY-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+               GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_APP_CMPLT_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-APP-CMPLT-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+               GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_APP_RECV_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-APP-RECV-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+               GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_CLM_CHQ_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-CLM-CHQ-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_CNVR_XPRY_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-CNVR-XPRY-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_INT_PAYO_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-INT-PAYO-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_ISS_EFF_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-ISS-EFF-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_MAT_XPRY_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-MAT-XPRY-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_MTHV_STRT_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-MTHV-STRT-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_NOTI_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-NOTI-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_NXT_ROLOVR_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-NXT-ROLOVR-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_PREM_CHNG_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-PREM-CHNG-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_STAT_EFF_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-STAT-EFF-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_STAT_PRCES_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-STAT-PRCES-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_UWGDECN_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-UWGDECN-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_WP_XPRY_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-WP-XPRY-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_XHBT_ISS_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-XHBT-ISS-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_XHBT_REINST_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-XHBT-REINST-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_XHBT_TRMN_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-CVG-XHBT-TRMN-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'FACE_CHNG_EFF_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-FACE-CHNG-EFF-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'FRST_LF_CF_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-FRST-LF-CF-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'GUAR_INT_END_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-GUAR-INT-END-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'GUAR_INT_STRT_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-GUAR-INT-STRT-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'LATST_CF_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-LATST-CF-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'PREV_MAT_XPRY_DT'
+               MOVE LAPUP-INPUT-DT-YR  TO WAPUP-CONV-DT-YR
+               MOVE LAPUP-INPUT-DT-MON TO WAPUP-CONV-DT-MON
+               MOVE LAPUP-INPUT-DT-DAY TO WAPUP-CONV-DT-DAY
+               MOVE WAPUP-CONV-DT      TO WCVGS-PREV-MAT-XPRY-DT (I)
+               MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+APEX54         GO TO 3000-PROCESS-DATE-FIELD-X
+           END-IF.
+ 
+           MOVE WAPUP-C-UNKNOWN-FIELD-ERR
+                                       TO LAPUP-RETURN-CD.
+ 
+       3000-PROCESS-DATE-FIELD-X.
+           EXIT.
+      /
+      *---------------------------
+       4000-PROCESS-NUMERIC-FIELD.
+      *---------------------------
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CRNT_CFAGT_SEQ_NUM'
+               MOVE 5                        TO L0280-LENGTH
+               MOVE ZERO                     TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CRNT-CFAGT-SEQ-NUM (I)
+                         = L0280-OUTPUT
+                         / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_AD_MULT_FCT'
+               MOVE 3                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-AD-MULT-FCT (I)
+                         = L0280-OUTPUT
+                         / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_AD_PREM_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-AD-PREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_APL_CLR_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-APL-CLR-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_BASIC_PREM_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-BASIC-PREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_CLM_CHQ_AMT'
+               MOVE 11                       TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-CLM-CHQ-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_CLM_LTD_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-CLM-LTD-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_CLM_YTD_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-CLM-YTD-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_COLA_PREM_AMT'
+               MOVE 7                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-COLA-PREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_COMIT_PCT'
+               MOVE 5                        TO L0280-LENGTH
+               MOVE 3                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-COMIT-PCT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_COMM_TRG_AMT'
+               MOVE 7                        TO L0280-LENGTH
+               MOVE ZERO                     TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-COMM-TRG-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_FE_DUR'
+               MOVE 3                        TO L0280-LENGTH
+               MOVE ZERO                     TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-FE-DUR (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_FE_PREM_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-FE-PREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_FE_UPREM_AMT'
+               MOVE 5                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-FE-UPREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_FYR_COMM_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-FYR-COMM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_GDLN_APREM_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-GDLN-APREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_GDLN_SPREM_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-GDLN-SPREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_GUAR_INT_PCT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 6                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-GUAR-INT-PCT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_LOAN_CLR_1_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-LOAN-CLR-1-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_LOAN_CLR_2_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-LOAN-CLR-2-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_LTA_PREM_AMT'
+               MOVE 7                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-LTA-PREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_LTB_PREM_AMT'
+               MOVE 7                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-LTB-PREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_MAX_COMIT_AMT'
+               MOVE 11                       TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-MAX-COMIT-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_MDRT_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE ZERO                     TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+                   COMPUTE WCVGS-CVG-MDRT-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+           ELSE
+               MOVE WAPUP-C-NUM-CONV-ERR     TO LAPUP-RETURN-CD
+               MOVE L0280-STATUS             TO LAPUP-SUB-RETURN-CD
+               GO TO 4000-PROCESS-NUMERIC-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_ME_DUR'
+               MOVE 3                        TO L0280-LENGTH
+               MOVE ZERO                     TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-ME-DUR (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_ME_FCT'
+               MOVE 3                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-ME-FCT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_ME_PREM_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-ME-PREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_MPREM_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-MPREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_NET_REISS_AMT'
+               MOVE 11                       TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-NET-REISS-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_NXT_CPI_FCT'
+               MOVE 5                        TO L0280-LENGTH
+               MOVE 3                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-NXT-CPI-FCT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_NXT_UPREM_AMT'
+               MOVE 5                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-NXT-UPREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_ORIG_FACE_AMT'
+               MOVE 11                       TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-ORIG-FACE-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_PFEE_AMT'
+               MOVE 5                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-PFEE-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_PMT_LTD_AMT'
+               MOVE 11                       TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-PMT-LTD-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_PREV_CPI_FCT'
+               MOVE 5                        TO L0280-LENGTH
+               MOVE 3                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-PREV-CPI-FCT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_PREV_FACE_AMT'
+               MOVE 11                       TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-PREV-FACE-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_PREV_UPREM_AMT'
+               MOVE 5                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-PREV-UPREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+557788*    IF  RUFLD-UPLD-FLD-NM = 'CVG_SALE_TAX_AMT'
+557788*        MOVE 7                        TO L0280-LENGTH
+557788*        MOVE 2                        TO L0280-PRECISION
+557788*        MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+557788*        PERFORM  0280-1000-NUMERIC-EDIT
+557788*            THRU 0280-1000-NUMERIC-EDIT-X
+557788*        IF  L0280-OK
+557788*            COMPUTE WCVGS-CVG-SALE-TAX-AMT (I) =
+557788*                L0280-OUTPUT / (10 ** L0280-PRECISION)
+557788*            MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+557788*            GO TO 4000-PROCESS-NUMERIC-FIELD-X
+557788*        ELSE
+557788*            MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+557788*            MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+557788*            GO TO 4000-PROCESS-NUMERIC-FIELD-X
+557788*        END-IF
+557788*    END-IF.
+ 
+557788*    IF  RUFLD-UPLD-FLD-NM = 'CVG_SALE_TAX_RT'
+557788*        MOVE 5                        TO L0280-LENGTH
+557788*        MOVE 4                        TO L0280-PRECISION
+557788*        MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+557788*        PERFORM  0280-1000-NUMERIC-EDIT
+557788*            THRU 0280-1000-NUMERIC-EDIT-X
+557788*        IF  L0280-OK
+557788*            COMPUTE WCVGS-CVG-SALE-TAX-RT (I) =
+557788*                L0280-OUTPUT / (10 ** L0280-PRECISION)
+557788*            MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+557788*            GO TO 4000-PROCESS-NUMERIC-FIELD-X
+557788*        ELSE
+557788*            MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+557788*            MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+557788*            GO TO 4000-PROCESS-NUMERIC-FIELD-X
+557788*        END-IF
+557788*   END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_SUM_INS_AMT'
+               MOVE 11                       TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-SUM-INS-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_SURR_LTD_AMT'
+               MOVE 13                       TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-SURR-LTD-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_SURR_TRG_AMT'
+               MOVE 7                        TO L0280-LENGTH
+               MOVE ZERO                     TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-SURR-TRG-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_UNIT_VALU_AMT'
+               MOVE 7                        TO L0280-LENGTH
+               MOVE ZERO                     TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-UNIT-VALU-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_UWG_AMT'
+               MOVE 11                       TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-UWG-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_WP_LTD_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-WP-LTD-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_WP_MULT_FCT'
+               MOVE 3                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-WP-MULT-FCT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_WP_PREM_AMT'
+               MOVE 7                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-WP-PREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_WP_YTD_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-CVG-WP-YTD-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'GIR_OPT_REMN_AMT'
+               MOVE 7                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-GIR-OPT-REMN-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'GUAR_IMPRD_INT_PCT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE 6                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-GUAR-IMPRD-INT-PCT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'GUAR_INT_PERI_DUR'
+               MOVE 3                        TO L0280-LENGTH
+               MOVE ZERO                     TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-GUAR-INT-PERI-DUR (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'MNPMT_TRG_LTD_AMT'
+               MOVE 9                        TO L0280-LENGTH
+               MOVE ZERO                     TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-MNPMT-TRG-LTD-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'MORT_ASSESS_PCT'
+               MOVE 3                        TO L0280-LENGTH
+               MOVE ZERO                     TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-MORT-ASSESS-PCT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'OUT_ALLOC_AMT_PCT'
+               MOVE 11                       TO L0280-LENGTH
+               MOVE 3                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-OUT-ALLOC-AMT-PCT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'OWN_OCCP_PREM_AMT'
+               MOVE 7                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-OWN-OCCP-PREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'PDISAB_PREM_AMT'
+               MOVE 7                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-PDISAB-PREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'PMT_LOAD_LTD_AMT'
+               MOVE 11                       TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-PMT-LOAD-LTD-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'PMT_LOAD_TRG_AMT'
+               MOVE 7                        TO L0280-LENGTH
+               MOVE ZERO                     TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-PMT-LOAD-TRG-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'PREV_CFAGT_SEQ_NUM'
+               MOVE 5                        TO L0280-LENGTH
+               MOVE ZERO                     TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-PREV-CFAGT-SEQ-NUM (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+010302*    IF  RUFLD-UPLD-FLD-NM = 'PREV_WP_UPREM_AMT'
+010302*        MOVE 5                        TO L0280-LENGTH
+010302*        MOVE 2                        TO L0280-PRECISION
+010302*        MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+010302*        PERFORM  0280-1000-NUMERIC-EDIT
+010302*            THRU 0280-1000-NUMERIC-EDIT-X
+010302*        IF  L0280-OK
+010302*            COMPUTE WCVGS-PREV-WP-UPREM-AMT (I) =
+010302*                L0280-OUTPUT / (10 ** L0280-PRECISION)
+010302*            MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+010302*            GO TO 4000-PROCESS-NUMERIC-FIELD-X
+010302*        ELSE
+010302*            MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+010302*            MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+010302*            GO TO 4000-PROCESS-NUMERIC-FIELD-X
+010302*        END-IF
+010302*    END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'REDC_EP_PREM_AMT'
+               MOVE 7                        TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-REDC-EP-PREM-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'SURR_LOAD_LTD_AMT'
+               MOVE 11                       TO L0280-LENGTH
+               MOVE 2                        TO L0280-PRECISION
+               MOVE LAPUP-INPUT-DATA         TO L0280-INPUT-DATA
+               PERFORM  0280-1000-NUMERIC-EDIT
+                   THRU 0280-1000-NUMERIC-EDIT-X
+               IF  L0280-OK
+                   COMPUTE WCVGS-SURR-LOAD-LTD-AMT (I) =
+                       L0280-OUTPUT / (10 ** L0280-PRECISION)
+                   MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               ELSE
+                   MOVE WAPUP-C-NUM-CONV-ERR TO LAPUP-RETURN-CD
+                   MOVE L0280-STATUS         TO LAPUP-SUB-RETURN-CD
+                   GO TO 4000-PROCESS-NUMERIC-FIELD-X
+               END-IF
+           END-IF.
+ 
+           MOVE WAPUP-C-UNKNOWN-FIELD-ERR    TO LAPUP-RETURN-CD.
+ 
+       4000-PROCESS-NUMERIC-FIELD-X.
+           EXIT.
+      /
+      *-------------------------
+       5000-PROCESS-TRANS-FIELD.
+      *-------------------------
+ 
+           MOVE WAPUP-C-UNKNOWN-FIELD-ERR    TO LAPUP-RETURN-CD.
+ 
+       5000-PROCESS-TRANS-FIELD-X.
+           EXIT.
+      /
+      *---------------------------
+       6000-PROCESS-COMPLEX-FIELD.
+      *---------------------------
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_FACE_AMT'
+           OR  RUFLD-UPLD-FLD-NM = 'CVG_AD_FACE_AMT'
+               PERFORM  6100-PROCESS-FACE-AMT
+                   THRU 6100-PROCESS-FACE-AMT-X
+               GO TO 6000-PROCESS-COMPLEX-FIELD-X
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'CVG_WP_IND'
+               IF  LAPUP-INPUT-DATA = '1'
+                   MOVE WAPUP-C-YES        TO WCVGS-CVG-WP-IND (I)
+                   MOVE 1.0                TO WCVGS-CVG-WP-MULT-FCT (I)
+                   MOVE WAPUP-C-YES        TO LAPUP-REC-CHANGED-SW
+                   GO TO 6000-PROCESS-COMPLEX-FIELD-X
+               ELSE
+                   GO TO 6000-PROCESS-COMPLEX-FIELD-X
+               END-IF
+           END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'IA_QUOT_NUM'
+               MOVE 'AQ'                   TO WQT-IA-QUOT-CD
+               MOVE LAPUP-INPUT-DATA       TO WQT-IA-QUOT-NUM
+               PERFORM  QT-1000-READ-FOR-UPDATE
+                   THRU QT-1000-READ-FOR-UPDATE-X
+APEX54         PERFORM  6005-IA-QUOT-NUM
+APEX54             THRU 6005-IA-QUOT-NUM-X
+APEX54         GO TO 6000-PROCESS-COMPLEX-FIELD-X
+           END-IF.
+ 
+012696***  IF  RUFLD-UPLD-FLD-NM = 'IN_ALLOC_AMT_PCT'
+012696***      MOVE 8                      TO L0280-LENGTH
+012696***      MOVE 3                      TO L0280-PRECISION
+012696***      MOVE LAPUP-INPUT-DATA       TO L0280-INPUT-DATA
+012696***      PERFORM  0280-1000-NUMERIC-EDIT
+012696***          THRU 0280-1000-NUMERIC-EDIT-X
+012696***      IF  L0280-OK
+012696***          PERFORM  6010-UPDATE-ALLOC-PCT
+012696***              THRU 6010-UPDATE-ALLOC-PCT-X
+012696***          GO TO 6000-PROCESS-COMPLEX-FIELD-X
+012696***      ELSE
+012696***          MOVE WAPUP-C-NUM-CONV-ERR
+012696***                                  TO LAPUP-RETURN-CD
+012696***          MOVE L0280-STATUS       TO LAPUP-SUB-RETURN-CD
+012696***          GO TO 6000-PROCESS-COMPLEX-FIELD-X
+012696***      END-IF
+012696***  END-IF.
+ 
+           IF  RUFLD-UPLD-FLD-NM = 'PLAN_ID'
+               PERFORM  6200-PROCESS-PLAN-ID
+                   THRU 6200-PROCESS-PLAN-ID-X
+               GO TO 6000-PROCESS-COMPLEX-FIELD-X
+           END-IF.
+ 
+APEX52     IF  RUFLD-UPLD-FLD-NM = 'CVG_SEX_CD'
+APEX52     AND RUFLD-UPLD-FLD-APEX-NM = 'JOINT'
+APEX52         MOVE 'J'                    TO WCVGS-CVG-SEX-CD (I)
+APEX52         MOVE WAPUP-C-YES            TO LAPUP-REC-CHANGED-SW
+APEX52         GO TO 6000-PROCESS-COMPLEX-FIELD-X
+           END-IF.
+ 
+           MOVE WAPUP-C-UNKNOWN-FIELD-ERR  TO LAPUP-RETURN-CD.
+ 
+       6000-PROCESS-COMPLEX-FIELD-X.
+           EXIT.
+      /
+      *-----------------
+APEX54 6005-IA-QUOT-NUM.
+      *-----------------
+ 
+           IF  WQT-IO-OK
+               MOVE LAPUP-INPUT-DATA         TO WCVGS-IA-QUOT-NUM (I)
+               MOVE WAPUP-C-YES              TO LAPUP-REC-CHANGED-SW
+               MOVE WAPUP-C-YES              TO LAPUP-VALID-QUOT-IND
+               IF  RQT-IA-QUOT-STAT-CD = 'C'
+                   MOVE 'M'                  TO RQT-IA-QUOT-STAT-CD
+                   PERFORM  QT-2000-REWRITE
+                       THRU QT-2000-REWRITE-X
+                   MOVE WAPUP-C-YES          TO LCVG-IA-QUOT-UPDT-IND
+               ELSE
+                   PERFORM  QT-3000-UNLOCK
+                       THRU QT-3000-UNLOCK-X
+               END-IF
+           ELSE
+               MOVE WAPUP-C-QUOT-ERR         TO LAPUP-RETURN-CD
+               MOVE WAPUP-C-NO               TO LAPUP-VALID-QUOT-IND
+           END-IF.
+ 
+APEX54 6005-IA-QUOT-NUM-X.
+           EXIT.
+      /
+      *----------------------
+012696*6010-UPDATE-ALLOC-PCT.
+      *----------------------
+ 
+012696***  IF  RUFLD-DEFERRED-STRUCT
+012696***      EVALUATE RUFLD-UPLD-FLD-APEX-NM
+012696***           WHEN 'PERCENT1'
+012696***               MOVE +1            TO J
+012696***           WHEN 'PERCENT2'
+012696***               MOVE +2            TO J
+012696***           WHEN 'PERCENT3'
+012696***               MOVE +3            TO J
+012696***      END-EVALUATE
+012696***  ELSE
+012696***      MOVE I                      TO J
+012696***  END-IF.
+ 
+012696***  IF  J > RPOL-POL-CVG-REC-CTR-N
+012696***      MOVE RPOL-POL-CVG-REC-CTR-N TO J
+012696***  END-IF.
+ 
+012696***  IF  L0280-OUTPUT = ZERO
+012696***      CONTINUE
+012696***  ELSE
+012696***      COMPUTE WCVGS-IN-ALLOC-AMT-PCT (J) =
+012696***          L0280-OUTPUT / (10 ** L0280-PRECISION)
+012696***  END-IF.
+ 
+012696***  MOVE WAPUP-C-YES                TO LAPUP-REC-CHANGED-SW.
+ 
+012696***  IF  RUFLD-DEFERRED-STRUCT
+012696***      IF  (RUFLD-UPLD-FLD-APEX-NM = 'PERCENT1'
+012696***      OR  RUFLD-UPLD-FLD-APEX-NM = 'PERCENT2'
+012696***      OR  RUFLD-UPLD-FLD-APEX-NM = 'PERCENT3')
+012696***          MOVE 'P'                TO WCVGS-CVG-IN-ALLOC-CD (I)
+012696***      ELSE
+012696***          MOVE 'A'                TO WCVGS-CVG-IN-ALLOC-CD (I)
+012696***      END-IF
+012696***  ELSE
+012696***      IF  RUFLD-UNIVLIFE-STRUCT
+012696***          MOVE 'P'                TO WCVGS-CVG-IN-ALLOC-CD (I)
+012696***      END-IF
+012696***  END-IF.
+ 
+012696*6010-UPDATE-ALLOC-PCT-X.
+012696***  EXIT.
+      /
+      *----------------------
+       6100-PROCESS-FACE-AMT.
+      *----------------------
+ 
+      *
+      * FACE AMOUNT PRECEEDS PLAN CODE ON INSURANCE (BASE PLAN)
+      * STRUCTURE, SO SOME NEW COVERAGE PROCESSING MUST BE DONE
+      *
+ 
+           IF  RUFLD-INSURANCE-STRUCT
+               MOVE SPACES                   TO LAPUP-EMBEDDED-SWITCHES
+               ADD +1                        TO RPOL-POL-CVG-REC-CTR-N
+               MOVE RPOL-POL-CVG-REC-CTR-N   TO I
+           ELSE
+               IF  LAPUP-EMBEDDED-WP
+               OR  LAPUP-EMBEDDED-EP
+               OR  LAPUP-EMBEDDED-OCCP
+               OR  LAPUP-EMBEDDED-LTA
+               OR  LAPUP-EMBEDDED-LTB
+               OR  LAPUP-EMBEDDED-PDISAB
+               OR  LAPUP-EMBEDDED-COLA
+                   GO TO 6100-PROCESS-FACE-AMT-X
+               END-IF
+           END-IF.
+ 
+      *
+      * IF AMOUNT IS IN UNITS, HAVE TO TRANSLATE TO FACE AMOUNT
+      *
+ 
+           IF  RUFLD-UPLD-FLD-APEX-NM = 'UNITS'
+               PERFORM  6110-PROCESS-UNITS
+                   THRU 6110-PROCESS-UNITS-X
+               GO TO 6100-PROCESS-FACE-AMT-X
+           END-IF.
+ 
+           MOVE 11                           TO L0280-LENGTH.
+           MOVE 2                            TO L0280-PRECISION.
+           MOVE LAPUP-INPUT-DATA             TO L0280-INPUT-DATA.
+ 
+           PERFORM  0280-1000-NUMERIC-EDIT
+               THRU 0280-1000-NUMERIC-EDIT-X.
+ 
+           IF  NOT L0280-OK
+               MOVE WAPUP-C-NUM-CONV-ERR     TO LAPUP-RETURN-CD
+               MOVE L0280-STATUS             TO LAPUP-SUB-RETURN-CD
+               GO TO 6100-PROCESS-FACE-AMT-X
+           END-IF.
+ 
+           IF  LAPUP-EMBEDDED-ADB
+               COMPUTE WCVGS-CVG-AD-FACE-AMT (1) =
+                   L0280-OUTPUT / (10 ** L0280-PRECISION)
+               MOVE WAPUP-C-YES              TO LAPUP-REC-CHANGED-SW
+           ELSE
+               COMPUTE WCVGS-CVG-FACE-AMT (I) =
+                   L0280-OUTPUT / (10 ** L0280-PRECISION)
+013064         MOVE WCVGS-CVG-FACE-AMT (I)   TO
+013064              WCVGS-CVG-PREV-FACE-AMT (I)
+               MOVE WAPUP-C-YES              TO LAPUP-REC-CHANGED-SW
+           END-IF.
+ 
+       6100-PROCESS-FACE-AMT-X.
+           EXIT.
+      /
+      *-------------------
+       6110-PROCESS-UNITS.
+      *-------------------
+ 
+           IF  WCVGS-CVG-FACE-AMT (I) NOT = ZEROS
+               GO TO 6110-PROCESS-UNITS-X
+           END-IF.
+ 
+           IF  LAPUP-INVALID-PLAN
+               GO TO 6110-PROCESS-UNITS-X
+           END-IF.
+ 
+           MOVE WCVGS-PLAN-ID (I)           TO WPD-PLAN-ID.
+ 
+APEX54     PERFORM  PDIN-1000-PLAN-DEFAULTS-IN
+APEX54         THRU PDIN-1000-PLAN-DEFAULTS-IN-X.
+ 
+           IF  NOT WPD-IO-OK
+               GO TO 6110-PROCESS-UNITS-X
+           END-IF.
+ 
+           MOVE 11                          TO L0280-LENGTH.
+           MOVE ZERO                        TO L0280-PRECISION.
+           MOVE LAPUP-INPUT-DATA            TO L0280-INPUT-DATA.
+ 
+           PERFORM  0280-1000-NUMERIC-EDIT
+               THRU 0280-1000-NUMERIC-EDIT-X.
+ 
+           IF  L0280-OK
+               COMPUTE WCVGS-CVG-FACE-AMT (I) = L0280-OUTPUT *
+                   RPD-PLAN-UNIT-VALU-AMT
+013064         MOVE WCVGS-CVG-FACE-AMT (I)  TO
+013064              WCVGS-CVG-PREV-FACE-AMT (I)
+               MOVE WAPUP-C-YES             TO LAPUP-REC-CHANGED-SW
+           ELSE
+               MOVE WAPUP-C-NUM-CONV-ERR    TO LAPUP-RETURN-CD
+               MOVE L0280-STATUS            TO LAPUP-SUB-RETURN-CD
+           END-IF.
+ 
+       6110-PROCESS-UNITS-X.
+           EXIT.
+      /
+      *---------------------
+       6200-PROCESS-PLAN-ID.
+      *---------------------
+ 
+      *
+      * BASE INPUT PLAN REQUIRED FOR SPECIAL UNIVERSAL LIFE PLAN
+      * PROCESSING
+      *
+ 
+           IF  RUFLD-INSURANCE-STRUCT
+               MOVE LAPUP-INPUT-DATA     TO LCVG-INPUT-BASE-PLAN
+           END-IF.
+ 
+      *
+      * UNIVERSAL LIFE HAS SPECIAL UTTB LOOKUP FOR FUNDING PLANS
+      *
+ 
+           IF  RUFLD-UNIVLIFE-STRUCT
+               MOVE LCVG-INPUT-BASE-PLAN TO WUTTB-UPLD-TTBL-TYP-ID
+               MOVE RUFLD-UPLD-FLD-APEX-NM
+                                         TO WUTTB-UPLD-TTBL-VALU-ID
+           ELSE
+               MOVE RUFLD-UPLD-TTBL-TYP-ID
+                                         TO WUTTB-UPLD-TTBL-TYP-ID
+               MOVE LAPUP-INPUT-DATA     TO WUTTB-UPLD-TTBL-VALU-ID
+           END-IF.
+ 
+           PERFORM  UTTB-1000-LOOKUP-UTTB
+               THRU UTTB-1000-LOOKUP-UTTB-X.
+ 
+           IF  NOT WUTTB-IO-OK
+               MOVE SPACES               TO RUTTB-UPLD-TTBL-VALU-TXT
+           END-IF.
+ 
+           MOVE SPACES                   TO LAPUP-EMBEDDED-SWITCHES.
+ 
+           IF  RUTTB-UPLD-TTBL-VALU-TXT = 'EMBEDWP'
+               MOVE WAPUP-C-YES          TO LAPUP-EMBEDDED-WP-SW
+               MOVE WAPUP-C-YES          TO WCVGS-CVG-WP-IND (1)
+               MOVE 1.0                  TO WCVGS-CVG-WP-MULT-FCT (1)
+               MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+010313         MOVE WAPUP-C-YES          TO LAPUP-BYPASS-SED-SW
+               GO TO 6200-PROCESS-PLAN-ID-X
+           END-IF.
+ 
+           IF  RUTTB-UPLD-TTBL-VALU-TXT = 'EMBEDAD'
+               MOVE WAPUP-C-YES          TO LAPUP-EMBEDDED-ADB-SW
+               MOVE 1.0                  TO WCVGS-CVG-AD-MULT-FCT (1)
+               MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+010313         MOVE WAPUP-C-YES          TO LAPUP-BYPASS-SED-SW
+               GO TO 6200-PROCESS-PLAN-ID-X
+           END-IF.
+ 
+           IF  RUTTB-UPLD-TTBL-VALU-TXT = 'EMBEDEP'
+               MOVE WAPUP-C-YES          TO LAPUP-EMBEDDED-EP-SW
+               MOVE WAPUP-C-YES          TO WCVGS-REDC-EP-SELCT-IND (1)
+               MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+010313         MOVE WAPUP-C-YES          TO LAPUP-BYPASS-SED-SW
+               GO TO 6200-PROCESS-PLAN-ID-X
+           END-IF.
+ 
+           IF  RUTTB-UPLD-TTBL-VALU-TXT = 'EMBEDOCCP'
+               MOVE WAPUP-C-YES          TO LAPUP-EMBEDDED-OCCP-SW
+               MOVE WAPUP-C-YES          TO WCVGS-OWN-OCCP-SELCT-IND(1)
+               MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+010313         MOVE WAPUP-C-YES          TO LAPUP-BYPASS-SED-SW
+               GO TO 6200-PROCESS-PLAN-ID-X
+           END-IF.
+ 
+           IF  RUTTB-UPLD-TTBL-VALU-TXT = 'EMBEDLTA'
+               MOVE WAPUP-C-YES          TO LAPUP-EMBEDDED-LTA-SW
+               MOVE WAPUP-C-YES          TO WCVGS-CVG-LTA-SELCT-IND (1)
+               MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+010313         MOVE WAPUP-C-YES          TO LAPUP-BYPASS-SED-SW
+               GO TO 6200-PROCESS-PLAN-ID-X
+           END-IF.
+ 
+           IF  RUTTB-UPLD-TTBL-VALU-TXT = 'EMBEDLTB'
+               MOVE WAPUP-C-YES          TO LAPUP-EMBEDDED-LTB-SW
+               MOVE WAPUP-C-YES          TO WCVGS-CVG-LTB-SELCT-IND (1)
+               MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+010313         MOVE WAPUP-C-YES          TO LAPUP-BYPASS-SED-SW
+               GO TO 6200-PROCESS-PLAN-ID-X
+           END-IF.
+ 
+           IF  RUTTB-UPLD-TTBL-VALU-TXT = 'EMBEDPDISAB'
+               MOVE WAPUP-C-YES          TO LAPUP-EMBEDDED-PDISAB-SW
+               MOVE WAPUP-C-YES          TO WCVGS-PDISAB-SELCT-IND (1)
+               MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+010313         MOVE WAPUP-C-YES          TO LAPUP-BYPASS-SED-SW
+               GO TO 6200-PROCESS-PLAN-ID-X
+           END-IF.
+ 
+           IF  RUTTB-UPLD-TTBL-VALU-TXT = 'EMBEDCOLA1'
+               MOVE WAPUP-C-YES          TO LAPUP-EMBEDDED-COLA-SW
+               MOVE '1'                  TO WCVGS-CVG-COLA-SELCT-CD (1)
+               MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+010313         MOVE WAPUP-C-YES          TO LAPUP-BYPASS-SED-SW
+               GO TO 6200-PROCESS-PLAN-ID-X
+           END-IF.
+ 
+           IF  RUTTB-UPLD-TTBL-VALU-TXT = 'EMBEDCOLA2'
+               MOVE WAPUP-C-YES          TO LAPUP-EMBEDDED-COLA-SW
+               MOVE '2'                  TO WCVGS-CVG-COLA-SELCT-CD (1)
+               MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+010313         MOVE WAPUP-C-YES          TO LAPUP-BYPASS-SED-SW
+               GO TO 6200-PROCESS-PLAN-ID-X
+           END-IF.
+ 
+           IF  RUTTB-UPLD-TTBL-VALU-TXT = 'EMBEDCOLA3'
+               MOVE WAPUP-C-YES          TO LAPUP-EMBEDDED-COLA-SW
+               MOVE '3'                  TO WCVGS-CVG-COLA-SELCT-CD (1)
+               MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+010313         MOVE WAPUP-C-YES          TO LAPUP-BYPASS-SED-SW
+               GO TO 6200-PROCESS-PLAN-ID-X
+           END-IF.
+ 
+           IF  RUTTB-UPLD-TTBL-VALU-TXT = 'EMBEDCOLA4'
+               MOVE WAPUP-C-YES          TO LAPUP-EMBEDDED-COLA-SW
+               MOVE '4'                  TO WCVGS-CVG-COLA-SELCT-CD (1)
+               MOVE WAPUP-C-YES          TO LAPUP-REC-CHANGED-SW
+010313         MOVE WAPUP-C-YES          TO LAPUP-BYPASS-SED-SW
+               GO TO 6200-PROCESS-PLAN-ID-X
+           END-IF.
+ 
+           MOVE RUTTB-UPLD-TTBL-VALU-TXT
+                                         TO WPH-PLAN-ID.
+014178
+014178*
+014178* IF SAME PLAN AS BASE CVG, DON'T CREATE NEW COVERAGE
+014178*
+014178     IF  (RUFLD-UPLD-FLD-STRUCT-NM = 'DIAFUND'
+014178     OR   RUFLD-UPLD-FLD-STRUCT-NM = 'GIAFUND')
+014178     AND WPH-PLAN-ID = WCVGS-PLAN-ID (1)
+014178         GO TO 6200-PROCESS-PLAN-ID-X
+014178     END-IF.
+014178
+           IF  RPH-KEY NOT = WPH-KEY
+               PERFORM  PH-1000-READ
+                   THRU PH-1000-READ-X
+           END-IF.
+ 
+           IF  NOT WPH-IO-OK
+               MOVE WAPUP-C-PLAN-ERR     TO LAPUP-RETURN-CD
+               PERFORM  PH-1000-CREATE
+                   THRU PH-1000-CREATE-X
+           END-IF.
+ 
+           IF  RPOL-APPL-ID NOT = RPH-APPL-ID
+               MOVE WAPUP-C-PLAN-ERR     TO LAPUP-RETURN-CD
+               MOVE WAPUP-C-YES          TO LAPUP-INVALID-PLAN-SW
+           END-IF.
+ 
+010418     SET WPSYS-SYS-CTL-INGENIUM TO TRUE.
+ 
+           PERFORM  PSYS-1000-READ
+               THRU PSYS-1000-READ-X.
+ 
+           IF  NOT WPSYS-IO-OK
+           AND NOT LAPUP-PLAN-ERR
+               MOVE WAPUP-C-PADM-READ-ERR
+                                         TO LAPUP-RETURN-CD
+           END-IF.
+ 
+007766*    IF  RPOL-POL-CVG-REC-CTR-N = RPSYS-MAX-CVG-ON-POL-QTY
+007766*        MOVE WAPUP-C-MAX-CVG-ERR  TO LAPUP-RETURN-CD
+007766*        GO TO 6200-PROCESS-PLAN-ID-X
+007766*    END-IF.
+ 
+      *
+      * FACE AMOUNT PRECEEDS PLAN CODE ON THE INSURANCE (BASE PLAN)
+      * STRUCTURE, SO COVERAGE NUMBER HAS ALREADY BEEN INCREMETED
+      *
+ 
+           IF  NOT RUFLD-INSURANCE-STRUCT
+               IF  RUFLD-UNIVLIFE-STRUCT
+557700         AND RPH-PLAN-CF-TYP-CD = WCVGS-CVG-CF-TYP-CD (1)
+557700*        AND RPH-PLAN-CF-TYP-DIA
+557700*        AND WCVGS-CVG-CF-TYP-DIA (1)
+      *
+557700* DON'T ADD CVG IF BASE PLAN HAS CVG INCLUDED
+      *
+                   GO TO 6200-PROCESS-PLAN-ID-X
+               ELSE
+                   ADD +1                TO RPOL-POL-CVG-REC-CTR-N
+                   MOVE RPOL-POL-CVG-REC-CTR-N
+                                         TO I
+               END-IF
+           END-IF.
+ 
+           MOVE RUTTB-UPLD-TTBL-VALU-TXT
+                                         TO WCVGS-PLAN-ID (I).
+           MOVE WAPUP-C-YES              TO LAPUP-REC-CHANGED-SW.
+ 
+           MOVE RPH-KEY                  TO WPD-KEY.
+ 
+APEX54     PERFORM  PDIN-1000-PLAN-DEFAULTS-IN
+APEX54         THRU PDIN-1000-PLAN-DEFAULTS-IN-X.
+ 
+           IF  NOT WPD-IO-OK
+               PERFORM  PD-1000-CREATE
+                   THRU PD-1000-CREATE-X
+           END-IF.
+ 
+           IF  WPH-IO-OK
+           AND WPD-IO-OK
+           AND NOT LAPUP-INVALID-PLAN
+               MOVE WAPUP-C-NO           TO LAPUP-INVALID-PLAN-SW
+           ELSE
+               MOVE WAPUP-C-YES          TO LAPUP-INVALID-PLAN-SW
+           END-IF.
+ 
+           IF  I = 1
+               MOVE RUTTB-UPLD-TTBL-VALU-TXT
+                                         TO RPOL-PLAN-ID
+               PERFORM  PCOM-1000-READ
+                   THRU PCOM-1000-READ-X
+           END-IF.
+ 
+APEX54     PERFORM  5790-1000-BUILD-PARM-INFO
+APEX54         THRU 5790-1000-BUILD-PARM-INFO-X
+ 
+APEX54     MOVE I                        TO L5790-CVG-NUM.
+APEX54     SET L5790-DEFAULT-INSURED     TO TRUE.
+APEX54     SET L5790-NEW-CVG             TO TRUE.
+ 
+APEX54     PERFORM  5790-1000-DEFAULT-CVG-FLDS
+APEX54         THRU 5790-1000-DEFAULT-CVG-FLDS-X.
+ 
+       6200-PROCESS-PLAN-ID-X.
+           EXIT.
+      /
+      *-------------------------
+       7000-PROCESS-FIELD-FIELD.
+      *-------------------------
+ 
+           IF  LAPUP-INPUT-DATA NOT = '1'
+               GO TO 7000-PROCESS-FIELD-FIELD-X
+           END-IF.
+ 
+           MOVE WAPUP-C-UNKNOWN-FIELD-ERR     TO LAPUP-RETURN-CD.
+ 
+       7000-PROCESS-FIELD-FIELD-X.
+           EXIT.
+      /
+      *****************************************************************
+      *  PROCESSING COPYBOOKS                                         *
+      *****************************************************************
+       COPY ACPPUTTB.
+      /
+       COPY CCPPPDIN.
+      /
+      *****************************************************************
+      *  LINKAGE PROCESSING COPYBOOKS                                 *
+      *****************************************************************
+APEX54 COPY CCPS5790.
+      /
+APEX54 COPY CCPL5790.
+      /
+       COPY XCPL0260.
+      /
+       COPY XCPL0280.
+      /
+      *****************************************************************
+      *  FILE I/O PROCESS MODULES                                     *
+      *****************************************************************
+       COPY ACPNUTTB.
+      /
+       COPY CCPNPCOM.
+      /
+       COPY CCPCPD.
+      /
+       COPY CCPNPD.
+      /
+       COPY CCPCPH.
+      /
+       COPY CCPNPH.
+      /
+       COPY CCPNPSYS.
+      /
+       COPY CCPUQT.
+      /
+      *****************************************************************
+      *  ERROR HANDLING ROUTINES                                      *
+      *****************************************************************
+       COPY XCPL0030.
+ 
+      *****************************************************************
+      **                 END OF PROGRAM ASRSCVG                      **
+      *****************************************************************
+014591
