@@ -11,6 +11,11 @@
            05  WUFLD-TABLE-NAME                   PIC X(04)
                                                   VALUE 'UFLD'.
            05  WUFLD-RQST-CD                      PIC X(02).
+
+        01  WUFLD-IO-WORK-AREA.
+           05  WUFLD-TABLE-NAME                   PIC X(04)
+                                                  VALUE 'UFLD'.
+           05  WUFLD-RQST-CD                      PIC X(02).
                88  WUFLD-RQST-SELECT              VALUE '01'.
                88  WUFLD-RQST-SELECT-FOR-UPDATE   VALUE '02'.
                88  WUFLD-RQST-UPDATE              VALUE '03'.

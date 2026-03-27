@@ -26,6 +26,7 @@ TL0193**  20SEP21  CTS    TLB041 - CO NAME LENGTH INCREASE           **
        01  RUCLI-REC-INFO.
            05  RUCLI-KEY.
                10  RUCLI-APP-ID                 PIC X(15).
+        RUCLI-APP-ID                 PIC X(15).
                10  RUCLI-SEQ-NUM                PIC X(02).
                10  RUCLI-SEQ-NUM-N              REDEFINES
                    RUCLI-SEQ-NUM                PIC 9(02).

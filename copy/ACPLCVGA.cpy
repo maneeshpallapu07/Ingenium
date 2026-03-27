@@ -25,6 +25,13 @@ APEX54**  31DEC96  TJS    MODIFICATIONS FOR MAINTAINABILITY          **
                                  LAPUP-PARM-AREA
                                  RUFLD-REC-INFO
                                  RCVGA-REC-INFO.
+
+      557660     CALL WPGWS-CALL-PGM-ID USING WGLOB-GLOBAL-AREA
+557660*    CALL 'ASRUCVGA' USING WGLOB-GLOBAL-AREA
+                                 LAPUP-PARM-AREA
+                                 RUFLD-REC-INFO
+                                 RCVGA-REC-INFO.
+ 
  
 557660     MOVE WPGWS-CRNT-PGM-ID       TO WGLOB-CRNT-PGM-ID.
 557660     MOVE WPGWS-PREV-PGM-ID       TO WGLOB-PREV-PGM-ID.

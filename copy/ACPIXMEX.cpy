@@ -32,6 +32,9 @@ NWLXML**  20JUL09  CTS    NEW                                        **
            IF  WXMEX-SEQ-FILE-STATUS  NOT = ZERO
                PERFORM  XMEX-9000-HANDLE-ERROR
                    THRU XMEX-9000-HANDLE-ERROR-X
+      IF  WXMEX-SEQ-FILE-STATUS  NOT = ZERO
+               PERFORM  XMEX-9000-HANDLE-ERROR
+                   THRU XMEX-9000-HANDLE-ERROR-X
            END-IF.
 
        XMEX-1000-READ-X.
