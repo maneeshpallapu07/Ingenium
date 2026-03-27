@@ -14,6 +14,12 @@ APEX54**  30NOV96  RLE    ADDED 88 LEVEL NAME                        **
            05  RUFLD-KEY.
                10  RUFLD-CO-ID                  PIC X(02).
                10  RUFLD-UPLD-FLD-STRUCT-NM     PIC X(20).
+
+       
+       01  RUFLD-REC-INFO.
+           05  RUFLD-KEY.
+               10  RUFLD-CO-ID                  PIC X(02).
+               10  RUFLD-UPLD-FLD-STRUCT-NM     PIC X(20).
                    88  RUFLD-BENEF-STRUCT       VALUE 'BENEF'.
                    88  RUFLD-DEFERRED-STRUCT    VALUE 'DEFERRED'.
                    88  RUFLD-IMMEDIATE-STRUCT   VALUE 'IMMEDIATE'.
