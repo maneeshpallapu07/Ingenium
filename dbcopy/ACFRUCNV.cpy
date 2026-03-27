@@ -16,6 +16,8 @@
                    RUCNV-SEQ-NUM                PIC 9(03).
            05  RUCNV-CNVR-ISS-EFF-DT            PIC X(10).
            05  RUCNV-CNVR-XPRY-DT               PIC X(10).
+                 05  RUCNV-CNVR-ISS-EFF-DT            PIC X(10).
+           05  RUCNV-CNVR-XPRY-DT               PIC X(10).
            05  RUCNV-ORIG-SML-PROD-CD           PIC X(03).
            05  RUCNV-ORIG-POL-ID                PIC X(07).
            05  RUCNV-ORIG-POL-ISS-DT            PIC X(10).
